@@ -156,6 +156,16 @@ def evaluate_mgmq(
         # Convert relative path to absolute path for PyArrow compatibility
         checkpoint_path = str(Path(checkpoint_path).resolve())
         
+        # Load training config if available (moved up to infer network name)
+        training_config = None
+        if use_training_config:
+            training_config = load_training_config(checkpoint_path)
+            
+        # Infer network name from training config if not explicitly provided (default is grid4x4)
+        if training_config and "network_name" in training_config and network_name == "grid4x4":
+            print(f"✓ Inferred network name from checkpoint: {training_config['network_name']}")
+            network_name = training_config["network_name"]
+
         # Load YAML config for defaults
         yaml_config = load_model_config(config_path)
         yaml_env_cfg = get_env_config(yaml_config)
@@ -166,8 +176,8 @@ def evaluate_mgmq(
         project_root = Path(__file__).parent.parent
         network_cfg = get_network_config(yaml_config, project_root)
         
-        # Override with CLI network name if provided
-        if network_name != "grid4x4":  # If user specified a different network via CLI
+        # Override with CLI network name (or inferred name)
+        if network_name != "grid4x4":  # If specific network is needed
             override_config = {"network": {"name": network_name}}
             network_cfg = get_network_config(override_config, project_root)
         
@@ -178,11 +188,6 @@ def evaluate_mgmq(
         detector_file = network_cfg["detector_file"]
         network_name = network_cfg["network_name"]  # Update network_name from config
 
-        # Load training config if available
-        training_config = None
-        if use_training_config:
-            training_config = load_training_config(checkpoint_path)
-        
         # Validate network files
         if not Path(net_file).exists():
             raise FileNotFoundError(f"Network file not found: {net_file}")
@@ -211,7 +216,8 @@ def evaluate_mgmq(
             print(f"⚠ Overriding network paths in config to match local environment...")
             
             # Build additional SUMO command with detector file
-            additional_sumo_cmd = "--step-length 0.1"
+            # Match training config (0.5s)
+            additional_sumo_cmd = "--step-length 0.5"
             if detector_file and Path(detector_file).exists():
                 additional_sumo_cmd = f"-a {detector_file} {additional_sumo_cmd}"
             
@@ -249,7 +255,8 @@ def evaluate_mgmq(
             print(f"  use_neighbor_obs: {env_config['use_neighbor_obs']}")
         else:
             # Build additional SUMO command with detector file
-            additional_sumo_cmd = "--step-length 0.1"
+            # Match training config (0.5s)
+            additional_sumo_cmd = "--step-length 0.5"
             if detector_file and Path(detector_file).exists():
                 additional_sumo_cmd = f"-a {detector_file} {additional_sumo_cmd}"
             

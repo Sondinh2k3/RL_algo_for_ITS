@@ -160,6 +160,9 @@ def create_mgmq_ppo_config(
             batch_mode="complete_episodes",  # Wait for full episode before training
             sample_timeout_s=3600,  # Increased timeout for SUMO simulation (1 hour)
         )
+        .multi_agent(
+            count_steps_by="agent_steps",  # Count agent steps (samples) instead of env steps
+        )
         .training(
             lr=learning_rate,
             gamma=gamma,
@@ -170,7 +173,7 @@ def create_mgmq_ppo_config(
             # Episode-based training: 1 episode = ~89 env steps × 16 agents = ~1424 samples
             # With 4 workers, we get ~5696 samples per iteration (4 complete episodes)
             train_batch_size=1424,  # Match single episode size
-            minibatch_size=256,     # Standard minibatch
+            minibatch_size=64,      # Reduced from 256 to prevent CUDA OOM
             num_sgd_iter=4,         # Fewer SGD iterations for faster updates
             grad_clip=0.5,
             # Use custom MGMQ model
