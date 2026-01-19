@@ -1,0 +1,58 @@
+[project]
+name = "mgmq"
+version = "0.1.0"
+description = "MGMQ-PPO: Multi-Layer Graph Masking Q-Learning with PPO for Adaptive Traffic Signal Control"
+authors = [
+    {name = "Sondinh2k3", email = "ledinhsonx1td@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10, <3.13"
+license = {text = "MIT"}
+keywords = ["reinforcement-learning", "traffic-signal-control", "multi-agent", "graph-neural-network"]
+
+dependencies = [
+    # Core Deep Learning
+    "torch>=2.0.0",
+    "numpy>=1.24.0,<2.0.0",
+    
+    # Reinforcement Learning
+    "ray[rllib]>=2.31.0",
+    "gymnasium>=1.1.1,<2.0.0",
+    "pettingzoo>=1.25.0,<2.0.0",
+    "supersuit>=3.10.0,<4.0.0",
+    
+    # SUMO Simulation
+    "traci>=1.24.0,<2.0.0",
+    
+    # Configuration & Data Processing
+    "pyyaml>=6.0",
+    "pandas>=2.0.0,<3.0.0",
+    
+    # Utilities
+    "pyvirtualdisplay>=3.0,<4.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=24.0.0",
+    "isort>=5.12.0",
+    "flake8>=7.0.0",
+]
+
+[project.scripts]
+mgmq-train = "scripts.train_mgmq_ppo:main"
+mgmq-eval = "scripts.eval_mgmq_ppo:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "scripts*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yml", "*.yaml", "*.json", "*.xml"]

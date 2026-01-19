@@ -1,0 +1,87 @@
+# Simulation Configuration File
+# This file contains the default configuration for traffic simulation
+
+# Network configuration
+network:
+  name: grid4x4
+  net_file: network/grid4x4/grid4x4.net.xml
+  route_file: network/grid4x4/grid4x4.rou.xml
+  
+# Preprocessing configuration
+preprocessing:
+  output_dir: network/grid4x4
+  output_file: intersection_config.json
+  
+  # GPI (General Plug-In) configuration
+  gpi:
+    enabled: true
+    # Lane aggregation settings
+    lane_aggregation:
+      enabled: true
+      # How to handle missing lanes: "zero" or "mask"
+      missing_lane_strategy: zero
+      # How to merge extra lanes: "sum", "mean", or "max"
+      merge_strategy: mean
+      # Standard number of lanes per direction
+      standard_lanes_per_direction: 2
+      
+  # FRAP (Feature Relation Attention Processing) configuration  
+  frap:
+    enabled: true
+    # Standard phase patterns: "4phase" or "2phase"
+    standard_pattern: 4phase
+    
+# SUMO simulation parameters
+simulation:
+  begin_time: 0
+  num_seconds: 8000
+  delta_time: 5  # seconds between actions
+  yellow_time: 3
+  min_green: 15
+  max_green: 90
+  use_gui: false
+  sumo_seed: random
+  
+# Training parameters (for reference, actual values in train script)
+training:
+  num_workers: 4
+  num_envs_per_worker: 1
+  learning_rate: 0.0003
+  gamma: 0.99
+  
+# Known networks and their traffic signal IDs
+networks:
+  grid4x4:
+    ts_ids:
+      - A0
+      - A1
+      - A2
+      - A3
+      - B0
+      - B1
+      - B2
+      - B3
+      - C0
+      - C1
+      - C2
+      - C3
+      - D0
+      - D1
+      - D2
+      - D3
+      
+  # 4x4 grid layout
+  # D0 - D1 - D2 - D3
+  # |    |    |    |
+  # C0 - C1 - C2 - C3
+  # |    |    |    |
+  # B0 - B1 - B2 - B3
+  # |    |    |    |
+  # A0 - A1 - A2 - A3
+      
+  network_test:
+    ts_ids:
+      - gneJ1
+      - gneJ2
+      - gneJ3
+      - gneJ4

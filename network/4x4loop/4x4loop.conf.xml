@@ -1,0 +1,14 @@
+<configuration>
+    <net-file value="4x4loop.net.xml"/>
+    <output-trip-file value="4x4loop-demo.rou.xml"/>
+    <trip-attributes value="type=&quot;td_0&quot; departLane=&quot;best&quot; departSpeed=&quot;max&quot; departPos=&quot;random&quot;"/>
+    <lanes value="True"/>
+    <!-- <insertion-density value="300.0"/> -->
+    <begin value="0"/>
+    <end value="5000"/>
+    <!-- <insertion-rate value="500.0"/> -->
+    <!-- <period value="0.6"/> -->
+    <binomial value="10"/>
+    <random-depart value="True"/>
+    <seed value="123"/>
+</configuration>

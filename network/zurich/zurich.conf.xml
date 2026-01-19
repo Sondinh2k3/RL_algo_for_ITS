@@ -1,0 +1,14 @@
+<configuration>
+    <net-file value="zurich.net.xml"/>
+    <output-trip-file value="zurich-demo.rou.xml"/>
+    <trip-attributes value="type=&quot;td_0&quot; departLane=&quot;best&quot; departSpeed=&quot;max&quot; departPos=&quot;random&quot;"/>
+    <lanes value="True"/>
+    <!-- <insertion-density value="300.0"/> -->
+    <begin value="0"/>
+    <end value="3600"/>
+    <insertion-rate value="1000,2142,4286,7140,10600,15000,20000,30000,20000,15000,10600,7140,4286,2142,1000,1"/>
+    <!-- <period value="0.6"/> -->
+    <binomial value="10"/>
+    <random-depart value="True"/>
+    <seed value="123"/>
+</configuration>

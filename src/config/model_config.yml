@@ -1,0 +1,122 @@
+# MGMQ Model Configuration
+# Các tham số mô hình MGMQ cho training và evaluation
+
+# ============================================
+# Network Configuration
+# ============================================
+network:
+  # Name of the traffic network (used as folder name under network/)
+  name: grid4x4
+  
+  # Base path for network files (relative to project root)
+  # If not specified, defaults to: network/{network_name}/
+  base_path: null
+  
+  # Network files (relative to base_path if base_path is set, or absolute paths)
+  net_file: grid4x4.net.xml
+  
+  # Route files - can be a single file or comma-separated list
+  # Order matters: type definitions should come before trip definitions
+  route_files:
+    - grid4x4.rou.xml         # Vehicle type definitions
+    - grid4x4-demo.rou.xml    # Demo traffic routes (optional)
+  
+  # Detector configuration file (for E2 detector-based rewards)
+  detector_file: detector.add.xml
+  
+  # Intersection preprocessing config (for phase standardization)
+  intersection_config: intersection_config.json
+
+# ============================================
+# MGMQ Architecture Parameters
+# ============================================
+mgmq:
+  # GAT (Graph Attention Network) parameters
+  gat:
+    hidden_dim: 128       # GAT hidden dimension
+    output_dim: 64       # GAT output dimension per head
+    num_heads: 4          # Number of GAT attention heads
+    
+  # GraphSAGE parameters
+  graphsage:
+    hidden_dim: 128       # GraphSAGE hidden dimension
+    
+  # Bi-GRU parameters
+  gru:
+    hidden_dim: 64       # Bi-GRU hidden dimension
+    
+  # Policy and Value network parameters
+  policy:
+    hidden_dims: [128, 64]   # Policy network hidden dimensions
+    
+  value:
+    hidden_dims: [128, 64]   # Value network hidden dimensions
+    
+  # Regularization
+  dropout: 0.3
+  
+  # Temporal observation
+  history_length: 4       # Observation history length (window size)
+  
+  # Local GNN settings
+  local_gnn:
+    enabled: false        # Use LocalTemporalMGMQTorchModel
+    max_neighbors: 4      # Maximum neighbors (K) for local GNN
+    obs_dim: 48           # 4 features * 12 detectors
+
+# ============================================
+# PPO Training Parameters
+# ============================================
+ppo:
+  learning_rate: 0.0003  # 3e-4
+  gamma: 0.99             # Discount factor
+  lambda_: 0.95           # GAE lambda
+  entropy_coeff: 0.01     # Entropy coefficient
+  clip_param: 0.2         # PPO clip parameter
+  vf_clip_param: 10.0     # Value function clip parameter
+  train_batch_size: 512  # Training batch size
+  minibatch_size: 64     # Mini batch size
+  num_sgd_iter: 10        # Number of SGD iterations
+  grad_clip: 0.5          # Gradient clipping
+
+# ============================================
+# Training Settings
+# ============================================
+training:
+  num_iterations: 200     # Number of training iterations
+  num_workers: 2          # Number of parallel workers
+  num_envs_per_worker: 1  # Environments per worker
+  checkpoint_interval: 5 # Checkpoint frequency
+  patience: 50            # Early stopping patience (iterations without improvement)
+  seed: 42                # Random seed
+  use_gpu: false          # Use GPU for training
+  output_dir: "./results_mgmq"  # Output directory
+
+# ============================================
+# Reward Configuration
+# ============================================
+reward:
+  # Available reward functions:
+  # - diff-waiting-time: Difference in waiting time
+  # - queue: Queue length based reward
+  # - average-speed: Average speed based reward
+  # - pressure: Traffic pressure reward
+  # - halt-veh-by-detectors: Halted vehicles by detector
+  # - diff-departed-veh: Difference in departed vehicles
+  functions:
+    - halt-veh-by-detectors
+    - diff-departed-veh
+    - occupancy
+  weights: null           # Auto-compute equal weights if null
+
+# ============================================
+# Environment Configuration
+# ============================================
+environment:
+  num_seconds: 8000       # Simulation duration
+  max_green: 90           # Maximum green time
+  min_green: 10           # Minimum green time
+  cycle_time: 90          # Traffic light cycle time
+  yellow_time: 3          # Yellow time
+  time_to_teleport: 500    # Teleport stuck vehicles (-1 to disable)
+  use_phase_standardizer: true  # Map 4-value action to signal phases
