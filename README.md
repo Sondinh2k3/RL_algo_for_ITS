@@ -1,7 +1,7 @@
 # MGMQ-PPO: Điều Khiển Đèn Giao Thông Thích Ứng
 
 [![Python](https://img.shields.io/badge/Python-3.10--3.12-blue.svg)](https://www.python.org/)
-[![SUMO](https://img.shields.io/badge/SUMO-1.24+-green.svg)](https://sumo.dlr.de/)
+[![SUMO](https://img.shields.io/badge/SUMO-1.24+-green.svg)](https://sumo.dlr.de/docs/index.html)
 [![RLlib](https://img.shields.io/badge/Ray%2FRLlib-2.31+-orange.svg)](https://docs.ray.io/en/latest/rllib/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
