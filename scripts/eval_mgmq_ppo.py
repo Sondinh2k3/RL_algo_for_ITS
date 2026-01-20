@@ -216,8 +216,15 @@ def evaluate_mgmq(
             print(f"⚠ Overriding network paths in config to match local environment...")
             
             # Build additional SUMO command with detector file
-            # Match training config (0.5s)
-            additional_sumo_cmd = "--step-length 0.5"
+            # Match training config (0.5s) and apply strict network settings
+            additional_sumo_cmd = (
+                "--step-length 0.5 "
+                "--lateral-resolution 0.5 "
+                "--ignore-route-errors "
+                "--tls.actuated.jam-threshold 30 "
+                "--device.rerouting.adaptation-steps 18 "
+                "--device.rerouting.adaptation-interval 10"
+            )
             if detector_file and Path(detector_file).exists():
                 additional_sumo_cmd = f"-a {detector_file} {additional_sumo_cmd}"
             
@@ -255,8 +262,15 @@ def evaluate_mgmq(
             print(f"  use_neighbor_obs: {env_config['use_neighbor_obs']}")
         else:
             # Build additional SUMO command with detector file
-            # Match training config (0.5s)
-            additional_sumo_cmd = "--step-length 0.5"
+            # Match training config (0.5s) and apply strict network settings
+            additional_sumo_cmd = (
+                "--step-length 0.5 "
+                "--lateral-resolution 0.5 "
+                "--ignore-route-errors "
+                "--tls.actuated.jam-threshold 30 "
+                "--device.rerouting.adaptation-steps 18 "
+                "--device.rerouting.adaptation-interval 10"
+            )
             if detector_file and Path(detector_file).exists():
                 additional_sumo_cmd = f"-a {detector_file} {additional_sumo_cmd}"
             

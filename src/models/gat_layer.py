@@ -87,7 +87,16 @@ class GATLayer(nn.Module):
         
         # Linear transformation: h' = h * W
         # Shape: [batch, N, out_features]
-        Wh = torch.matmul(h, self.W)
+        Wh = torch.matmul(h, self.W) # [batch, N, out_features]. Do matmul chi nhan 2 chieu cuoi
+        #===============================
+        # Giải thích một chút cho bước trên:
+        # Mục đích của phép nhân h*W là để biến đổi đặc trưng của các nút (lanes) từ không gian đặc trưng ban đầu (in_features)
+        # sang không gian đặc trưng mới (out_features) thông qua ma trận trọng số W.
+        # Cụ thể:
+        # - h chứa thông tn ban đầu
+        # - W là cách ta "nhìn" thông tin đó 
+        # - hW tạo ra biểu diễn mới, hữu ích hơn cho việc học các mối quan hệ giữa các nút trong đồ thị.
+        #===============================
         
         # Compute attention coefficients
         # e_ij = LeakyReLU(a^T * [Wh_i || Wh_j])

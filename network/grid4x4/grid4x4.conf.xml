@@ -7,7 +7,7 @@
     <begin value="0"/>
     <end value="3600"/>
     <!-- <insertion-rate value="6000,10500,12000,15000,18000,21000,24000,25500,27000,27000,27500,28500,30000,28500,27000,25500,22500,19500,15000,12000,9000,6000,3000,1500,3"/> -->
-    <insertion-rate value="10000"/>
+    <insertion-rate value="30000"/>
     <!-- <period value="0.0001"/> -->
     <binomial value="10"/>
     <random-depart value="True"/>

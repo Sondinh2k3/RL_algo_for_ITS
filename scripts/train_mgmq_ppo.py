@@ -116,7 +116,7 @@ def create_mgmq_ppo_config(
     mgmq_config: dict,
     num_workers: int = 2,
     num_envs_per_worker: int = 1,
-    learning_rate: float = 3e-5,
+    learning_rate: float = 3e-4,
     gamma: float = 0.99,
     lambda_: float = 0.95,
     entropy_coeff: float = 0.01,
@@ -222,7 +222,7 @@ def train_mgmq_ppo(
     policy_hidden_dims: list = None,
     value_hidden_dims: list = None,
     dropout: float = 0.3,
-    learning_rate: float = 3e-5,
+    learning_rate: float = 3e-4,
     patience: int = 50,
     history_length: int = 4,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
@@ -350,7 +350,14 @@ def train_mgmq_ppo(
         print(f"✓ Phase Standardizer: {'ENABLED' if use_phase_standardizer else 'DISABLED'}")
         
         # Build additional SUMO command with detector file
-        additional_sumo_cmd = f"--step-length 0.5"
+        additional_sumo_cmd = (
+            "--step-length 0.5 "
+            "--lateral-resolution 0.5 "
+            "--ignore-route-errors "
+            "--tls.actuated.jam-threshold 30 "
+            "--device.rerouting.adaptation-steps 18 "
+            "--device.rerouting.adaptation-interval 10"
+        )
         if detector_file and Path(detector_file).exists():
             additional_sumo_cmd = f"-a {detector_file} {additional_sumo_cmd}"
             print(f"✓ Detector file: {detector_file}")
