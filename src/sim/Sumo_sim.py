@@ -11,8 +11,9 @@ import os
 import json
 import sys
 import sumolib
+import libsumo
 import traci
-import numpy as np
+import numpy as nplibsumo
 from typing import Dict, List, Optional, Tuple, Any, Union
 from pyvirtualdisplay.smartdisplay import SmartDisplay
 
@@ -318,14 +319,13 @@ class SumoSimulator(SimulatorAPI):
         """Initialize simulator and get initial observations.
         
         Steps:
-        1. Start temporary SUMO connection to read network metadata
+        1. Start SUMO simulation (start once only)
         2. Get agent IDs (traffic light IDs)
         3. Build TrafficSignal objects for each agent
-        4. Start full SUMO simulation
-        5. Return initial observations for all agents
+        4. Return initial observations for all agents
         """
-        # Start temp connection to read metadata
-        self._start_temp_connection()
+        # Start simulation (handles both fresh start and reload)
+        self._start_simulation()
         
         # Get agent IDs if not provided
         if self.ts_ids is None:
@@ -349,12 +349,6 @@ class SumoSimulator(SimulatorAPI):
         # Update neighbor_provider with built traffic signals
         if self.neighbor_provider is not None:
             self.neighbor_provider.update_traffic_signals(self.traffic_signals)
-        
-        # Close temp connection
-        self._close_connection()
-        
-        # Start full simulation
-        self._start_full_connection()
         
         # Initialize vehicles dict and counters
         self.vehicles = {}
@@ -730,67 +724,97 @@ class SumoSimulator(SimulatorAPI):
         
         return cmd
 
-    def _start_temp_connection(self):
-        """Start temporary SUMO connection to read network metadata."""
-        cmd = self._build_cmd(gui=False, net_only=True)
-        
-        if LIBSUMO:
-            traci.start(cmd)
-            self.conn = traci
-        else:
-            # Use PID for unique label to avoid conflicts between Ray workers
-            label = f"init_connection_{self.label}_{os.getpid()}"
-            traci.start(cmd, label=label)
-            self.conn = traci.getConnection(label)
-            self._unique_label = label
-        
-        self.sumo = self.conn
-        return self.conn
-
-    def _start_full_connection(self):
-        """Start full SUMO simulation connection."""
+    def _start_simulation(self):
+        """Start SUMO simulation (handles both fresh start and reload/reset)."""
         cmd = self._build_cmd(gui=self.use_gui, net_only=False)
         
         # Setup virtual display if needed
         if self.use_gui and self.virtual_display and not LIBSUMO:
-            self.disp = SmartDisplay(size=self.virtual_display)
-            self.disp.start()
-        
+            if self.disp is None:
+                self.disp = SmartDisplay(size=self.virtual_display)
+                self.disp.start()
+
         if LIBSUMO:
-            traci.start(cmd)
-            self.conn = traci
-            self.sumo = traci
+            # Handle libsumo lifecycle: single instance per process
+            if self._started:
+                try:
+                    # Reload simulation using load() - args start from index 1 (skip binary)
+                    libsumo.load(cmd[1:])
+                except Exception as e:
+                    print(f"[SumoSim] Warning: libsumo.load() failed, trying start(): {e}")
+                    pass
+            else:
+                libsumo.start(cmd)
+                self._started = True
+            
+            self.conn = libsumo
+            self.sumo = libsumo
+            
         else:
+            # Handle traci lifecycle (multi-process safe via labels)
             # Use PID for unique label to avoid conflicts between Ray workers
-            unique_label = f"{self.label}_{os.getpid()}"
-            traci.start(cmd, label=unique_label)
-            self.conn = traci.getConnection(unique_label)
+            label = f"sim_{self.label}_{os.getpid()}"
+            
+            if self._started and self.conn:
+                try:
+                    # Try to reload existing connection
+                    traci.switch(self._unique_label)
+                    traci.load(cmd[1:])
+                except Exception:
+                    # Connection lost, restart
+                    try:
+                        traci.close()
+                    except:
+                        pass
+                    traci.start(cmd, label=label)
+                    self._unique_label = label
+                    self.conn = traci.getConnection(label)
+                    self._started = True
+            else:
+                # Fresh start
+                try:
+                    traci.start(cmd, label=label)
+                    self._unique_label = label
+                    self.conn = traci.getConnection(label)
+                    self._started = True
+                except traci.FatalTraCIError:
+                    # If label exists but connection lost (zombie), try getting it or force close
+                    try:
+                        traci.close() # Close any active default
+                    except:
+                        pass
+                    # Retry
+                    traci.start(cmd, label=label)
+                    self._unique_label = label
+                    self.conn = traci.getConnection(label)
+                    self._started = True
+            
             self.sumo = self.conn
-            # Store the unique label for later use
-            self._unique_label = unique_label
-        
-        self._started = True
-        
-        # Setup GUI display
+
+        # Setup GUI display (common for both if GUI enabled)
         if self.use_gui:
             try:
-                if "DEFAULT_VIEW" not in dir(traci.gui):
-                    traci.gui.DEFAULT_VIEW = "View #0"
-                self.sumo.gui.setSchema(traci.gui.DEFAULT_VIEW, "real world")
+                gui_interface = self.sumo.gui
+                if "DEFAULT_VIEW" not in dir(gui_interface):
+                    gui_interface.DEFAULT_VIEW = "View #0"
+                gui_interface.setSchema(gui_interface.DEFAULT_VIEW, "real world")
             except Exception:
                 pass
 
     def _close_connection(self):
         """Close SUMO connection and cleanup."""
+        # For libsumo, we generally avoid closing in Ray workers to allow reload()
+        if LIBSUMO:
+            return
+            
         if not self._started and self.conn is None:
             return
         
         try:
-            if not LIBSUMO and self.conn:
-                # Use the unique label if stored, otherwise fallback to self.label
+            if self.conn:
                 label_to_use = getattr(self, '_unique_label', self.label)
                 traci.switch(label_to_use)
-            traci.close()
+                traci.close()
         finally:
             if self.disp is not None:
                 try:
@@ -798,9 +822,10 @@ class SumoSimulator(SimulatorAPI):
                 except Exception:
                     pass
                 self.disp = None
-            self.conn = None
-            self.sumo = None
-            self._started = False
+            if not LIBSUMO:
+                self.conn = None
+                self.sumo = None
+                self._started = False
 
     def _build_traffic_signals(self, conn):
         """Build TrafficSignal objects for each traffic light.

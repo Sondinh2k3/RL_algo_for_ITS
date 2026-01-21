@@ -474,3 +474,35 @@ Dự án này được cấp phép theo **MIT License** - xem file [LICENSE](LIC
 - **Tác giả:** Son Dinh
 - **Email:** ledinhsonx1td@gmail.com
 - **GitHub:** [Sondinh2k3](https://github.com/Sondinh2k3)
+
+---
+
+## Lưu ý khi sử dụng traci và libsumo
+
+Bạn có thể chọn giữa hai backend để điều khiển mô phỏng SUMO:
+
+### 1. Sử dụng traci (mặc định)
+- Không cần thiết lập gì thêm, chỉ cần cài đúng SUMO và thư viện `traci`.
+- Phù hợp khi chạy nhiều worker song song hoặc cần khởi tạo/đóng mô phỏng nhiều lần.
+- Chạy các lệnh huấn luyện/eval như bình thường:
+
+```bash
+python scripts/train_mgmq_ppo.py --network grid4x4 --iterations 200
+```
+
+### 2. Sử dụng libsumo (nhanh hơn, single-process)
+- Cần thiết lập biến môi trường `LIBSUMO_AS_TRACI=1` trước khi chạy script.
+- Phù hợp khi muốn tăng tốc, giảm overhead IPC, hoặc chạy trên môi trường single-process.
+- Thiết lập biến môi trường:
+
+```bash
+export LIBSUMO_AS_TRACI=1
+python scripts/train_mgmq_ppo.py --network grid4x4 --iterations 200
+```
+
+#### Lưu ý:
+- Không nên dùng libsumo khi cần chạy nhiều worker Ray song song (multi-process), hãy dùng traci.
+- Nếu gặp lỗi khởi tạo lại mô phỏng hoặc ActorDiedError, hãy kiểm tra biến môi trường và chỉ dùng libsumo cho single worker.
+- Nếu không thiết lập biến môi trường, hệ thống sẽ tự động dùng traci.
+
+---

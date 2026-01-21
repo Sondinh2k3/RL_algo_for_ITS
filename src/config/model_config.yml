@@ -113,7 +113,7 @@ reward:
 # Environment Configuration
 # ============================================
 environment:
-  num_seconds: 8000       # Simulation duration
+  num_seconds: 6000       # Simulation duration
   max_green: 90           # Maximum green time
   min_green: 10           # Minimum green time
   cycle_time: 90          # Traffic light cycle time

@@ -437,9 +437,30 @@ class TrafficSignal:
         if np.sum(green_time_set) == 0:
             green_time_set = np.ones(self.num_green_phases)
         green_time_set /= np.sum(green_time_set)
+        
+        # Calculate raw green times
         green_times = green_time_set * self.total_green_time
         
-        return green_times
+        # Round to integers to ensure precise cycle time
+        # This fixes calculations where floating point arithmetic could lead to 
+        # total simulation step differing from the configured cycle_time (e.g. 89s vs 90s)
+        int_green_times = np.floor(green_times).astype(int)
+        
+        # Distribute the remainder using the largest remainder method
+        # This ensures sum(int_green_times) == self.total_green_time
+        remainder = int(self.total_green_time - np.sum(int_green_times))
+        
+        if remainder > 0:
+            # Add remainder to phases with highest fractional parts
+            fractional_parts = green_times - int_green_times
+            # Get indices sorted by fractional part descending
+            indices = np.argsort(fractional_parts)[::-1]
+            
+            for i in range(remainder):
+                idx = indices[i % len(indices)]
+                int_green_times[idx] += 1
+                
+        return int_green_times.tolist()
 
     def compute_observation(self):
         """Computes the observation of the traffic signal."""
