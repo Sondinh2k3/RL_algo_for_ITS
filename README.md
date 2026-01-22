@@ -78,7 +78,7 @@ Action (Traffic Signal Phase)
 | Thành phần | Mô tả | File |
 |------------|-------|------|
 | **GAT Layer** | Xử lý tương tác giữa các làn xe (Cooperation + Conflict graphs) | `src/models/gat_layer.py` |
-| **GraphSAGE + Bi-GRU** | Tổng hợp thông tin không gian-thời gian trên mạng lưới | `src/models/graphsage_bigru.py` |
+| **GraphSAGE + Bi-GRU** | Directional/Topology-aware Spatio-Temporal Aggregation | `src/models/graphsage_bigru.py` |
 | **MGMQ Model** | Mô hình hoàn chỉnh với RLlib integration | `src/models/mgmq_model.py` |
 
 ---

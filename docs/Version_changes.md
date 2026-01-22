@@ -242,7 +242,48 @@
 
 ---
 
-<!-- TEMPLATE CHO EXPERIMENT MỚI - Copy phần này khi thêm experiment mới -->
+### Experiment #004 - 2026-01-22
+**Mục tiêu:** Đánh giá hiệu quả thuật toán trên checkpoint mới, so sánh kết quả trước và sau với dữ liệu trong folder ket_qua/20260122_115608
+
+#### 🔧 Tham số (Parameters)
+| Tham số | Giá trị | Ghi chú |
+|---------|---------|---------|
+| `learning_rate` |0.0003  | |
+| `batch_size` |  | |
+| `gamma` |0.99  | |
+| `num_episodes` | 1 | Đánh giá 1 episode |
+
+#### 📈 Kết quả (Results)
+| Metric | Giá trị | So sánh với baseline |
+|--------|---------|---------------------|
+| Mean Reward |~ -889| |
+| Episode Length |8000s | |
+| Convergence Step |  | |
+| Training Time |33h35  | |
+
+#### 📉 Biểu đồ (nếu có)
+
+##### So sánh tổng hợp (Before vs After)
+| Biểu đồ | Mô tả |
+|---------|-------|
+| ![Congestion Overview Combined](../ket_qua/20260122_115608/congestion_overview_combinedcombined.png) | Tổng quan tình trạng tắc nghẽn |
+| ![MFD Scatter Combined](../ket_qua/20260122_115608/mfd_scatter_combined.png) | Macroscopic Fundamental Diagram |
+| ![Efficiency Speed](../ket_qua/20260122_115608/efficiency_speed_plot.png) | So sánh hiệu quả tốc độ |
+| ![Efficiency Volume](../ket_qua/20260122_115608/efficiency_volume_plot.png) | So sánh hiệu quả lưu lượng |
+| ![Efficiency Occupancy](../ket_qua/20260122_115608/efficiency_occupancy_plot.png) | So sánh hiệu quả mật độ chiếm đường |
+
+#### 💡 Nhận xét & Kết luận
+- Điểm mạnh:
+  - Tổng lưu lượng tăng 31.59%
+- Điểm yếu/Vấn đề:
+  - Độ chiếm dụng trung bình tăng 39,91%
+  - Sau khi áp dụng thuât toán, mạng lưới tắc nghẽn hơn, mặc dù lưu lượng tăng nhiều.
+- Kết luận:
+  - Vấn đề có lẽ nằm ở chỗ hàm phần thưởng. Hiện tại thuật toán đang rất ưu tiên tăng lưu lượng nhưng không quan tâm tới các yếu tố khác
+  - Một vấn đề nữa là mean total reward đang khác nhau giữa các lần chạy đánh giá, mặc dù kịch bản, mạng lưới, và các thông số mô phỏng giống hệt nhau. (liệu có phải do seed?)
+- Hướng cải tiến tiếp theo:
+  - Xem và sửa lại các hàm phần thưởng sao cho chuẩn.
+
 <!--
 ### Experiment #XXX - YYYY-MM-DD
 **Mục tiêu:** 
@@ -287,7 +328,8 @@
 | Experiment | Date | Key Params | Mean Reward | Best? | Notes |
 |------------|------|------------|-------------|-------|-------|
 | #002 | 2026-01-19 | lr=0.0003, bs=1424 | ~ -145 | ⭐ | Baseline |
-| #003 | 2026-01-20 | episodes=90 |~ -682 | | New Checkpoint |
+| #003 | 2026-01-20 | episodes=90 |~ -682 | | New Checkpoint, nhu cầu giao thông không lớn|
+| #004 | 2026-01-22 | episodes=20 |~ -889 | | New Checkpoint, Nhu cầu giao thông lớn |
 | | | | | | |
 
 ---

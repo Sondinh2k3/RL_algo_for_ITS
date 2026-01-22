@@ -235,8 +235,8 @@ def evaluate_mgmq(
                 "virtual_display": None,  # Disable virtual display for local evaluation
                 "render_mode": "human" if render else None,
                 "num_seconds": int(stored_env_config.get("num_seconds", 8000)),
-                "max_green": int(stored_env_config.get("max_green", 60)),
-                "min_green": int(stored_env_config.get("min_green", 5)),
+                "max_green": int(stored_env_config.get("max_green", 90)),
+                "min_green": int(stored_env_config.get("min_green", 10)),
                 "cycle_time": int(stored_env_config.get("cycle_time", stored_env_config.get("delta_time", 90))),
                 "yellow_time": int(stored_env_config.get("yellow_time", 3)),
                 # Force enable teleport for evaluation to prevent permanent deadlocks

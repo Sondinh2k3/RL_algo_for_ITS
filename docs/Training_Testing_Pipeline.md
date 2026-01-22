@@ -617,28 +617,38 @@ Các làn xe có quỹ đạo xung đột được kết nối:
 ### 5.3. GraphSAGE Aggregation
 
 ```python
-# Pseudo-code cho GraphSAGE aggregation
+# Pseudo-code cho Directional GraphSAGE aggregation
 
 def aggregate_neighbors(node_features, adjacency):
     """
-    Tổng hợp features từ các ngã tư lân cận
+    Tổng hợp features từ các ngã tư lân cận theo hướng
     
     Args:
         node_features: [batch, num_nodes, feature_dim]
         adjacency: [num_nodes, num_nodes]
-    
-    Returns:
-        aggregated: [batch, num_nodes, feature_dim]
     """
-    # Mean aggregation
-    neighbor_sum = adjacency @ node_features
-    neighbor_count = adjacency.sum(dim=-1, keepdim=True)
-    aggregated = neighbor_sum / neighbor_count.clamp(min=1)
+    # 1. Directional Projection (Self, N, E, S, W)
+    g_self  = proj_self(node_features)
+    g_north = proj_north(node_features)
+    g_east  = proj_east(node_features)
+    g_south = proj_south(node_features)
+    g_west  = proj_west(node_features)
     
-    # Combine with self
-    output = self_linear(node_features) + neighbor_linear(aggregated)
+    # 2. Neighbor Sampling (Flow Pairing)
+    # Output South của hàng xóm -> Input North của mình
+    in_north = adjacency @ g_south
+    in_east  = adjacency @ g_west
+    in_south = adjacency @ g_north
+    in_west  = adjacency @ g_east
     
-    return relu(layer_norm(output))
+    # 3. Bi-GRU Aggregation
+    # Tạo chuỗi vector hướng
+    sequence = [in_north, in_east, in_south, in_west, g_self]
+    
+    # Feed qua Bi-GRU
+    output, _ = bigru(sequence)
+    
+    return output_linear(output)
 ```
 
 ---

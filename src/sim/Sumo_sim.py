@@ -1232,3 +1232,25 @@ class SumoSimulator(SimulatorAPI):
             return self.sumo.trafficlight.getControlledLinks(ts_id)
         except Exception:
             return []
+
+    def get_teleport_count_this_step(self) -> int:
+        """Get number of vehicles that completed teleport in the current simulation step.
+        
+        This is useful for penalizing teleportation in rewards, as teleportation
+        indicates severe congestion where vehicles are stuck for too long.
+        
+        Returns:
+            int: Number of vehicles that teleported in this step
+        """
+        try:
+            return self.sumo.simulation.getEndingTeleportNumber()
+        except Exception:
+            return 0
+    
+    def get_total_teleport_count(self) -> int:
+        """Get total number of teleported vehicles since simulation start.
+        
+        Returns:
+            int: Total number of teleported vehicles
+        """
+        return self.num_teleported_vehicles

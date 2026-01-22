@@ -174,7 +174,7 @@ def create_mgmq_ppo_config(
             # With 4 workers, we get ~5696 samples per iteration (4 complete episodes)
             train_batch_size=1424,  # Match single episode size
             minibatch_size=64,      # Reduced from 256 to prevent CUDA OOM
-            num_sgd_iter=4,         # Fewer SGD iterations for faster updates
+            num_epochs=4,         # Fewer SGD iterations for faster updates
             grad_clip=0.5,
             # Use custom MGMQ model
             model={

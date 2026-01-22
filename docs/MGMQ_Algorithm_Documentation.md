@@ -71,12 +71,23 @@ Xử lý thông tin chi tiết tại cấp độ làn đường (Lane-level) cho
 *   **Mechanics**: Sử dụng 2 đồ thị con (Cooperation & Conflict) để tính toán Attention giữa các làn xe.
 *   **Output**: Một vector embedding đại diện cho trạng thái giao thông của một giao lộ tại một thời điểm $t$.
 
-### 3.3. Spatio-Temporal Aggregator (`LocalTemporalMGMQEncoder`)
-Đây là "bộ não" xử lý không gian và thời gian.
-1.  **Local Star Graph**: Tại mỗi bước $t$, Agent xây dựng một đồ thị nhỏ với nó là trung tâm và các hàng xóm xung quanh.
-2.  **GraphSAGE (Spatial)**: Tổng hợp thông tin từ các hàng xóm về trung tâm.
-    *   Công thức: $h_{self}^{(t)} \leftarrow \text{Aggregate}(h_{self}^{(t)}, \{h_{neighbor}^{(t)}\})$.
-3.  **Bi-GRU (Temporal)**: Chuỗi các vector tổng hợp theo thời gian $t=1...T$ được đưa qua mạng GRU hai chiều để nắm bắt xu hướng giao thông (ví dụ: hàng đợi đang dài ra hay ngắn lại).
+### 3.3. Spatio-Temporal Aggregator (Directional GraphSAGE + BiGRU)
+Đây là "bộ não" xử lý không gian và thời gian, giải quyết bài toán tầm nhìn cục bộ và bảo toàn thông tin hướng của dòng giao thông.
+
+1.  **Directional Projection (Phân tách hướng)**:
+    *   Vector trạng thái của nút giao (từ GAT) được chiếu thành 5 vector thành phần: **Self, North, East, South, West**.
+    *   Điều này giúp mô hình phân biệt được thông tin đến từ các hướng khác nhau.
+
+2.  **Topology-Aware Sampling (Ghép cặp luồng)**:
+    *   Thay vì tổng hợp vô hướng, hệ thống ghép cặp vector dựa trên dòng chảy vật lý:
+        *   Input Cửa Bắc $\leftarrow$ Output Cửa Nam của hàng xóm.
+        *   Input Cửa Đông $\leftarrow$ Output Cửa Tây của hàng xóm.
+        *   (Tương tự cho South và West).
+    *   Giúp nút giao biết được áp lực giao thông đang đổ về từ hướng nào.
+
+3.  **Bi-GRU Aggregation (Tổng hợp Không gian - Thời gian)**:
+    *   **Spatial Aggregation**: Tại mỗi bước thời gian, chuỗi vector 5 hướng `[N, E, S, W, Self]` được đưa qua Bi-GRU hai chiều để tổng hợp ngữ cảnh không gian topo.
+    *   **Temporal Aggregation**: Chuỗi các vector kết quả theo thời gian $t=1...T$ tiếp tục được xử lý để nắm bắt xu hướng (ví dụ: tắc nghẽn đang lan truyền từ hướng Bắc xuống).
 
 ### 3.4. Action Space & Execution
 *   **Action**: Continuous vector (softmax ratio), đại diện cho **tỷ lệ thời gian xanh** phân bổ cho các pha.

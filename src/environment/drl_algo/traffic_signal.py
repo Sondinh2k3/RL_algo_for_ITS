@@ -218,6 +218,10 @@ class TrafficSignal:
         self._vehicles_at_cycle_start = set()  # Vehicles present at start of cycle
         self._vehicles_seen_this_cycle = set()  # All vehicles seen during the cycle
         
+        # Track teleported vehicles for penalty reward
+        self.teleported_vehicles_this_cycle = 0  # Number of teleported vehicles in current cycle
+        self._last_total_teleport = 0  # Total teleport count at start of cycle
+        
         # Reward metrics history - aggregated over cycle (6 samples with 10s interval = 60s)
         self.reward_metrics_history = {
             "halting_vehicles": [],    # Track halting vehicles per sample
@@ -817,6 +821,41 @@ class TrafficSignal:
         # Clip to max 3.0 (100% clearance is excellent already)
         return max(0.0, min(3.0, reward))
 
+    def _teleport_penalty_reward(self):
+        """Computes penalty for teleported vehicles. Range: [-3.0, 0.0].
+        
+        Logic:
+        - In SUMO, vehicles are teleported when they are stuck (waiting) for too long
+          (exceeding time-to-teleport threshold, typically 300-500 seconds).
+        - Teleportation indicates severe congestion/gridlock at the intersection.
+        - This reward penalizes the agent when vehicles under its control get teleported.
+        
+        Calculation:
+        - Count teleported vehicles in this cycle
+        - Normalize by max_veh (maximum detector capacity)
+        - Return negative penalty scaled to [-3.0, 0.0]
+        
+        Returns:
+            float: Penalty where:
+                   0.0 = No teleports (best)
+                   -3.0 = Many teleports relative to capacity (worst)
+        """
+        if self.max_veh == 0:
+            return 0.0
+        
+        # Get teleported vehicles count for this cycle
+        teleported = float(self.teleported_vehicles_this_cycle)
+        
+        if teleported == 0:
+            return 0.0
+        
+        # Calculate ratio of teleported vehicles to max capacity
+        # Even a small number of teleports is bad, so we scale aggressively
+        ratio = min(1.0, teleported / (self.max_veh * 0.1))  # 10% of capacity = max penalty
+        
+        # Return negative penalty
+        return -3.0 * ratio
+
     def _observation_fn_default(self):
         """Default observation function returning comprehensive traffic state information.
         
@@ -1183,6 +1222,9 @@ class TrafficSignal:
         # This ensures fresh aggregation for the new cycle
         for key in self.reward_metrics_history:
             self.reward_metrics_history[key] = []
+        
+        # Update teleport tracking for the new cycle
+        self._update_teleport_tracking()
 
     def update_departed_vehicles(self):
         """Track unique vehicles seen during the cycle.
@@ -1211,6 +1253,22 @@ class TrafficSignal:
             except Exception:
                 pass
         return vehicle_ids
+    
+    def _update_teleport_tracking(self):
+        """Update teleport tracking at the start of a new cycle.
+        
+        Calculates how many vehicles were teleported during the previous cycle
+        by comparing total teleport count before and after.
+        """
+        try:
+            current_total_teleport = self.data_provider.get_total_teleport_count()
+            # Teleported this cycle = total now - total at cycle start
+            self.teleported_vehicles_this_cycle = max(0, current_total_teleport - self._last_total_teleport)
+            # Update baseline for next cycle
+            self._last_total_teleport = current_total_teleport
+        except Exception:
+            # If data_provider doesn't support teleport tracking, default to 0
+            self.teleported_vehicles_this_cycle = 0
 
 
     def get_lanes_density_by_detectors(self) -> List[float]:
@@ -1370,4 +1428,5 @@ class TrafficSignal:
         "pressure": _pressure_reward,
         "halt-veh-by-detectors": _halt_veh_reward_by_detectors,
         "diff-departed-veh": _diff_departed_veh_reward,
+        "teleport-penalty": _teleport_penalty_reward,
     }

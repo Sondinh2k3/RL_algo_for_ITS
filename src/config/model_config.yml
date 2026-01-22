@@ -103,10 +103,13 @@ reward:
   # - pressure: Traffic pressure reward
   # - halt-veh-by-detectors: Halted vehicles by detector
   # - diff-departed-veh: Difference in departed vehicles
+  # - teleport-penalty: Penalty for teleported vehicles (severe congestion indicator)
   functions:
     - halt-veh-by-detectors
     - diff-departed-veh
     - occupancy
+    - average-speed
+    # - teleport-penalty   # Uncomment to penalize teleportation (requires time_to_teleport > 0)
   weights: null           # Auto-compute equal weights if null
 
 # ============================================

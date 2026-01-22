@@ -187,7 +187,7 @@ Các tham số này được cấu hình trong `create_mgmq_ppo_config()`:
 
 **`graphsage_hidden_dim`**
 - **Ý nghĩa**: Kích thước embedding sau khi tổng hợp thông tin từ các ngã tư lân cận.
-- **Cách hoạt động**: GraphSAGE aggregates features từ neighbors → transform → output
+- **Cách hoạt động**: Chiếu features thành 5 hướng (N, E, S, W, Self) → Ghép cặp luồng (Neighbor Out -> Self In) → Bi-GRU Aggregation.
 - **Tinh chỉnh**:
   ```
   Mạng lưới 4x4: 32-64
