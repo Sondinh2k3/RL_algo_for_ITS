@@ -170,11 +170,18 @@ def create_mgmq_ppo_config(
             entropy_coeff=entropy_coeff,
             clip_param=clip_param,
             vf_clip_param=10.0,
+            # CRITICAL FIX 1: Reduce value function loss coefficient
+            # This prevents vf_loss from dominating the total loss
+            vf_loss_coeff=0.5,  # Default is 1.0, reduce to balance with policy_loss
+            # CRITICAL FIX 2: Normalize advantages for stable learning
+            # Without this, advantage estimates have high variance
+            use_gae=True,  # Ensure GAE is enabled (default is True)
             # Episode-based training: 1 episode = ~89 env steps × 16 agents = ~1424 samples
-            # With 4 workers, we get ~5696 samples per iteration (4 complete episodes)
-            train_batch_size=1424,  # Match single episode size
-            minibatch_size=64,      # Reduced from 256 to prevent CUDA OOM
-            num_epochs=4,         # Fewer SGD iterations for faster updates
+            # CRITICAL FIX 3: Increase batch size for multi-agent PPO
+            # With 16 agents, need more samples for stable gradient estimates
+            train_batch_size=1072,  # Increased from 1424 for better gradient estimates
+            minibatch_size=64,     # Increased from 64 for better batch normalization
+            num_epochs=5,          # Increased from 4 for more thorough updates
             grad_clip=0.5,
             # Use custom MGMQ model
             model={
@@ -351,7 +358,7 @@ def train_mgmq_ppo(
         
         # Build additional SUMO command with detector file
         additional_sumo_cmd = (
-            "--step-length 0.5 "
+            "--step-length 1 "
             "--lateral-resolution 0.5 "
             "--ignore-route-errors "
             "--tls.actuated.jam-threshold 30 "

@@ -108,7 +108,7 @@ reward:
     - halt-veh-by-detectors
     - diff-departed-veh
     - occupancy
-    - average-speed
+    # - average-speed
     # - teleport-penalty   # Uncomment to penalize teleportation (requires time_to_teleport > 0)
   weights: null           # Auto-compute equal weights if null
 

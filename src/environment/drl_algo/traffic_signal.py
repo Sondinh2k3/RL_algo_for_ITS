@@ -797,22 +797,30 @@ class TrafficSignal:
         - Measures the proportion of initial vehicles that successfully departed.
         - Reward = (Departed / Initial) * 3.0
         - Promotes throughput: clearing vehicles from the intersection.
+        
+        BUGFIX: Handle edge cases properly to avoid misleading reward signals.
         """
         initial = float(self.initial_vehicles_this_cycle)
         departed = float(self.departed_vehicles_this_cycle)
         
+        # BUGFIX: Require minimum threshold to avoid spurious rewards
+        # When both values are very small, the ratio becomes unreliable
+        MIN_VEHICLES_THRESHOLD = 1.0  # Minimum vehicles to compute meaningful ratio
+        
         # Normalize by initial vehicles
-        if initial > 0:
+        if initial >= MIN_VEHICLES_THRESHOLD:
             # Ratio of vehicles cleared
             # Can be > 1.0 if new vehicles arrived and departed in same cycle
             ratio = departed / initial
         else:
-            # If no vehicles at start:
-            if departed > 0:
-                # Vehicles arrived and departed -> Good flow
-                ratio = 1.0
+            # BUGFIX: When initial vehicles < threshold
+            # Don't give misleading reward signal
+            if departed >= MIN_VEHICLES_THRESHOLD:
+                # Some vehicles passed through with low initial count
+                # Give partial credit but not full
+                ratio = 0.5  # Neutral-positive signal
             else:
-                # No demand, no flow -> Neutral
+                # No significant demand or flow -> Neutral
                 return 0.0
         
         # Scale to 3.0 to match other reward magnitudes

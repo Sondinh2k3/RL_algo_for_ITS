@@ -218,7 +218,7 @@ def evaluate_mgmq(
             # Build additional SUMO command with detector file
             # Match training config (0.5s) and apply strict network settings
             additional_sumo_cmd = (
-                "--step-length 0.5 "
+                "--step-length 1 "
                 "--lateral-resolution 0.5 "
                 "--ignore-route-errors "
                 "--tls.actuated.jam-threshold 30 "
@@ -264,7 +264,7 @@ def evaluate_mgmq(
             # Build additional SUMO command with detector file
             # Match training config (0.5s) and apply strict network settings
             additional_sumo_cmd = (
-                "--step-length 0.5 "
+                "--step-length 1 "
                 "--lateral-resolution 0.5 "
                 "--ignore-route-errors "
                 "--tls.actuated.jam-threshold 30 "

@@ -85,6 +85,104 @@
 
 ---
 
+### [v1.1.2] - 2026-01-23
+#### ✨ Thêm mới (Added)
+- Chưa thêm gì mới
+
+#### 🔄 Thay đổi (Changed)
+- Thêm giới hạn biên cho giá trị log(std): [Xem giải thích chi tiết](Explanation_Log_Std.md)
+
+#### 🐛 Sửa lỗi (Fixed)
+- Sửa lại lớp đồ thị mạng lưới: GraphSAGE + BiGRU
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `graphsage_bigru.py` | Modified | Sửa lại cấu trúc của GraphSAGE -> GraphSAGE nâng cao, và BiGRU lúc này chỉ nhằm mục đích tổng hợp thông tin cho output của GraphSAGE |
+| `mgmq_model.py` | Modified | Thêm giới hạn cho log(std)|
+
+---
+
+### [v1.2.0] - 2026-01-23
+#### ✨ Thêm mới (Added)
+- **Directional Adjacency Matrix**: Tạo module mới để xây dựng ma trận kề có hướng từ file SUMO .net.xml
+  - Phân loại neighbor theo 4 hướng chuẩn (North, East, South, West) dựa trên tọa độ địa lý
+  - Tính toán góc vector từ node A đến neighbor B để xác định hướng chính xác
+  - Hỗ trợ cả ma trận kề đơn giản (backward compatible)
+
+#### 🔄 Thay đổi (Changed)
+- **GraphSAGE Logic**: Sửa lại logic neighbor exchange để sử dụng đúng mask hướng:
+  - `in_north = torch.bmm(mask_north, g_south)` — Đầu vào cổng Bắc từ đầu ra hướng Nam của neighbor phía Bắc
+  - `in_east = torch.bmm(mask_east, g_west)` — Đầu vào cổng Đông từ đầu ra hướng Tây của neighbor phía Đông
+  - Tương tự cho hướng Nam và Tây
+  - **Trước đây**: Sử dụng một ma trận kề duy nhất cho tất cả hướng → Nhầm lẫn thông tin từ các hướng khác nhau
+  - **Bây giờ**: Sử dụng ma trận riêng cho từng hướng → Đúng vật lý, chính xác hơn
+- **DirectionalGraphSAGE.forward()**: Nhận đầu vào `adj_directions: [Batch, 4, N, N] or [4, N, N]`
+- **GraphSAGE_BiGRU.forward()**: Cập nhật chữ ký hàm để nhận `adj_directions`
+- **TemporalGraphSAGE_BiGRU.forward()**: Cập nhật để nhận và xử lý `adj_directions` đúng cách
+- **build_network_adjacency()**: 
+  - Thêm tham số `directional: bool = True`
+  - Tính toán góc hướng từ tọa độ junction trong file .net.xml
+  - Trả về tensor `[4, N, N]` khi `directional=True`
+- **MGMQEncoder**: 
+  - Cập nhật để nhận và xử lý ma trận kề `[4, N, N]`
+  - Tự động expand ma trận kề đơn giản thành ma trận có hướng nếu cần
+- **LocalTemporalMGMQEncoder._build_star_adjacency()**: Trả về `[B, 4, N, N]` thay vì `[B, N, N]`
+
+#### 🐛 Sửa lỗi (Fixed)
+- **Lỗi logic vật lý**: Trước đây neighbor exchange không phân biệt hướng, dẫn đến nhầm lẫn thông tin spatial
+- **Ma trận kề không phản ánh topology**: Bây giờ ma trận kề chứa đúng thông tin hướng từ tọa độ địa lý
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/preprocessing/graph_builder.py` | Added | Module mới: xây dựng directional adjacency matrix từ SUMO |
+| `src/models/graphsage_bigru.py` | Modified | Cập nhật forward để nhận `adj_directions [4,N,N]` thay vì `adj [N,N]` |
+| `src/models/mgmq_model.py` | Modified | Cập nhật `build_network_adjacency()` để tạo ma trận có hướng, cập nhật `MGMQEncoder` |
+| `src/preprocessing/__init__.py` | Modified | Export các hàm mới từ `graph_builder.py` |
+
+#### 💡 Nhận xét Kỹ Thuật
+- **Vấn đề được giải quyết**: Trước đây mô hình không tận dụng được thông tin topology có hướng của mạng giao thông, tất cả neighbor được xử lý như nhau
+- **Cải thiện đạt được**: 
+  - Logic neighbor exchange giờ đây tuân theo vật lý thực tế (xe từ phía Bắc chảy vào cổng Bắc)
+  - Mô hình có thể học được các pattern khác biệt giữa các hướng
+  - Embedding network sẽ chứa đúng thông tin spatial relationship
+- **Backward Compatibility**: Vẫn hỗ trợ ma trận kề đơn giản, tự động mở rộng thành ma trận có hướng
+
+---
+
+### [v1.2.1] - 2026-01-23
+#### ✨ Thêm mới (Added)
+- Không có
+
+#### 🔄 Thay đổi (Changed)
+- **Code Quality Improvements**: Clean code và cải thiện documentation
+  - **DirectionalGraphSAGE.forward()**: 
+    - Thêm input validation với assert statements
+    - Cải thiện docstring với chi tiết về input/output shapes
+    - Thêm section comments rõ ràng (Step 1, 2, 3, 4)
+  - **GraphSAGE_BiGRU**: 
+    - Cải thiện docstring với giải thích rõ về API compatibility
+    - Thêm type hints đầy đủ
+  - **TemporalGraphSAGE_BiGRU**: 
+    - Cải thiện docstring với giải thích về pipeline (Spatial -> Temporal -> Pooling)
+    - Thêm section comments cho từng bước xử lý
+  - **LocalTemporalMGMQEncoder._build_star_adjacency()**: 
+    - Cải thiện docstring với giải thích chi tiết về node indexing và edge logic
+    - Thêm ASCII art cho node layout
+
+#### 🐛 Sửa lỗi (Fixed)
+- Sửa comment sai trong mgmq_model.py: `[B, 1+K, 1+K]` → `[B, 4, 1+K, 1+K]`
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/models/graphsage_bigru.py` | Modified | Clean code: improved docstrings, type hints, section comments |
+| `src/models/mgmq_model.py` | Modified | Fixed comment, improved _build_star_adjacency docstring |
+- **Test Results**: ✓ DirectionalGraphSAGE test passed | ✓ TemporalGraphSAGE_BiGRU test passed | ✓ build_network_adjacency test passed
+
+---
+
 <!-- TEMPLATE CHO CHANGELOG MỚI - Copy phần này khi thêm version mới -->
 <!--
 ### [vX.X.X] - YYYY-MM-DD
@@ -332,19 +430,35 @@
 | #004 | 2026-01-22 | episodes=20 |~ -889 | | New Checkpoint, Nhu cầu giao thông lớn |
 | | | | | | |
 
+## 📝 Bảng Tracking Version Code
+
+| Version | Date | Main Changes | Scope | Status |
+|---------|------|------------|-------|--------|
+| v1.0.0 | 2026-01-17 | Phiên bản khung dự án | Foundation | ✅ |
+| v1.1.0 | 2026-01-18 | Episode-based training config | Configuration | ✅ |
+| v1.1.1 | 2026-01-18 | Fix cấu hình đồng nhất | Config fix | ✅ |
+| v1.1.2 | 2026-01-23 | Log(std) bounds + GraphSAGE review | Model | ✅ |
+| v1.2.0 | 2026-01-23 | **Directional Adjacency Matrix** | **Major** | ✅ **NEW** |
+
 ---
 
 ## 📒 Ghi Chú Chung
 
 ### Lessons Learned
 - Reward_mean có thể khác nhau lớn giữa các lần training do kịch bản nhu cầu giao thông khác nhau.
+- **[v1.2.0]** Lỗi logic vật lý trong GraphSAGE: Trước đây sử dụng một ma trận kề duy nhất cho tất cả hướng dẫn đến nhầm lẫn thông tin spatial. Bây giờ sử dụng ma trận riêng cho từng hướng, chính xác hơn về vật lý.
+- Khi thiết kế GNN cho mô phỏng giao thông, cần phân biệt rõ hướng (direction) của neighbor để mô hình có thể học được pattern spatial phức tạp.
 
 ### TODO / Ideas
-- [ ] 
-- [ ] 
+- [ ] **Training tiếp theo**: Huấn luyện mô hình với directional adjacency mới để kiểm tra hiệu quả cải thiện
+- [ ] **Benchmark**: So sánh kết quả training v1.1.x (non-directional) vs v1.2.0 (directional) trên cùng kịch bản
+- [ ] **Ablation Study**: Tắt directional adjacency để kiểm tra tác động thực tế đến hiệu quả
+- [ ] **Mở rộng**: Xem xét thêm thông tin edge type (vd: highway vs local road) vào adjacency matrix
+- [ ] **Optimization**: Kiểm tra xem directional adjacency có tăng thêm chi phí tính toán hay không
 
 ### Tài liệu tham khảo
-- 
+- Hamilton et al., "Inductive Representation Learning on Large Graphs", NeurIPS 2017
+- SUMO Network File Format: https://sumo.dlr.de/docs/Networks/index.html 
 
 ---
 

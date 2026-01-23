@@ -25,9 +25,16 @@ from .gat_layer import GATLayer, MultiHeadGATLayer, get_lane_conflict_matrix, ge
 from .graphsage_bigru import GraphSAGE_BiGRU, TemporalGraphSAGE_BiGRU
 
 
+# Log std bounds to prevent entropy explosion
+LOG_STD_MIN = -20.0  # Minimum log_std (very deterministic)
+LOG_STD_MAX = 0.5    # FIXED: Reduced from 2.0 to 0.5 for faster entropy convergence
+                     # std = e^0.5 ≈ 1.65, which is reasonable for normalized actions
+
+
 def build_network_adjacency(
     ts_ids: list,
-    net_file: str
+    net_file: str,
+    directional: bool = True
 ) -> torch.Tensor:
     """
     Build adjacency matrix for the traffic network (controlled intersections only).
@@ -39,17 +46,30 @@ def build_network_adjacency(
     Args:
         ts_ids: List of traffic signal IDs (controlled intersections only)
         net_file: Path to SUMO .net.xml file to parse connectivity
+        directional: If True, return directional adjacency [4, N, N]
+                     If False, return simple adjacency [N, N]
             
     Returns:
-        Adjacency matrix of shape [N, N] where N = len(ts_ids)
+        If directional=True: Adjacency tensor of shape [4, N, N] where:
+            Channel 0: North neighbors
+            Channel 1: East neighbors  
+            Channel 2: South neighbors
+            Channel 3: West neighbors
+        If directional=False: Adjacency matrix of shape [N, N]
     """
+    import math
+    
     N = len(ts_ids)
-    adj = torch.eye(N)  # Self-connections
     ts_set = set(ts_ids)
     ts_to_idx = {ts: i for i, ts in enumerate(ts_ids)}
     
+    if directional:
+        adj = torch.zeros(4, N, N)  # [4, N, N] for 4 directions
+    else:
+        adj = torch.eye(N)  # Self-connections for non-directional
+    
     if not net_file:
-        print("Warning: net_file not provided. Returning identity adjacency matrix.")
+        print("Warning: net_file not provided. Returning identity/zero adjacency matrix.")
         return adj
 
     try:
@@ -59,8 +79,15 @@ def build_network_adjacency(
         tree = ET.parse(net_file)
         root = tree.getroot()
         
+        # Get junction coordinates
+        junction_coords = {}
+        for junction in root.findall('junction'):
+            junc_id = junction.get('id')
+            x = float(junction.get('x', 0))
+            y = float(junction.get('y', 0))
+            junction_coords[junc_id] = (x, y)
+        
         # Build graph of all junctions (controlled and non-controlled)
-        # junction -> list of connected junctions
         graph = defaultdict(set)
         
         for edge in root.findall('.//edge'):
@@ -75,11 +102,6 @@ def build_network_adjacency(
                 graph[from_junction].add(to_junction)
                 graph[to_junction].add(from_junction)  # Undirected
         
-        # For each controlled intersection, find neighboring controlled intersections
-        # Two controlled intersections are neighbors if:
-        # 1. They are directly connected, OR
-        # 2. There's a path between them through non-controlled junctions only
-        
         def find_controlled_neighbors(start_ts: str) -> set:
             """BFS to find controlled intersections reachable without passing through other controlled ones."""
             neighbors = set()
@@ -93,26 +115,63 @@ def build_network_adjacency(
                 visited.add(current)
                 
                 if current in ts_set:
-                    # Found a controlled intersection - it's a neighbor
                     neighbors.add(current)
-                    # Don't continue through this node (stop at controlled intersections)
                 else:
-                    # Non-controlled junction - continue searching through it
                     for next_junction in graph[current]:
                         if next_junction not in visited:
                             queue.append(next_junction)
             
             return neighbors
         
+        def get_direction_index(from_id: str, to_id: str) -> int:
+            """Get direction index (0=N, 1=E, 2=S, 3=W) from source to target."""
+            if from_id not in junction_coords or to_id not in junction_coords:
+                return -1
+            
+            x1, y1 = junction_coords[from_id]
+            x2, y2 = junction_coords[to_id]
+            
+            dx = x2 - x1
+            dy = y2 - y1
+            
+            if abs(dx) < 1e-6 and abs(dy) < 1e-6:
+                return -1
+            
+            angle = math.degrees(math.atan2(dy, dx))
+            # Normalize to [0, 360)
+            angle = angle % 360
+            
+            # Direction classification:
+            # North: 45 to 135 degrees
+            # West: 135 to 225 degrees
+            # South: 225 to 315 degrees
+            # East: 315 to 360 or 0 to 45 degrees
+            if 45 <= angle < 135:
+                return 0  # North
+            elif 135 <= angle < 225:
+                return 3  # West
+            elif 225 <= angle < 315:
+                return 2  # South
+            else:
+                return 1  # East
+        
         # Build adjacency matrix
         for ts_id in ts_ids:
             controlled_neighbors = find_controlled_neighbors(ts_id)
             i = ts_to_idx[ts_id]
+            
             for neighbor in controlled_neighbors:
                 if neighbor in ts_to_idx:
                     j = ts_to_idx[neighbor]
-                    adj[i, j] = 1
-                    adj[j, i] = 1
+                    
+                    if directional:
+                        # Get direction from ts_id to neighbor
+                        dir_idx = get_direction_index(ts_id, neighbor)
+                        if dir_idx >= 0:
+                            adj[dir_idx, i, j] = 1.0
+                    else:
+                        adj[i, j] = 1
+                        adj[j, i] = 1
                 
         return adj
     except Exception as e:
@@ -137,7 +196,8 @@ class MGMQEncoder(nn.Module):
         graphsage_hidden_dim: Hidden dimension for GraphSAGE
         gru_hidden_dim: Hidden dimension for Bi-GRU
         dropout: Dropout rate
-        network_adjacency: Pre-computed adjacency matrix for the network (optional)
+        network_adjacency: Pre-computed directional adjacency matrix [4, N, N]
+                          or simple adjacency [N, N] (will be expanded)
         window_size: Size of observation history window (1 for non-temporal)
     """
     
@@ -239,12 +299,21 @@ class MGMQEncoder(nn.Module):
                 dropout=dropout
             )
         
-        # Store network adjacency matrix
+        # Store network adjacency matrix (directional: [4, N, N] or simple: [N, N])
         if network_adjacency is not None:
-            self.register_buffer('network_adj', network_adjacency)
+            # If simple adjacency [N, N], expand to directional [4, N, N]
+            if network_adjacency.dim() == 2:
+                # Expand simple adjacency to all 4 directions
+                N = network_adjacency.size(0)
+                network_adjacency_4d = network_adjacency.unsqueeze(0).expand(4, -1, -1).clone()
+                self.register_buffer('network_adj', network_adjacency_4d)
+            else:
+                self.register_buffer('network_adj', network_adjacency)
         else:
-            # Default: fully connected for single agent, identity otherwise
-            self.register_buffer('network_adj', torch.ones(max(1, num_agents), max(1, num_agents)))
+            # Default: fully connected for all directions
+            N = max(1, num_agents)
+            default_adj = torch.ones(4, N, N)  # [4, N, N]
+            self.register_buffer('network_adj', default_adj)
             
         # Store Lane adjacency matrices separately (Static 12x12)
         lane_adj_coop = get_lane_cooperation_matrix()
@@ -357,22 +426,21 @@ class MGMQEncoder(nn.Module):
         
         # --- Layer 2: Network-level GraphSAGE (Network Embedding) ---
         
-        # Get network adjacency
+        # Get network adjacency (directional: [4, N, N])
         if num_agents == 1:
-            net_adj = torch.ones(1, 1, device=obs.device)
+            # Single agent: create dummy directional adjacency
+            net_adj = torch.ones(4, 1, 1, device=obs.device)
         else:
-            net_adj = self.network_adj[:num_agents, :num_agents]
+            # self.network_adj is [4, N, N]
+            net_adj = self.network_adj[:, :num_agents, :num_agents]  # [4, num_agents, num_agents]
         
         if self.window_size > 1:
             # Temporal GraphSAGE
-            # Input: [batch, T, N, features]
+            # Input: [batch, T, N, features], adj_directions: [4, N, N]
             network_emb = self.graphsage_bigru(intersection_emb_temporal, net_adj)
         else:
             # Standard GraphSAGE
-            # Input: [batch, N, features]
-            if net_adj.dim() == 2:
-                net_adj = net_adj.unsqueeze(0).expand(batch_size, -1, -1)
-                
+            # Input: [batch, N, features], adj_directions: [4, N, N]
             # Output sequence: [batch, num_agents, graphsage_hidden_dim]
             network_emb_seq = self.graphsage_bigru(intersection_emb, net_adj, return_sequence=True)
             # Mean pooling over agents
@@ -531,7 +599,7 @@ class LocalTemporalMGMQEncoder(nn.Module):
         ], dim=2)  # -> [B, T, 1+K, gat_dim]
         
         # ======== 4. Build local star adjacency ========
-        local_adj = self._build_star_adjacency(mask)  # [B, 1+K, 1+K]
+        local_adj = self._build_star_adjacency(mask)  # [B, 4, 1+K, 1+K]
         
         # ======== 5. Temporal GraphSAGE + BiGRU ========
         # Input: [B, T, N, features] where N = 1+K
@@ -580,29 +648,48 @@ class LocalTemporalMGMQEncoder(nn.Module):
         return gat_pooled.view(batch_size, T, -1)
         
     def _build_star_adjacency(self, mask: torch.Tensor) -> torch.Tensor:
-        """Build 1-hop star graph adjacency.
+        """Build 1-hop star graph directional adjacency for local observation.
+        
+        Constructs a directional adjacency matrix for a star graph where:
+        - Node 0: Self (central node)
+        - Node 1: North neighbor (direction 0)
+        - Node 2: East neighbor (direction 1)
+        - Node 3: South neighbor (direction 2)
+        - Node 4: West neighbor (direction 3)
+        
+        Edge Logic:
+        - Self -> North neighbor: edge in direction 0 (North)
+        - North neighbor -> Self: edge in direction 2 (South)
+        (and similarly for other directions)
         
         Args:
-            mask: [B, K] - 1 if neighbor valid, 0 otherwise
+            mask: [B, K] - Binary mask, 1 if neighbor valid, 0 otherwise
+                  K should be 4 for standard 4-way intersection
         Returns:
-            adj: [B, 1+K, 1+K]
+            adj: [B, 4, 1+K, 1+K] - Directional adjacency matrices
+                 Channel 0: North edges
+                 Channel 1: East edges
+                 Channel 2: South edges
+                 Channel 3: West edges
         """
         B, K = mask.shape
-        N = 1 + K  # Self + neighbors
+        N = 1 + K  # Total nodes: Self + K neighbors
         
-        adj = torch.zeros(B, N, N, device=mask.device)
+        # Create directional adjacency: [B, 4, N, N]
+        adj = torch.zeros(B, 4, N, N, device=mask.device)
         
-        # Self-loop at position 0
-        adj[:, 0, 0] = 1.0
-        
-        # Neighbor self-loops (masked)
-        for i in range(K):
-            adj[:, i+1, i+1] = mask[:, i]
+        # Build edges for each direction
+        for direction in range(min(K, 4)):
+            neighbor_idx = direction + 1  # Neighbor position in adj (1-indexed)
             
-        # Self ↔ Neighbors edges (masked)
-        for i in range(K):
-            adj[:, 0, i+1] = mask[:, i]
-            adj[:, i+1, 0] = mask[:, i]
+            # Edge: Self (idx 0) -> Neighbor in this direction
+            # Apply mask so invalid neighbors have 0 weight
+            adj[:, direction, 0, neighbor_idx] = mask[:, direction]
+            
+            # Edge: Neighbor -> Self (opposite direction)
+            # If neighbor is to North (dir 0), self is to South (dir 2) from its view
+            opposite_dir = (direction + 2) % 4
+            adj[:, opposite_dir, neighbor_idx, 0] = mask[:, direction]
             
         return adj
 
@@ -843,11 +930,12 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         value_hidden_dims = custom_config.get("value_hidden_dims", [128, 64])
         dropout = custom_config.get("dropout", 0.3)
         
-        # Build adjacency matrix if ts_ids provided
+        # Build directional adjacency matrix if ts_ids provided
         ts_ids = custom_config.get("ts_ids", None)
         net_file = custom_config.get("net_file", None)
         if ts_ids is not None:
-            network_adjacency = build_network_adjacency(ts_ids, net_file=net_file)
+            # Build directional adjacency [4, N, N] for proper neighbor direction encoding
+            network_adjacency = build_network_adjacency(ts_ids, net_file=net_file, directional=True)
         else:
             network_adjacency = None
         
@@ -940,6 +1028,14 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         # Policy output
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
+        
+        # Clamp log_std to prevent entropy explosion
+        # policy_out contains [mean, log_std] - clamp the log_std part
+        action_dim = policy_out.shape[-1] // 2
+        mean = policy_out[..., :action_dim]
+        log_std = policy_out[..., action_dim:]
+        log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+        policy_out = torch.cat([mean, log_std], dim=-1)
         
         # Compute and store value
         value_features = self.value_net(joint_emb)
@@ -1121,6 +1217,14 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
         # Policy output
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
+        
+        # Clamp log_std to prevent entropy explosion
+        # policy_out contains [mean, log_std] - clamp the log_std part
+        action_dim = policy_out.shape[-1] // 2
+        mean = policy_out[..., :action_dim]
+        log_std = policy_out[..., action_dim:]
+        log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+        policy_out = torch.cat([mean, log_std], dim=-1)
         
         # Compute and store value
         value_features = self.value_net(joint_emb)
