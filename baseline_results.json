@@ -1,0 +1,14 @@
+{
+  "network": "grid4x4",
+  "type": "BASELINE_NO_AI",
+  "num_episodes": 1,
+  "mean_reward": -346.6706018518517,
+  "std_reward": 0.0,
+  "min_reward": -346.6706018518517,
+  "max_reward": -346.6706018518517,
+  "mean_length": 67.0,
+  "metrics": {},
+  "episode_rewards": [
+    -346.6706018518517
+  ]
+}
