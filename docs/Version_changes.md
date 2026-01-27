@@ -183,6 +183,29 @@
 
 ---
 
+### [v1.2.2] - 2026-01-27
+#### ✨ Thêm mới (Added)
+- Không có
+
+#### 🔄 Thay đổi (Changed)
+- **Observation Structure**: Chuyển đổi cấu trúc vector quan sát từ **Feature-major** sang **Lane-major**.
+  - **Trước đây**: `[All_Densities, All_Queues, All_Occupancies, All_Speeds]`
+  - **Bây giờ**: `[Lane0_Feats, Lane1_Feats, ..., Lane11_Feats]`
+  - **Lý do**: Model GAT (`mgmq_model.py`) sử dụng `.view(-1, 12, 4)` để tách đặc trưng cho từng lane. Với cấu trúc cũ, Lane 0 nhận nhầm 4 giá trị density của 4 lane đầu tiên thay vì 4 đặc trưng của chính nó.
+  - **Ảnh hưởng**: Thay đổi ý nghĩa của input features. **BẮT BUỘC** phải train lại model mới, model cũ sẽ hoạt động sai lệch.
+
+#### 🐛 Sửa lỗi (Fixed)
+- **Critical Bug Fix**: Sửa lỗi mismatch giữa `observations.py` và `mgmq_model.py`. Đảm bảo GAT layer nhận đúng đặc trưng vật lý của từng lane.
+- **Baseline Evaluation**: Sửa lỗi `eval_baseline_reward.py` để dùng `fixed_ts=True` và `SumoMultiAgentEnv` chuẩn, đảm bảo metrics so sánh (steps, reward) nhất quán với training.
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/environment/drl_algo/observations.py` | Modified | Reorder observation vector to Lane-major |
+| `tools/eval_baseline_reward.py` | Modified | Rewrite to match eval_mgmq_ppo.py structure |
+
+---
+
 <!-- TEMPLATE CHO CHANGELOG MỚI - Copy phần này khi thêm version mới -->
 <!--
 ### [vX.X.X] - YYYY-MM-DD
@@ -438,7 +461,9 @@
 | v1.1.0 | 2026-01-18 | Episode-based training config | Configuration | ✅ |
 | v1.1.1 | 2026-01-18 | Fix cấu hình đồng nhất | Config fix | ✅ |
 | v1.1.2 | 2026-01-23 | Log(std) bounds + GraphSAGE review | Model | ✅ |
-| v1.2.0 | 2026-01-23 | **Directional Adjacency Matrix** | **Major** | ✅ **NEW** |
+| v1.2.0 | 2026-01-23 | **Directional Adjacency Matrix** | **Major** | ✅ |
+| v1.2.1 | 2026-01-23 | Code cleanup & Docstrings | Quality | ✅ |
+| v1.2.2 | 2026-01-27 | **Fix Observation Structure (Lane-major)** | **Critical Fix** | ✅ **NEW** |
 
 ---
 

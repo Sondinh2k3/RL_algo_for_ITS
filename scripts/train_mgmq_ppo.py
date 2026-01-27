@@ -212,6 +212,8 @@ def train_mgmq_ppo(
     use_gpu: bool = False,
     seed: int = 42,
     output_dir: str = "./results_mgmq",
+    # Resume training from previous experiment
+    resume_path: str = None,  # Path to experiment dir to resume from
     # Environment parameters from YAML config
     num_seconds: int = 8000,  # Simulation duration
     max_green: int = 90,
@@ -231,7 +233,7 @@ def train_mgmq_ppo(
     dropout: float = 0.3,
     learning_rate: float = 3e-4,
     patience: int = 50,
-    history_length: int = 4,
+    history_length: int = 1,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
     reward_weights: list = None,  # Default: equal weights for all reward functions
     use_local_gnn: bool = False,  # Use LocalTemporalMGMQTorchModel with pre-packaged neighbor obs
@@ -439,26 +441,54 @@ def train_mgmq_ppo(
         # Get absolute path for storage
         storage_path = output_dir.resolve()
         
-        # Create Tuner
-        tuner = tune.Tuner(
-            "PPO",
-            param_space=ppo_config.to_dict(),
-            run_config=tune.RunConfig(  # Use tune.RunConfig instead of air.RunConfig
-                name=experiment_name,
-                storage_path=str(storage_path),  # Must be absolute path
-                stop=stopper,
-                checkpoint_config=tune.CheckpointConfig(  # Use tune.CheckpointConfig
-                    checkpoint_frequency=checkpoint_interval,
-                    num_to_keep=5,
-                    checkpoint_score_attribute="env_runners/episode_reward_mean",
-                    checkpoint_score_order="max",
+        # Resume training or create new Tuner
+        if resume_path:
+            # Resume from previous experiment
+            resume_path = Path(resume_path).resolve()
+            if not resume_path.exists():
+                raise FileNotFoundError(f"Resume path not found: {resume_path}")
+            
+            print(f"\n{'='*80}")
+            print("RESUMING TRAINING FROM PREVIOUS EXPERIMENT")
+            print(f"{'='*80}")
+            print(f"Resume path: {resume_path}")
+            print(f"New max iterations: {num_iterations}")
+            print(f"{'='*80}\n")
+            
+            # Use Tuner.restore() to resume from checkpoint
+            tuner = tune.Tuner.restore(
+                path=str(resume_path),
+                trainable="PPO",
+                resume_unfinished=True,  # Resume trials that haven't finished
+                resume_errored=True,  # Retry trials that errored
+                param_space=ppo_config.to_dict(),  # Allow parameter overrides
+                # Override stopper with new iteration count
+                restart_errored=False,  # Don't restart errored trials from scratch
+            )
+            # Note: stopper is reinitialized, so the iteration count starts fresh
+            # The model weights are restored from the last checkpoint
+        else:
+            # Create new Tuner for fresh training
+            tuner = tune.Tuner(
+                "PPO",
+                param_space=ppo_config.to_dict(),
+                run_config=tune.RunConfig(  # Use tune.RunConfig instead of air.RunConfig
+                    name=experiment_name,
+                    storage_path=str(storage_path),  # Must be absolute path
+                    stop=stopper,
+                    checkpoint_config=tune.CheckpointConfig(  # Use tune.CheckpointConfig
+                        checkpoint_frequency=checkpoint_interval,
+                        num_to_keep=5,
+                        checkpoint_score_attribute="env_runners/episode_reward_mean",
+                        checkpoint_score_order="max",
+                    ),
+                    verbose=1,
                 ),
-                verbose=1,
-            ),
-        )
+            )
         
         # Run training
-        print("Starting MGMQ-PPO training...\n")
+        mode_str = "RESUMING" if resume_path else "Starting"
+        print(f"{mode_str} MGMQ-PPO training...\n")
         print("Model Architecture:")
         print("  Input -> GAT (Intersection Embedding) -> GraphSAGE+BiGRU (Network Embedding)")
         print("       -> Joint Embedding -> Policy/Value Networks -> Action\n")
@@ -541,6 +571,11 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", type=str, default=None,
                         help="Output directory")
     
+    # Resume training argument
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Path to experiment directory to resume training from. "
+                             "Example: results_mgmq/mgmq_ppo_grid4x4_20260127_003407")
+    
     # MGMQ model arguments
     parser.add_argument("--gat-hidden-dim", type=int, default=None,
                         help="GAT hidden dimension")
@@ -611,6 +646,7 @@ if __name__ == "__main__":
         use_gpu=args.gpu or training_cfg["use_gpu"],
         seed=args.seed if args.seed is not None else training_cfg["seed"],
         output_dir=args.output_dir or training_cfg["output_dir"],
+        resume_path=args.resume,  # Resume from previous experiment if provided
         # Environment config from YAML
         num_seconds=env_cfg["num_seconds"],
         max_green=env_cfg["max_green"],

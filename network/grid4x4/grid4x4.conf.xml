@@ -1,5 +1,5 @@
 <configuration>
-    <net-file value="grid4x4.net.xml"/>
+    <net-file value="grid4x4_no_internal_links.net.xml"/>
     <output-trip-file value="grid4x4-demo.rou.xml"/>
     <trip-attributes value="type=&quot;td_0&quot; departLane=&quot;best&quot; departSpeed=&quot;max&quot; departPos=&quot;random&quot;"/>
     <lanes value="True"/>

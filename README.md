@@ -315,6 +315,22 @@ python scripts/eval_mgmq_ppo.py \
 
 ---
 
+## Tiếp tục training từ lần training trước đó:
+
+```bash
+# Tiếp tục training từ experiment trước đó
+python scripts/train_mgmq_ppo.py \
+    --resume results_mgmq/mgmq_ppo_grid4x4_20260127_003407 \
+    --iterations 500
+
+# Resume với GPU và thay đổi learning rate
+python scripts/train_mgmq_ppo.py \
+    --resume results_mgmq/mgmq_ppo_grid4x4_20260127_003407 \
+    --iterations 1000 \
+    --gpu \
+    --learning-rate 1e-4
+```
+
 ## Cấu hình
 
 ### File cấu hình chính: `src/config/model_config.yml`

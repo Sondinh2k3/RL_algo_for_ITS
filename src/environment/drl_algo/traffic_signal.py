@@ -432,15 +432,44 @@ class TrafficSignal:
     def _get_green_time_from_ratio(self, green_time_set: np.ndarray):
         """
         Computes the green time for each phase based on the provided green time rates.
+        
+        ACTION MASKING: If phase_standardizer is available, invalid phases
+        (those that don't exist for this intersection) will have their 
+        allocated time redistributed to valid phases.
+        
         Args:
             green_time_set (np.ndarray): An array of green time rates for each phase.
         Returns:
             List[int]: A list of green times for each phase.
         """
         green_time_set = np.array(green_time_set, dtype=float, copy=True)
+        
+        # ACTION MASKING: Apply phase mask to zero out invalid phases
+        # and redistribute their allocation to valid phases
+        action_mask = self.get_action_mask()
+        if action_mask is not None:
+            # Get the mask matching the green_time_set length
+            mask = action_mask[:len(green_time_set)] if len(action_mask) >= len(green_time_set) else action_mask
+            
+            # Zero out invalid phases
+            green_time_set = green_time_set * mask
+            
+            if self.debug_logging:
+                print(f"[ActionMask] {self.id}: mask={mask}, after_mask={green_time_set}")
+        
+        # Normalize to ensure sum = 1
         if np.sum(green_time_set) == 0:
-            green_time_set = np.ones(self.num_green_phases)
-        green_time_set /= np.sum(green_time_set)
+            # If all phases are masked or zero, use equal distribution for valid phases
+            if action_mask is not None:
+                mask = action_mask[:self.num_green_phases]
+                if np.sum(mask) > 0:
+                    green_time_set = mask / np.sum(mask)
+                else:
+                    green_time_set = np.ones(self.num_green_phases) / self.num_green_phases
+            else:
+                green_time_set = np.ones(self.num_green_phases) / self.num_green_phases
+        else:
+            green_time_set /= np.sum(green_time_set)
         
         # Calculate raw green times
         green_times = green_time_set * self.total_green_time
@@ -465,6 +494,22 @@ class TrafficSignal:
                 int_green_times[idx] += 1
                 
         return int_green_times.tolist()
+    
+    def get_action_mask(self) -> np.ndarray:
+        """Get binary mask indicating which phases are valid for this intersection.
+        
+        This enables Action Masking for the Time Ratio distribution problem:
+        - Invalid phases (non-existent at this intersection) get mask = 0
+        - Valid phases get mask = 1
+        - Time allocated to invalid phases gets redistributed to valid ones
+        
+        Returns:
+            np.ndarray: Binary mask [num_green_phases], or None if no masking needed
+        """
+        if self.use_phase_standardizer and self.phase_standardizer is not None:
+            return self.phase_standardizer.get_phase_mask()
+        # Default: all phases are valid
+        return np.ones(self.num_green_phases, dtype=np.float32)
 
     def compute_observation(self):
         """Computes the observation of the traffic signal."""

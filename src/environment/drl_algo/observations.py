@@ -39,7 +39,14 @@ class DefaultObservationFunction(ObservationFunction):
         queue = self.ts.get_lanes_queue_by_detectors()
         occupancy = self.ts.get_lanes_occupancy_by_detectors()
         average_speed = self.ts.get_lanes_average_speed_by_detectors()
-        observation = np.array(density + queue + occupancy + average_speed, dtype=np.float32)
+        # CRITICAL FIX: Reorder to Lane-major [Lane0_Feats, Lane1_Feats, ...]
+        # This matches the model's expectation: .view(-1, 12, 4)
+        obs_data = []
+        num_lanes = len(self.ts.detectors_e2)
+        for i in range(num_lanes):
+            obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
+            
+        observation = np.array(obs_data, dtype=np.float32)
         # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
         observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
         return observation
@@ -69,7 +76,14 @@ class SpatioTemporalObservationFunction(ObservationFunction):
         queue = self.ts.get_lanes_queue_by_detectors()
         occupancy = self.ts.get_lanes_occupancy_by_detectors()
         average_speed = self.ts.get_lanes_average_speed_by_detectors()
-        observation = np.array(density + queue + occupancy + average_speed, dtype=np.float32)
+        # CRITICAL FIX: Reorder to Lane-major [Lane0_Feats, Lane1_Feats, ...]
+        # This matches the model's expectation: .view(-1, 12, 4)
+        obs_data = []
+        num_lanes = len(self.ts.detectors_e2)
+        for i in range(num_lanes):
+            obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
+
+        observation = np.array(obs_data, dtype=np.float32)
         # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
         observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
         return observation
@@ -143,7 +157,13 @@ class NeighborTemporalObservationFunction(ObservationFunction):
         queue = self.ts.get_lanes_queue_by_detectors()
         occupancy = self.ts.get_lanes_occupancy_by_detectors()
         average_speed = self.ts.get_lanes_average_speed_by_detectors()
-        observation = np.array(density + queue + occupancy + average_speed, dtype=np.float32)
+        # CRITICAL FIX: Reorder to Lane-major [Lane0_Feats, Lane1_Feats, ...]
+        obs_data = []
+        num_lanes = len(self.ts.detectors_e2)
+        for i in range(num_lanes):
+            obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
+            
+        observation = np.array(obs_data, dtype=np.float32)
         observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
         return observation
 

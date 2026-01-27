@@ -1,14 +1,84 @@
 {
+  "type": "baseline",
   "network": "grid4x4",
-  "type": "BASELINE_NO_AI",
   "num_episodes": 1,
-  "mean_reward": -346.6706018518517,
+  "num_agents": 16,
+  "mean_reward": -25706.322048611175,
   "std_reward": 0.0,
-  "min_reward": -346.6706018518517,
-  "max_reward": -346.6706018518517,
-  "mean_length": 67.0,
-  "metrics": {},
+  "min_reward": -25706.322048611175,
+  "max_reward": -25706.322048611175,
+  "mean_length": 8000.0,
+  "mean_reward_per_agent": -1606.6451280381984,
   "episode_rewards": [
-    -346.6706018518517
-  ]
+    -25706.322048611175
+  ],
+  "episode_lengths": [
+    8000
+  ],
+  "per_agent_stats": {
+    "A0": {
+      "mean_reward": -2324.666666666682,
+      "std_reward": 0.0
+    },
+    "A1": {
+      "mean_reward": -2058.604166666661,
+      "std_reward": 0.0
+    },
+    "A2": {
+      "mean_reward": -1441.6874999999986,
+      "std_reward": 0.0
+    },
+    "A3": {
+      "mean_reward": -2050.354166666659,
+      "std_reward": 0.0
+    },
+    "B0": {
+      "mean_reward": -1972.9021990741003,
+      "std_reward": 0.0
+    },
+    "B1": {
+      "mean_reward": -1460.7083333333333,
+      "std_reward": 0.0
+    },
+    "B2": {
+      "mean_reward": -2359.2708333333303,
+      "std_reward": 0.0
+    },
+    "B3": {
+      "mean_reward": -1005.3541666666698,
+      "std_reward": 0.0
+    },
+    "C0": {
+      "mean_reward": -1160.0416666666706,
+      "std_reward": 0.0
+    },
+    "C1": {
+      "mean_reward": -1420.6041666666588,
+      "std_reward": 0.0
+    },
+    "C2": {
+      "mean_reward": -1267.2916666666547,
+      "std_reward": 0.0
+    },
+    "C3": {
+      "mean_reward": -945.5416666666725,
+      "std_reward": 0.0
+    },
+    "D0": {
+      "mean_reward": -1380.9583333333171,
+      "std_reward": 0.0
+    },
+    "D1": {
+      "mean_reward": -2401.666666666652,
+      "std_reward": 0.0
+    },
+    "D2": {
+      "mean_reward": -1041.104166666672,
+      "std_reward": 0.0
+    },
+    "D3": {
+      "mean_reward": -1415.565682870364,
+      "std_reward": 0.0
+    }
+  }
 }

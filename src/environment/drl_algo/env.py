@@ -198,6 +198,7 @@ class SumoEnvironment(gym.Env):
             use_phase_standardizer=use_phase_standardizer,  # Pass phase standardizer flag
             use_neighbor_obs=use_neighbor_obs,  # Pass neighbor observation flag
             max_neighbors=max_neighbors,  # Pass max neighbors
+            fixed_ts=self.fixed_ts, # Pass fixed_ts flag to Simulator
         )
         
         # Initialize simulator and get initial state

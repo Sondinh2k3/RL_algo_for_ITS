@@ -13,6 +13,7 @@ import sys
 import sumolib
 import libsumo
 import traci
+import numpy as np
 import numpy as nplibsumo
 from typing import Dict, List, Optional, Tuple, Any, Union
 from pyvirtualdisplay.smartdisplay import SmartDisplay
@@ -395,14 +396,16 @@ class SumoSimulator(SimulatorAPI):
         # CRITICAL FIX: If an agent is ready to act but no action was provided,
         # apply a default action (equal phase distribution) to prevent infinite loop.
         # This can happen when RLlib is initializing or sampling.
-        for ts_id in self.ts_ids:
-            if ts_id in self.traffic_signals:
-                ts = self.traffic_signals[ts_id]
-                if ts.time_to_act and ts_id not in actions:
-                    # Apply default action: equal distribution across all phases
-                    default_action = np.ones(ts.num_green_phases) / ts.num_green_phases
-                    ts.set_next_phase(default_action)
-                    actions_applied += 1
+        # NOTE: If fixed_ts is enabled, we DO NOT want to interfere with SUMO logic.
+        if not self.fixed_ts:
+            for ts_id in self.ts_ids:
+                if ts_id in self.traffic_signals:
+                    ts = self.traffic_signals[ts_id]
+                    if ts.time_to_act and ts_id not in actions:
+                        # Apply default action: equal distribution across all phases
+                        default_action = np.ones(ts.num_green_phases) / ts.num_green_phases
+                        ts.set_next_phase(default_action)
+                        actions_applied += 1
         
         # Debug: Log if no actions were applied (potential issue indicator)
         # Disabled during normal training to reduce log noise
@@ -468,9 +471,12 @@ class SumoSimulator(SimulatorAPI):
                     self.traffic_signals[ts_id].update_departed_vehicles()
             
             # Check if any agent can act
+            # CRITICAL FIX: Even with fixed_ts=True, we must wait for delta_time
+            # before returning obs/rewards to match training step counting
             for ts_id in self.ts_ids:
                 if ts_id in self.traffic_signals:
-                    if self.traffic_signals[ts_id].time_to_act or self.fixed_ts:
+                    # Always check time_to_act (based on delta_time), regardless of fixed_ts
+                    if self.traffic_signals[ts_id].time_to_act:
                         time_to_act = True
                         break
             
