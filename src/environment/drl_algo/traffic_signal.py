@@ -429,13 +429,31 @@ class TrafficSignal:
         if self.debug_logging:
             self._log_action_debug(new_phase, current_time)
 
+    def update_timing(self):
+        """Update next action time without changing phase (for fixed_ts mode).
+        
+        This ensures that even when the agent is not controlling the traffic light
+        (e.g. baseline evaluation), the simulation still steps forward by delta_time
+        intervals, ensuring consistent reward accumulation and step counting.
+        """
+        current_time = self.data_provider.get_sim_time()
+        self.next_action_time = current_time + self.delta_time
+        
+        # Update vehicle tracking for rewards (reset cycle counters)
+        self.update_cycle_vehicle_tracking()
+        
+        if self.debug_logging:
+            print(f"[TrafficSignal] {self.id}: Updated timing (fixed_ts). Next action: {self.next_action_time:.1f}s")
+
     def _get_green_time_from_ratio(self, green_time_set: np.ndarray):
         """
         Computes the green time for each phase based on the provided green time rates.
         
-        ACTION MASKING: If phase_standardizer is available, invalid phases
-        (those that don't exist for this intersection) will have their 
-        allocated time redistributed to valid phases.
+        Strictly enforces min_green for ALL phases to ensure cycle time consistency.
+        Algorithm:
+        1. Allocate min_green to every phase.
+        2. Distribute the remaining time (total_green - num_phases*min_green) 
+           according to the normalized ratios.
         
         Args:
             green_time_set (np.ndarray): An array of green time rates for each phase.
@@ -471,17 +489,27 @@ class TrafficSignal:
         else:
             green_time_set /= np.sum(green_time_set)
         
-        # Calculate raw green times
-        green_times = green_time_set * self.total_green_time
+        # --- NEW LOGIC: Enforce min_green ---
         
-        # Round to integers to ensure precise cycle time
-        # This fixes calculations where floating point arithmetic could lead to 
-        # total simulation step differing from the configured cycle_time (e.g. 89s vs 90s)
+        # 1. Calculate available time for distribution
+        min_green_total = self.min_green * self.num_green_phases
+        remaining_time = self.total_green_time - min_green_total
+        
+        if remaining_time < 0:
+            # This should be caught by __init__ assertion, but as a fallback:
+            print(f"Warning: total_green_time ({self.total_green_time}) < min_green_total ({min_green_total}). Clamping to min_green.")
+            return [self.min_green] * self.num_green_phases
+            
+        # 2. Distribute remaining time based on ratios
+        # green_times = min_green + (ratio * remaining_time)
+        green_times = self.min_green + (green_time_set * remaining_time)
+        
+        # 3. Round to integers
         int_green_times = np.floor(green_times).astype(int)
         
-        # Distribute the remainder using the largest remainder method
-        # This ensures sum(int_green_times) == self.total_green_time
-        remainder = int(self.total_green_time - np.sum(int_green_times))
+        # 4. Distribute the remainder (due to flooring)
+        current_sum = np.sum(int_green_times)
+        remainder = int(self.total_green_time - current_sum)
         
         if remainder > 0:
             # Add remainder to phases with highest fractional parts

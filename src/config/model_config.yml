@@ -118,7 +118,7 @@ reward:
 environment:
   num_seconds: 8000       # Simulation duration (synced with grid4x4.sumocfg end=8000)
   max_green: 90           # Maximum green time
-  min_green: 10           # Minimum green time
+  min_green: 5           # Minimum green time
   cycle_time: 90          # Traffic light cycle time
   yellow_time: 3          # Yellow time
   time_to_teleport: 500    # Teleport stuck vehicles (-1 to disable)

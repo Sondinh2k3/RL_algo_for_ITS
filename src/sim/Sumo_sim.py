@@ -406,6 +406,16 @@ class SumoSimulator(SimulatorAPI):
                         default_action = np.ones(ts.num_green_phases) / ts.num_green_phases
                         ts.set_next_phase(default_action)
                         actions_applied += 1
+        else:
+            # For fixed_ts (Baseline), we need to manually update the timing
+            # so that the simulation steps forward by delta_time (e.g. 90s)
+            # instead of 1s, ensuring consistent step counting with AI training.
+            for ts_id in self.ts_ids:
+                if ts_id in self.traffic_signals:
+                    ts = self.traffic_signals[ts_id]
+                    if ts.time_to_act:
+                        ts.update_timing()
+                        actions_applied += 1
         
         # Debug: Log if no actions were applied (potential issue indicator)
         # Disabled during normal training to reduce log noise
