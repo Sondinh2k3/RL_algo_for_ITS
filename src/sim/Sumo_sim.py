@@ -1062,13 +1062,33 @@ class SumoSimulator(SimulatorAPI):
         return self.get_sim_time() >= next_action_time
 
     def set_traffic_light_phase(self, ts_id: str, green_times: List[float]):
-        """Set traffic light phase durations."""
+        """Set traffic light phase durations and synchronize to cycle start.
+        
+        IMPORTANT: After setting new phase durations, we reset the traffic light
+        to phase 0 to ensure the new timing takes effect immediately and the
+        total cycle time remains consistent (e.g., 90s).
+        
+        Without resetting to phase 0, if we change durations mid-cycle, the
+        actual observed cycle time will vary because:
+        - Phases that already completed keep their old duration
+        - Only future phases use the new duration
+        
+        Args:
+            ts_id: Traffic signal ID
+            green_times: List of green phase durations (one per green phase)
+        """
         try:
             logic = self.sumo.trafficlight.getAllProgramLogics(ts_id)[0]
             num_phases = len(green_times)
             for i in range(num_phases):
                 logic.phases[2 * i].duration = green_times[i]
             self.sumo.trafficlight.setProgramLogic(ts_id, logic)
+            
+            # CRITICAL: Reset to phase 0 to start a fresh cycle with new timings
+            # This ensures the total cycle time = sum(green_times) + sum(yellow_times)
+            # Without this, cycle time varies depending on when action is applied
+            self.sumo.trafficlight.setPhase(ts_id, 0)
+            
         except Exception as e:
             print(f"Warning: Failed to set traffic light phase for {ts_id}: {e}")
 
