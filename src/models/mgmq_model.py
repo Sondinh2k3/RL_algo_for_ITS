@@ -21,7 +21,7 @@ from ray.rllib.models.modelv2 import ModelV2
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import ModelConfigDict, TensorType
 
-from .gat_layer import GATLayer, MultiHeadGATLayer, get_lane_conflict_matrix, get_lane_cooperation_matrix
+from .gat_layer import GATLayer, MultiHeadGATLayer, DualStreamGATLayer, get_lane_conflict_matrix, get_lane_cooperation_matrix
 from .graphsage_bigru import GraphSAGE_BiGRU, TemporalGraphSAGE_BiGRU
 
 
@@ -236,50 +236,20 @@ class MGMQEncoder(nn.Module):
             print(f"Warning: Feature dim {self.total_feature_dim} not divisible by 12 lanes. Using projection.")
             self.lane_feature_dim = gat_hidden_dim # Arbitrary, will be handled by input_proj
             
-        # Input projection to match GAT input dimension
-        # We project each lane's features to gat_hidden_dim
-        if self.total_feature_dim % self.num_lanes == 0:
-            self.lane_feature_dim = self.total_feature_dim // self.num_lanes
-            self.input_proj = nn.Sequential(
-                nn.Linear(self.lane_feature_dim, gat_hidden_dim),
-                nn.LayerNorm(gat_hidden_dim),
-                nn.ReLU(),
-                nn.Dropout(dropout)
-            )
-        else:
-            # Fallback: Project entire observation to 12 * hidden
-            print(f"Warning: Feature dim {self.total_feature_dim} not divisible by {self.num_lanes} lanes. Using projection to {self.num_lanes} * {gat_hidden_dim}.")
-            self.lane_feature_dim = self.total_feature_dim 
-            self.input_proj = nn.Sequential(
-                nn.Linear(self.total_feature_dim, self.num_lanes * gat_hidden_dim),
-                nn.LayerNorm(self.num_lanes * gat_hidden_dim),
-                nn.ReLU(),
-                nn.Dropout(dropout)
-            )
-        
-        # Layer 1: Multi-head GAT for intersection embedding (Lane-level)
-        # Split into Cooperation and Conflict GATs as per MGMQ paper
-        self.gat_layer_coop = MultiHeadGATLayer(
-            in_features=gat_hidden_dim,
+        # Layer 1: Dual-Stream GAT for intersection embedding (Lane-level)
+        # Replaces separate input_proj and dual GAT layers
+        self.dual_stream_gat = DualStreamGATLayer(
+            in_features=self.lane_feature_dim,
+            hidden_dim=gat_hidden_dim,
             out_features=gat_output_dim,
             n_heads=gat_num_heads,
             dropout=dropout,
-            alpha=0.2,
-            concat=True
-        )
-        
-        self.gat_layer_conf = MultiHeadGATLayer(
-            in_features=gat_hidden_dim,
-            out_features=gat_output_dim,
-            n_heads=gat_num_heads,
-            dropout=dropout,
-            alpha=0.2,
-            concat=True
+            alpha=0.2
         )
         
         # Layer 2: GraphSAGE + Bi-GRU for network embedding
-        # Output dimension is doubled because we concat coop and conf outputs
-        gat_total_output = (gat_output_dim * gat_num_heads) * 2
+        # Output dimension of DualStreamGATLayer is n_heads * gat_output_dim
+        gat_total_output = gat_output_dim * gat_num_heads
         
         if window_size > 1:
             # Use Temporal version if history is provided
@@ -380,30 +350,31 @@ class MGMQEncoder(nn.Module):
         # Reshape to 12 lanes: [batch * ..., 12, lane_feature_dim]
         if self.total_feature_dim % 12 == 0:
             lane_features = obs_flat.view(-1, 12, self.total_feature_dim // 12)
-            # Project: [batch * ..., 12, gat_hidden_dim]
-            h_lanes = self.input_proj(lane_features)
-        else:
-            # Fallback if not divisible: Project whole vec to 12 * gat_hidden_dim
-            # obs_flat: [batch * ..., total_feature_dim]
-            # h_flat: [batch * ..., 12 * gat_hidden_dim]
-            h_flat = self.input_proj(obs_flat)
-            # Reshape to [batch * ..., 12, gat_hidden_dim]
-            h_lanes = h_flat.view(-1, 12, self.gat_output_dim if hasattr(self, 'gat_output_dim') else 32) # Wait, gat_hidden_dim is not stored in self?
-            # I need to check if gat_hidden_dim is stored. It is not.
-            # But I can infer it from h_flat size.
-            h_lanes = h_flat.view(h_flat.size(0), 12, -1)
-
-        # Apply GAT on lanes
+        # Apply Dual-Stream GAT on lanes
         # Expand adj matrices
-        lane_adj_coop_batch = self.lane_adj_coop.unsqueeze(0).expand(h_lanes.size(0), -1, -1)
-        lane_adj_conf_batch = self.lane_adj_conf.unsqueeze(0).expand(h_lanes.size(0), -1, -1)
+        lane_adj_coop_batch = self.lane_adj_coop.unsqueeze(0).expand(lane_features.size(0), -1, -1)
+        lane_adj_conf_batch = self.lane_adj_conf.unsqueeze(0).expand(lane_features.size(0), -1, -1)
         
-        # Run separate GATs
-        gat_out_coop = self.gat_layer_coop(h_lanes, lane_adj_coop_batch)
-        gat_out_conf = self.gat_layer_conf(h_lanes, lane_adj_conf_batch)
+        # Run Dual-Stream GAT
+        # Input to dual_stream_gat is raw lane features (it handles projection)
+        # h_lanes here is raw features if we removed input_proj
+        # Wait, I removed input_proj in __init__ but need to adjust the reshape logic above.
         
-        # Concatenate outputs: [batch * ..., 12, gat_total_output]
-        gat_out = torch.cat([gat_out_coop, gat_out_conf], dim=-1)
+        # Let's fix the reshape logic first.
+        # obs_flat: [batch * ..., total_feature_dim]
+        if self.total_feature_dim % 12 == 0:
+             lane_features = obs_flat.view(-1, 12, self.total_feature_dim // 12)
+        else:
+             # Fallback: we need to project first if not divisible, but DualStreamGAT expects raw features per lane.
+             # If not divisible, we can't easily split into lanes.
+             # For now, let's assume it is divisible or we project to 12*F first.
+             # If we use the fallback projection from before, we need to keep a projection layer for this case.
+             # But standard MGMQ assumes 5 features per lane * 12 lanes = 60 features.
+             # If total_feature_dim is not divisible by 12, something is wrong with input or it's not lane-based.
+             # I will assume it is divisible for now as per standard MGMQ.
+             raise ValueError(f"Total feature dim {self.total_feature_dim} must be divisible by 12 for GAT.")
+
+        gat_out = self.dual_stream_gat(lane_features, lane_adj_coop_batch, lane_adj_conf_batch)
         
         # Pooling (Mean) over lanes to get Intersection Embedding
         # [batch * ..., gat_output_dim * heads]
@@ -507,31 +478,14 @@ class LocalTemporalMGMQEncoder(nn.Module):
         # Calculate lane feature dimension
         self.lane_feature_dim = obs_dim // self.num_lanes  # 48/12 = 4
         
-        # Input projection for lane features
-        self.input_proj = nn.Sequential(
-            nn.Linear(self.lane_feature_dim, gat_hidden_dim),
-            nn.LayerNorm(gat_hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout)
-        )
-        
-        # GAT layers for lane-level processing
-        self.gat_layer_coop = MultiHeadGATLayer(
-            in_features=gat_hidden_dim,
+        # Dual-Stream GAT
+        self.dual_stream_gat = DualStreamGATLayer(
+            in_features=self.lane_feature_dim,
+            hidden_dim=gat_hidden_dim,
             out_features=gat_output_dim,
             n_heads=gat_num_heads,
             dropout=dropout,
-            alpha=0.2,
-            concat=True
-        )
-        
-        self.gat_layer_conf = MultiHeadGATLayer(
-            in_features=gat_hidden_dim,
-            out_features=gat_output_dim,
-            n_heads=gat_num_heads,
-            dropout=dropout,
-            alpha=0.2,
-            concat=True
+            alpha=0.2
         )
         
         # Static lane adjacency matrices
@@ -539,7 +493,7 @@ class LocalTemporalMGMQEncoder(nn.Module):
         self.register_buffer('lane_adj_conf', get_lane_conflict_matrix())
         
         # GAT output dimension
-        self.gat_total_output = (gat_output_dim * gat_num_heads) * 2
+        self.gat_total_output = gat_output_dim * gat_num_heads
         
         # Temporal GraphSAGE + BiGRU for local graph
         self.temporal_graphsage = TemporalGraphSAGE_BiGRU(
@@ -629,19 +583,15 @@ class LocalTemporalMGMQEncoder(nn.Module):
         # Reshape to lanes: [B*T, 12, 4]
         lane_feat = x_flat.view(-1, self.num_lanes, self.lane_feature_dim)
         
-        # Project: [B*T, 12, gat_hidden]
-        h = self.input_proj(lane_feat)
+        # Reshape to lanes: [B*T, 12, 4]
+        lane_feat = x_flat.view(-1, self.num_lanes, self.lane_feature_dim)
         
         # Expand lane adjacency
-        adj_coop = self.lane_adj_coop.unsqueeze(0).expand(h.size(0), -1, -1)
-        adj_conf = self.lane_adj_conf.unsqueeze(0).expand(h.size(0), -1, -1)
+        adj_coop = self.lane_adj_coop.unsqueeze(0).expand(lane_feat.size(0), -1, -1)
+        adj_conf = self.lane_adj_conf.unsqueeze(0).expand(lane_feat.size(0), -1, -1)
         
-        # GAT forward
-        out_coop = self.gat_layer_coop(h, adj_coop)  # [B*T, 12, heads*out]
-        out_conf = self.gat_layer_conf(h, adj_conf)
-        
-        # Concat + pool over lanes
-        gat_out = torch.cat([out_coop, out_conf], dim=-1)  # [B*T, 12, gat_dim]
+        # Dual-Stream GAT forward
+        gat_out = self.dual_stream_gat(lane_feat, adj_coop, adj_conf)  # [B*T, 12, gat_dim]
         gat_pooled = gat_out.mean(dim=1)  # [B*T, gat_dim]
         
         # Reshape back: [B, T, gat_dim]

@@ -405,6 +405,9 @@ def preprocess_network(
             print(f"   {direction}: {num_orig} lanes → {status}")
         
         # Map detectors to directions
+        # IMPORTANT: GAT layer expects lanes ordered as [Left, Through, Right] per direction.
+        # SUMO's get_edge_lanes() returns lanes in index order (0=Right, 1=Through, 2=Left).
+        # We need to REVERSE the lane order to get [Left, Through, Right].
         detectors_by_direction = {}
         all_e1_detectors = []
         all_e2_detectors = []
@@ -412,10 +415,15 @@ def preprocess_network(
         
         for direction in ['N', 'E', 'S', 'W']:
             lanes = lanes_by_direction.get(direction, [])
+            # CRITICAL FIX: Reverse lanes to get Left-Through-Right order
+            # SUMO lane indices: 0=Right, 1=Through, 2=Left
+            # After reversal: [Left, Through, Right] = [lane_2, lane_1, lane_0]
+            lanes_reversed = lanes[::-1]
+            
             direction_e1 = []
             direction_e2 = []
             
-            for lane_id in lanes:
+            for lane_id in lanes_reversed:
                 # Get E1 detectors for this lane
                 e1_dets = detector_info['lane_to_e1'].get(lane_id, [])
                 direction_e1.extend(e1_dets)

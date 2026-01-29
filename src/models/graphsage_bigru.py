@@ -68,8 +68,10 @@ class DirectionalGraphSAGE(nn.Module):
         )
         
         # 3. Final Output Linear
-        # BiGRU (bidir) outputs 2 * hidden_features
-        self.output_linear = nn.Linear(hidden_features * 2, out_features)
+        # Input: [h_v || h_N(v)]
+        # h_v dim: hidden_features (projected)
+        # h_N(v) dim: 2 * hidden_features (BiGRU output)
+        self.output_linear = nn.Linear(hidden_features + hidden_features * 2, out_features)
         
     def forward(self, h: torch.Tensor, adj_directions: torch.Tensor) -> torch.Tensor:
         """
@@ -132,26 +134,39 @@ class DirectionalGraphSAGE(nn.Module):
         in_west  = torch.bmm(mask_west, g_east)    # West neighbors' East -> My West input
         
         # === Step 3: Bi-GRU Aggregation over Directions ===
-        # Stack directions as sequence: [North, East, South, West, Self]
-        # Shape: [Batch, N, 5, Hidden]
-        seq_tensor = torch.stack([in_north, in_east, in_south, in_west, g_self], dim = 2)
+        # Stack directions as sequence: [North, East, South, West]
+        # Exclude Self from sequence as per user spec
+        # Shape: [Batch, N, 4, Hidden]
+        seq_tensor = torch.stack([in_north, in_east, in_south, in_west], dim=2)
         
-        # Reshape for GRU: [Batch*N, 5, Hidden]
-        seq_flat = seq_tensor.view(batch_size * num_nodes, 5, self.hidden_features)
+        # Reshape for GRU: [Batch*N, 4, Hidden]
+        seq_flat = seq_tensor.view(batch_size * num_nodes, 4, self.hidden_features)
         
-        # Run BiGRU: output shape [Batch*N, 5, 2*Hidden]
-        gru_out, _ = self.bigru(seq_flat)
+        # Run BiGRU: output shape [Batch*N, 4, 2*Hidden]
+        # h_n shape: [2, Batch*N, Hidden] (2 layers for bidirectional)
+        _, h_n = self.bigru(seq_flat)
         
-        # Take the state at 'Self' position (last in sequence) as node embedding
-        final_state = gru_out[:, -1, :]  # [Batch*N, 2*Hidden]
+        # Extract Neighbor Context h_N(v)
+        # Concatenate forward and backward final states
+        # h_n[0] is forward last state, h_n[1] is backward last state
+        # Shape: [Batch*N, 2*Hidden]
+        h_neighbor = torch.cat([h_n[0], h_n[1]], dim=-1)
         
-        # === Step 4: Output Projection ===
-        # Reshape to [Batch, N, 2*Hidden]
-        final_state = final_state.view(batch_size, num_nodes, -1)
+        # === Step 4: Node State Update ===
+        # Concatenate Self + Neighbor Context
+        # g_self: [Batch, N, Hidden] -> [Batch*N, Hidden]
+        g_self_flat = g_self.view(batch_size * num_nodes, -1)
         
-        # Project to output dimension: [Batch, N, Out]
-        out = self.output_linear(final_state)
+        # [Batch*N, Hidden + 2*Hidden]
+        combined = torch.cat([g_self_flat, h_neighbor], dim=-1)
+        
+        # Project to output dimension: [Batch*N, Out]
+        out = self.output_linear(combined)
+        out = F.relu(out) # Apply activation (sigma) as per spec
         out = self.dropout_layer(out)
+        
+        # Reshape back to [Batch, N, Out]
+        out = out.view(batch_size, num_nodes, -1)
         
         if squeeze_output:
             out = out.squeeze(0)

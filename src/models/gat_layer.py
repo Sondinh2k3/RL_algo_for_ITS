@@ -297,3 +297,120 @@ def get_lane_cooperation_matrix() -> torch.Tensor:
     
     return adj
 
+
+class DualStreamGATLayer(nn.Module):
+    """
+    Dual-Stream GAT Layer as per MGMQ specification.
+    
+    Implements the 4-step process:
+    1. Linear Transformation (Input -> Latent)
+    2. Dual-Stream Attention (Same-phase & Diff-phase)
+    3. Multi-head Integration
+    4. Node State Update (Concatenation of Input + Same + Diff)
+    
+    Args:
+        in_features: Dimension of raw input features (F=5)
+        hidden_dim: Dimension of latent space (F')
+        out_features: Dimension of output embedding per head (D)
+        n_heads: Number of attention heads (K)
+        dropout: Dropout rate
+        alpha: LeakyReLU negative slope
+    """
+    
+    def __init__(
+        self,
+        in_features: int,
+        hidden_dim: int,
+        out_features: int,
+        n_heads: int = 4,
+        dropout: float = 0.3,
+        alpha: float = 0.2
+    ):
+        super(DualStreamGATLayer, self).__init__()
+        self.in_features = in_features
+        self.hidden_dim = hidden_dim
+        self.out_features = out_features
+        self.n_heads = n_heads
+        
+        # Step 1: Linear Transformation
+        # h_i = LeakyReLU(W_init * x_i + b_init)
+        self.input_proj = nn.Sequential(
+            nn.Linear(in_features, hidden_dim),
+            nn.LeakyReLU(alpha)
+        )
+        
+        # Step 2 & 3: Dual-Stream Attention & Multi-head Integration
+        # We use MultiHeadGATLayer for each stream
+        self.gat_same = MultiHeadGATLayer(
+            in_features=hidden_dim,
+            out_features=out_features,
+            n_heads=n_heads,
+            dropout=dropout,
+            alpha=alpha,
+            concat=True
+        )
+        
+        self.gat_diff = MultiHeadGATLayer(
+            in_features=hidden_dim,
+            out_features=out_features,
+            n_heads=n_heads,
+            dropout=dropout,
+            alpha=alpha,
+            concat=True
+        )
+        
+        # Step 4: Node State Update
+        # h'_i = Activation(W_final * [h_i || h_same || h_diff])
+        # h_i dim: hidden_dim
+        # h_same dim: n_heads * out_features
+        # h_diff dim: n_heads * out_features
+        concat_dim = hidden_dim + 2 * (n_heads * out_features)
+        
+        # Output dimension is typically the same as the attention output or specified
+        # The user spec says output is h'_i in R^D. 
+        # Usually D refers to the final embedding size.
+        # Let's assume the final output dimension is n_heads * out_features (to match previous logic)
+        # OR we can add a parameter for final_output_dim.
+        # Looking at MGMQEncoder, it expects `gat_total_output = (gat_output_dim * gat_num_heads) * 2`
+        # But that was for simple concatenation.
+        # Here we do a projection. Let's make the output dimension configurable or default to something reasonable.
+        # Given the next layer is GraphSAGE, let's output `n_heads * out_features` which is a common choice,
+        # or we can keep it as `hidden_dim`.
+        # Let's set final output dim to `n_heads * out_features` to maintain capacity.
+        self.final_output_dim = n_heads * out_features
+        
+        self.final_proj = nn.Sequential(
+            nn.Linear(concat_dim, self.final_output_dim),
+            nn.LeakyReLU(alpha) # "Activation" in spec, usually LeakyReLU or ELU in GAT
+        )
+        
+    def forward(
+        self, 
+        x: torch.Tensor, 
+        adj_same: torch.Tensor, 
+        adj_diff: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Args:
+            x: Input features [batch, N, in_features]
+            adj_same: Adjacency matrix for same-phase edges [batch, N, N]
+            adj_diff: Adjacency matrix for diff-phase edges [batch, N, N]
+            
+        Returns:
+            Updated node features [batch, N, final_output_dim]
+        """
+        # Step 1: Linear Transformation
+        h = self.input_proj(x) # [batch, N, hidden_dim]
+        
+        # Step 2 & 3: Dual-Stream Attention
+        h_same = self.gat_same(h, adj_same) # [batch, N, n_heads * out_features]
+        h_diff = self.gat_diff(h, adj_diff) # [batch, N, n_heads * out_features]
+        
+        # Step 4: Node State Update
+        # Concatenate: [h || h_same || h_diff]
+        combined = torch.cat([h, h_same, h_diff], dim=-1)
+        
+        # Final projection
+        h_out = self.final_proj(combined)
+        
+        return h_out

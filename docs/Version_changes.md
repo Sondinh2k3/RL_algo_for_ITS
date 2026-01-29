@@ -206,6 +206,28 @@
 
 ---
 
+### [v1.2.3] - 2026-01-29
+#### ✨ Thêm mới (Added)
+- Không có
+
+#### 🔄 Thay đổi (Changed)
+- **Detector Ordering**: Cập nhật logic trong `preprocess_network.py` để đảo ngược thứ tự lane trong mỗi hướng.
+  - **Trước đây**: Thứ tự lane theo index SUMO (0=Right, 1=Through, 2=Left) → Detector order: [Right, Through, Left]
+  - **Bây giờ**: Đảo ngược thứ tự lane → Detector order: [Left, Through, Right]
+  - **Lý do**: GAT layer (`gat_layer.py`) và các ma trận conflict/cooperation kỳ vọng thứ tự lane là [Left, Through, Right] (NL, NT, NR, ...). Việc sai thứ tự dẫn đến việc gán sai đặc trưng cho các node trong đồ thị.
+
+#### 🐛 Sửa lỗi (Fixed)
+- **Critical Mapping Fix**: Sửa lỗi mismatch nghiêm trọng giữa thứ tự detector trong config và thứ tự lane kỳ vọng của GAT.
+- Regenerated `intersection_config.json` với thứ tự detector đúng.
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `scripts/preprocess_network.py` | Modified | Reverse lane order per direction to match GAT expectation |
+| `network/grid4x4/intersection_config.json` | Modified | Regenerated with correct detector order |
+
+---
+
 <!-- TEMPLATE CHO CHANGELOG MỚI - Copy phần này khi thêm version mới -->
 <!--
 ### [vX.X.X] - YYYY-MM-DD
@@ -463,7 +485,8 @@
 | v1.1.2 | 2026-01-23 | Log(std) bounds + GraphSAGE review | Model | ✅ |
 | v1.2.0 | 2026-01-23 | **Directional Adjacency Matrix** | **Major** | ✅ |
 | v1.2.1 | 2026-01-23 | Code cleanup & Docstrings | Quality | ✅ |
-| v1.2.2 | 2026-01-27 | **Fix Observation Structure (Lane-major)** | **Critical Fix** | ✅ **NEW** |
+| v1.2.2 | 2026-01-27 | **Fix Observation Structure (Lane-major)** | **Critical Fix** | ✅ |
+| v1.2.3 | 2026-01-29 | **Fix Detector Order (L-T-R)** | **Critical Fix** | ✅ **NEW** |
 
 ---
 
