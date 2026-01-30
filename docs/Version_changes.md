@@ -228,6 +228,55 @@
 
 ---
 
+### [v1.2.4] - 2026-01-30
+#### ✨ Thêm mới (Added)
+- **Softmax Action Distribution**: Thêm tùy chọn sử dụng Softmax cho đầu ra `policy_mean` của Actor network.
+  - **Mục tiêu**: Giải quyết vấn đề "Scale Ambiguity & Vanishing Gradient" khi output là raw logits được normalize ngoại lai.
+  - **Cơ chế**: `policy_out -> Softmax -> Output [0,1]` (Sum=1). Giữ gradient flow qua phép chuẩn hóa.
+- **New Configurations**:
+  - `use_softmax_output` (default: `True`): Bật/tắt chế độ Softmax output.
+  - `softmax_temperature` (default: `1.0`): Điều chỉnh độ "cứng" của phân phối xác suất.
+- **Log Std Optimization**: Điều chỉnh giới hạn `log_std` khi dùng Softmax (`[-5.0, -1.0]`) để phù hợp với output đã chuẩn hóa [0,1].
+
+#### 🔄 Thay đổi (Changed)
+- **MGMQTorchModel & LocalTemporalMGMQTorchModel**: Cập nhật `forward()` để hỗ trợ Softmax normalization trực tiếp trong computation graph.
+- **Default Behavior**: Chuyển sang sử dụng Softmax output làm mặc định để đảm bảo gradient flow ổn định.
+
+#### 🐛 Sửa lỗi (Fixed)
+- **Scale Ambiguity**: Khắc phục tình trạng model học các giá trị raw logits rất lớn (gây bão hòa gradient) để đạt được cùng một tỷ lệ phân chia xanh sau khi normalize.
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/models/mgmq_model.py` | Modified | Implement Softmax output & Config Update |
+
+---
+
+### [v1.2.5] - 2026-01-30
+#### ✨ Thêm mới (Added)
+- Không có
+
+#### 🔄 Thay đổi (Changed)
+- **Dirichlet Distribution Logic**: Thay đổi công thức biến đổi logit sang concentration ($\alpha$).
+  - **Cũ**: `softplus(logits) + 0.5` với Max ~ 5.0. Công thức này bão hòa rất nhanh, khiến $\alpha$ luôn ở mức thấp (~2.6), ép hành động về dạng phân phối đều Uniform (tỷ lệ xanh $\approx 0.25$).
+  - **Mới**: `MIN + (MAX - MIN) * sigmoid(logits)` với `MAX = 20.0`. Sử dụng hàm sigmoid để map logit vào khoảng gía trị rộng [0.5, 20.0].
+  - **Hiệu quả**: Model có thể output các pha đèn cực ngắn (7s) hoặc cực dài (56s) tùy theo logit, thay vì bị kẹt cứng ở khoảng 19s-21s.
+- **GAT Adjacency Matrices**: Cập nhật lại các hàm `get_lane_cooperation_matrix` và `get_lane_conflict_matrix` trong GAT Layer.
+  - **Fix**: Điều chỉnh lại việc map index cho đúng chuẩn SUMO (`_0=Right`, `_1=Through`, `_2=Left`) thay vì giả định sai trước đó.
+  - **Trước đó**: `cooperation_matrix` nối nhầm các làn (ví dụ nối làn rẽ phải với làn rẽ trái) do sai index, khiến GAT học sai topology.
+
+#### 🐛 Sửa lỗi (Fixed)
+- **Action Range Stuck**: Sửa lỗi phân phối thời gian xanh bị "kẹt" trong khoảng hẹp do hạn chế toán học của hàm phân phối cũ.
+- **Graph Topology Mismatch**: Sửa lỗi sai lệch thông tin topology do map sai thứ tự làn xe trong ma trận kề.
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/models/dirichlet_distribution.py` | Modified | Update alpha transformation logic (Sigmoid scaling) |
+| `src/models/gat_layer.py` | Modified | Fix lane mapping in Adjacency Matrices (SUMO standard) |
+
+---
+
 <!-- TEMPLATE CHO CHANGELOG MỚI - Copy phần này khi thêm version mới -->
 <!--
 ### [vX.X.X] - YYYY-MM-DD
@@ -486,7 +535,8 @@
 | v1.2.0 | 2026-01-23 | **Directional Adjacency Matrix** | **Major** | ✅ |
 | v1.2.1 | 2026-01-23 | Code cleanup & Docstrings | Quality | ✅ |
 | v1.2.2 | 2026-01-27 | **Fix Observation Structure (Lane-major)** | **Critical Fix** | ✅ |
-| v1.2.3 | 2026-01-29 | **Fix Detector Order (L-T-R)** | **Critical Fix** | ✅ **NEW** |
+| v1.2.3 | 2026-01-29 | **Fix Detector Order (L-T-R)** | **Critical Fix** | ✅ |
+| v1.2.4 | 2026-01-30 | **Fix Scale Ambiguity (Softmax Output)** | **Model Logic** | ✅ **NEW** |
 
 ---
 

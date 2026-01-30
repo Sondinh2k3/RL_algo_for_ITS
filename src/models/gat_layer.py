@@ -216,18 +216,21 @@ def get_lane_conflict_matrix() -> torch.Tensor:
     """
     Returns a static 12x12 adjacency matrix representing lane conflicts.
     
-    Nodes are ordered by direction (N, E, S, W) and turn (Left, Through, Right):
-    0: NL, 1: NT, 2: NR
-    3: EL, 4: ET, 5: ER
-    6: SL, 7: ST, 8: SR
-    9: WL, 10: WT, 11: WR
+    IMPORTANT: Node ordering follows PREPROCESSED observation vector where lanes 
+    are ordered by direction (N, E, S, W) and within each direction REVERSED
+    from SUMO index (Left first, then Through, then Right):
+    
+    0: NL (North-Left),    1: NT (North-Through),   2: NR (North-Right)
+    3: EL (East-Left),     4: ET (East-Through),    5: ER (East-Right)
+    6: SL (South-Left),    7: ST (South-Through),   8: SR (South-Right)
+    9: WL (West-Left),    10: WT (West-Through),   11: WR (West-Right)
     
     A value of 1 indicates the lanes conflict (cannot move simultaneously).
     """
     # Initialize 12x12 matrix
     adj = torch.zeros((12, 12))
     
-    # Define conflicts (undirected edges)
+    # Define conflicts based on PREPROCESSED ordering (Left=0, Through=1, Right=2)
     # Format: (lane_idx_1, lane_idx_2)
     conflicts = [
         # Through vs Crossing Through
@@ -235,10 +238,10 @@ def get_lane_conflict_matrix() -> torch.Tensor:
         (7, 4), (7, 10),  # ST vs ET, WT
         
         # Through vs Crossing Left
-        (1, 3), (1, 9),   # NT vs EL, WL
-        (7, 3), (7, 9),   # ST vs EL, WL
-        (4, 0), (4, 6),   # ET vs NL, SL
-        (10, 0), (10, 6), # WT vs NL, SL
+        (1, 3), (1, 9),    # NT vs EL, WL
+        (7, 3), (7, 9),    # ST vs EL, WL
+        (4, 0), (4, 6),    # ET vs NL, SL
+        (10, 0), (10, 6),  # WT vs NL, SL
         
         # Left vs Opposing Through
         (0, 7),           # NL vs ST
@@ -267,22 +270,25 @@ def get_lane_cooperation_matrix() -> torch.Tensor:
     Returns a static 12x12 adjacency matrix representing lane cooperation.
     Lanes are connected if they belong to the same standard signal phase.
     
-    Nodes are ordered by direction (N, E, S, W) and turn (Left, Through, Right):
-    0: NL, 1: NT, 2: NR
-    3: EL, 4: ET, 5: ER
-    6: SL, 7: ST, 8: SR
-    9: WL, 10: WT, 11: WR
+    IMPORTANT: Node ordering follows PREPROCESSED observation vector where lanes 
+    are ordered by direction (N, E, S, W) and within each direction REVERSED
+    from SUMO index (Left first, then Through, then Right):
+    
+    0: NL (North-Left),    1: NT (North-Through),   2: NR (North-Right)
+    3: EL (East-Left),     4: ET (East-Through),    5: ER (East-Right)
+    6: SL (South-Left),    7: ST (South-Through),   8: SR (South-Right)
+    9: WL (West-Left),    10: WT (West-Through),   11: WR (West-Right)
     """
     # Initialize 12x12 matrix
     adj = torch.zeros((12, 12))
     
     # Define phase groups (lanes that move together)
-    # Standard 4-phase NEMA pattern
+    # Standard 4-phase NEMA pattern with PREPROCESSED ordering (Left=0, Through=1, Right=2)
     phases = [
-        [0, 6],             # Phase 1: NS Left (NL, SL)
-        [1, 7, 2, 8],       # Phase 2: NS Through + Right (NT, ST, NR, SR)
-        [3, 9],             # Phase 3: EW Left (EL, WL)
-        [4, 10, 5, 11],     # Phase 4: EW Through + Right (ET, WT, ER, WR)
+        [0, 6],             # Phase 0: NS Left (NL=0, SL=6)
+        [1, 2, 7, 8],       # Phase 1: NS Through + Right (NT=1, NR=2, ST=7, SR=8)
+        [3, 9],             # Phase 2: EW Left (EL=3, WL=9)
+        [4, 5, 10, 11],     # Phase 3: EW Through + Right (ET=4, ER=5, WT=10, WR=11)
     ]
     
     # Connect all lanes within the same phase

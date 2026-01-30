@@ -1,14 +1,11 @@
 {
-  "type": "baseline",
   "network": "grid4x4",
   "num_episodes": 1,
-  "num_agents": 16,
   "mean_reward": -285.6256944444442,
   "std_reward": 0.0,
   "min_reward": -285.6256944444442,
   "max_reward": -285.6256944444442,
   "mean_length": 89.0,
-  "mean_reward_per_agent": -17.851605902777763,
   "episode_rewards": [
     -285.6256944444442
   ],

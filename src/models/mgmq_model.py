@@ -30,6 +30,13 @@ LOG_STD_MIN = -20.0  # Minimum log_std (very deterministic)
 LOG_STD_MAX = 0.5    # FIXED: Reduced from 2.0 to 0.5 for faster entropy convergence
                      # std = e^0.5 ≈ 1.65, which is reasonable for normalized actions
 
+# Softmax temperature for action output (lower = more deterministic)
+SOFTMAX_TEMPERATURE = 1.0
+
+# For Softmax-based output, we use smaller std bounds since actions are already normalized [0,1]
+SOFTMAX_LOG_STD_MIN = -5.0   # std = e^-5 ≈ 0.007 (very deterministic)
+SOFTMAX_LOG_STD_MAX = -1.0   # std = e^-1 ≈ 0.37 (moderate exploration for normalized output)
+
 
 def build_network_adjacency(
     ts_ids: list,
@@ -495,14 +502,24 @@ class LocalTemporalMGMQEncoder(nn.Module):
         # GAT output dimension
         self.gat_total_output = gat_output_dim * gat_num_heads
         
-        # Temporal GraphSAGE + BiGRU for local graph
-        self.temporal_graphsage = TemporalGraphSAGE_BiGRU(
-            in_features=self.gat_total_output,
-            hidden_features=graphsage_hidden_dim,
-            gru_hidden_size=gru_hidden_dim,
-            history_length=window_size,
-            dropout=dropout
-        )
+        # GraphSAGE for local graph - choose based on window_size
+        if window_size > 1:
+            # Use Temporal version if history is provided
+            self.graphsage_layer = TemporalGraphSAGE_BiGRU(
+                in_features=self.gat_total_output,
+                hidden_features=graphsage_hidden_dim,
+                gru_hidden_size=gru_hidden_dim,
+                history_length=window_size,
+                dropout=dropout
+            )
+        else:
+            # Use standard DirectionalGraphSAGE (no temporal component)
+            self.graphsage_layer = GraphSAGE_BiGRU(
+                in_features=self.gat_total_output,
+                hidden_features=graphsage_hidden_dim,
+                gru_hidden_size=gru_hidden_dim,
+                dropout=dropout
+            )
         
         # Output dimensions
         self.intersection_emb_dim = self.gat_total_output
@@ -555,9 +572,17 @@ class LocalTemporalMGMQEncoder(nn.Module):
         # ======== 4. Build local star adjacency ========
         local_adj = self._build_star_adjacency(mask)  # [B, 4, 1+K, 1+K]
         
-        # ======== 5. Temporal GraphSAGE + BiGRU ========
-        # Input: [B, T, N, features] where N = 1+K
-        network_emb = self.temporal_graphsage(all_nodes, local_adj)  # [B, hidden]
+        # ======== 5. GraphSAGE (Temporal or Standard based on window_size) ========
+        if self.window_size > 1:
+            # Temporal mode: Input [B, T, N, features] where N = 1+K
+            network_emb = self.graphsage_layer(all_nodes, local_adj)  # [B, hidden]
+        else:
+            # Non-temporal mode: Input [B, N, features] - use last timestep only
+            # all_nodes: [B, T, 1+K, gat_dim] -> [B, 1+K, gat_dim]
+            all_nodes_last = all_nodes[:, -1, :, :]  # [B, 1+K, gat_dim]
+            # GraphSAGE_BiGRU expects [B, N, features] and [4, N, N] or [B, 4, N, N]
+            network_emb_seq = self.graphsage_layer(all_nodes_last, local_adj, return_sequence=True)  # [B, N, hidden]
+            network_emb = network_emb_seq.mean(dim=1)  # [B, hidden]
         
         # ======== 6. Joint Embedding ========
         # Intersection embedding: last timestep của self
@@ -880,6 +905,22 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         value_hidden_dims = custom_config.get("value_hidden_dims", [128, 64])
         dropout = custom_config.get("dropout", 0.3)
         
+        # === ACTION DISTRIBUTION OPTIONS ===
+        # Option 1: use_dirichlet=True (RECOMMENDED)
+        #   - Model outputs raw logits → Dirichlet concentration params
+        #   - Actions automatically sum=1, all positive
+        #   - No gradient saturation issues
+        #
+        # Option 2: use_softmax_output=True, use_dirichlet=False (LEGACY)
+        #   - Model outputs Softmax(logits) as mean for Gaussian
+        #   - Still has issues: Gaussian sampling can break sum=1
+        #
+        # Option 3: Both False (NOT RECOMMENDED - gradient death)
+        self.use_dirichlet = custom_config.get("use_dirichlet", True)  # Default: True
+        self.use_softmax_output = custom_config.get("use_softmax_output", False)  # Legacy fallback
+        self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
+        self.action_dim = int(np.prod(action_space.shape))  # Store for forward()
+        
         # Build directional adjacency matrix if ts_ids provided
         ts_ids = custom_config.get("ts_ids", None)
         net_file = custom_config.get("net_file", None)
@@ -916,8 +957,13 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
             prev_dim = hidden_dim
         self.policy_net = nn.Sequential(*policy_layers)
         
-        # Output layer for policy (num_outputs = 2 * action_dim for mean and log_std)
-        self.policy_out = nn.Linear(prev_dim, num_outputs)
+        # Output layer for policy
+        # Dirichlet: num_outputs = action_dim (concentration params only)
+        # Gaussian: num_outputs = 2 * action_dim (mean + log_std)
+        if self.use_dirichlet:
+            self.policy_out = nn.Linear(prev_dim, self.action_dim)
+        else:
+            self.policy_out = nn.Linear(prev_dim, num_outputs)
         
         # Value network
         value_layers = []
@@ -966,6 +1012,17 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
             
         Returns:
             Tuple of (policy_output, state)
+            
+        IMPORTANT: When use_softmax_output=True, the mean output is normalized via Softmax.
+        This solves the "Scale Ambiguity & Vanishing Gradient" problem:
+        - Raw logits (e.g., [2,3,5] vs [200,300,500]) produce the same action after external normalization
+        - But gradients for large logits → 0 (vanishing gradient)
+        - By applying Softmax INSIDE the model, gradient flows properly through the computation graph
+        
+        Data Flow:
+        1. Raw Logits from policy_out
+        2. Apply Softmax (with temperature) → mean is now in [0,1] and sums to 1
+        3. Log_std is clamped to smaller range for normalized output
         """
         obs = input_dict["obs_flat"].float()
         
@@ -979,13 +1036,31 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
         
-        # Clamp log_std to prevent entropy explosion
-        # policy_out contains [mean, log_std] - clamp the log_std part
-        action_dim = policy_out.shape[-1] // 2
-        mean = policy_out[..., :action_dim]
-        log_std = policy_out[..., action_dim:]
-        log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
-        policy_out = torch.cat([mean, log_std], dim=-1)
+        if self.use_dirichlet:
+            # === DIRICHLET MODE (RECOMMENDED) ===
+            # Output raw logits → Dirichlet distribution transforms them to concentration params
+            # Actions sampled from Dirichlet automatically sum=1 and are all positive
+            # No gradient saturation issues, no external normalization needed
+            pass  # policy_out is already correct (action_dim outputs)
+        elif self.use_softmax_output:
+            # === LEGACY: Softmax + Gaussian mode ===
+            # Split into mean and log_std
+            action_dim = self.action_dim
+            mean_logits = policy_out[..., :action_dim]
+            log_std = policy_out[..., action_dim:]
+            
+            # Apply temperature-scaled Softmax
+            mean = F.softmax(mean_logits / self.softmax_temperature, dim=-1)
+            
+            # For Softmax output, use tighter log_std bounds
+            log_std = torch.clamp(log_std, SOFTMAX_LOG_STD_MIN, SOFTMAX_LOG_STD_MAX)
+            policy_out = torch.cat([mean, log_std], dim=-1)
+        else:
+            # Original behavior: raw mean output (NOT RECOMMENDED - gradient death)
+            action_dim = self.action_dim
+            mean = policy_out[..., :action_dim]
+            log_std = torch.clamp(policy_out[..., action_dim:], LOG_STD_MIN, LOG_STD_MAX)
+            policy_out = torch.cat([mean, log_std], dim=-1)
         
         # Compute and store value
         value_features = self.value_net(joint_emb)
@@ -1067,6 +1142,13 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
         value_hidden_dims = custom_config.get("value_hidden_dims", [128, 64])
         dropout = custom_config.get("dropout", 0.3)
         
+        # NEW: Softmax-based output option to fix Scale Ambiguity problem
+        # === ACTION DISTRIBUTION OPTIONS ===
+        self.use_dirichlet = custom_config.get("use_dirichlet", True)  # Default: True
+        self.use_softmax_output = custom_config.get("use_softmax_output", False)  # Legacy fallback
+        self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
+        self.action_dim = int(np.prod(action_space.shape))  # Store for forward()
+        
         # MGMQ Encoder
         self.mgmq_encoder = LocalTemporalMGMQEncoder(
             obs_dim=feature_dim,
@@ -1094,7 +1176,14 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
             ])
             prev_dim = hidden_dim
         self.policy_net = nn.Sequential(*policy_layers)
-        self.policy_out = nn.Linear(prev_dim, num_outputs)
+        
+        # Output layer for policy
+        # Dirichlet: action_dim outputs (concentration params only)
+        # Gaussian: 2 * action_dim outputs (mean + log_std)
+        if self.use_dirichlet:
+            self.policy_out = nn.Linear(prev_dim, self.action_dim)
+        else:
+            self.policy_out = nn.Linear(prev_dim, num_outputs)
         
         # Value network
         value_layers = []
@@ -1143,6 +1232,9 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
             
         Returns:
             Tuple of (policy_output, state)
+            
+        IMPORTANT: When use_softmax_output=True, the mean output is normalized via Softmax.
+        This solves the "Scale Ambiguity & Vanishing Gradient" problem.
         """
         obs = input_dict["obs"]
         
@@ -1168,13 +1260,25 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
         
-        # Clamp log_std to prevent entropy explosion
-        # policy_out contains [mean, log_std] - clamp the log_std part
-        action_dim = policy_out.shape[-1] // 2
-        mean = policy_out[..., :action_dim]
-        log_std = policy_out[..., action_dim:]
-        log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
-        policy_out = torch.cat([mean, log_std], dim=-1)
+        if self.use_dirichlet:
+            # === DIRICHLET MODE (RECOMMENDED) ===
+            # Output raw logits → Dirichlet distribution transforms them to concentration params
+            pass  # policy_out is already correct (action_dim outputs)
+        elif self.use_softmax_output:
+            # === LEGACY: Softmax + Gaussian mode ===
+            action_dim = self.action_dim
+            mean_logits = policy_out[..., :action_dim]
+            log_std = policy_out[..., action_dim:]
+            
+            mean = F.softmax(mean_logits / self.softmax_temperature, dim=-1)
+            log_std = torch.clamp(log_std, SOFTMAX_LOG_STD_MIN, SOFTMAX_LOG_STD_MAX)
+            policy_out = torch.cat([mean, log_std], dim=-1)
+        else:
+            # Original behavior: raw mean output (NOT RECOMMENDED)
+            action_dim = self.action_dim
+            mean = policy_out[..., :action_dim]
+            log_std = torch.clamp(policy_out[..., action_dim:], LOG_STD_MIN, LOG_STD_MAX)
+            policy_out = torch.cat([mean, log_std], dim=-1)
         
         # Compute and store value
         value_features = self.value_net(joint_emb)

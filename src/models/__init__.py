@@ -8,6 +8,7 @@ from .mgmq_model import (
     LocalTemporalMGMQEncoder,
     LocalTemporalMGMQTorchModel,
 )
+from .dirichlet_distribution import TorchDirichlet, register_dirichlet_distribution
 
 __all__ = [
     "GATLayer",
@@ -17,5 +18,7 @@ __all__ = [
     "MGMQTorchModel",
     "LocalTemporalMGMQEncoder",
     "LocalTemporalMGMQTorchModel",
+    "TorchDirichlet",
+    "register_dirichlet_distribution",
 ]
 

@@ -1,6 +1,6 @@
 {
-  "network_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_v8_oke/network/grid4x4/grid4x4.net.xml",
-  "detector_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_v8_oke/network/grid4x4/detector.add.xml",
+  "network_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/grid4x4/grid4x4.net.xml",
+  "detector_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/grid4x4/detector.add.xml",
   "num_intersections": 16,
   "intersections": {
     "A0": {

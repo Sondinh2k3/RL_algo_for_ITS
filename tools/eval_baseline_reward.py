@@ -148,7 +148,8 @@ def evaluate_baseline(
         "min_green": yaml_env_cfg["min_green"],
         "cycle_time": yaml_env_cfg["cycle_time"],
         "yellow_time": yaml_env_cfg["yellow_time"],
-        "time_to_teleport": yaml_env_cfg["time_to_teleport"],
+        # Match eval_mgmq_ppo.py: Force enable teleport for evaluation to prevent permanent deadlocks
+        "time_to_teleport": 500,
         "single_agent": False,
         "window_size": yaml_mgmq_cfg["window_size"],
         "preprocessing_config": preprocessing_config,
@@ -229,18 +230,14 @@ def evaluate_baseline(
     env.close()
     
     # Calculate statistics (SAME as eval_mgmq_ppo.py)
-    num_agents = len(ts_ids)
     results = {
-        "type": "baseline",
         "network": network_name,
         "num_episodes": num_episodes,
-        "num_agents": num_agents,
         "mean_reward": float(np.mean(episode_rewards)),
         "std_reward": float(np.std(episode_rewards)),
         "min_reward": float(np.min(episode_rewards)),
         "max_reward": float(np.max(episode_rewards)),
         "mean_length": float(np.mean(episode_lengths)),
-        "mean_reward_per_agent": float(np.mean(episode_rewards)) / num_agents if num_agents > 0 else 0,
         "episode_rewards": [float(r) for r in episode_rewards],
         "episode_lengths": [int(l) for l in episode_lengths],
     }
@@ -274,7 +271,6 @@ def evaluate_baseline(
     print(f"Mean Total Reward: {results['mean_reward']:.2f} ± {results['std_reward']:.2f}")
     print(f"Min/Max Reward: {results['min_reward']:.2f} / {results['max_reward']:.2f}")
     print(f"Mean Episode Length: {results['mean_length']:.1f}")
-    print(f"Mean Reward per Agent: {results['mean_reward_per_agent']:.2f}")
     
     if "mean_waiting_time" in results:
         print(f"Mean Waiting Time: {results['mean_waiting_time']:.2f} ± {results.get('std_waiting_time', 0):.2f}")

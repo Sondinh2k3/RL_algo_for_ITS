@@ -34,6 +34,7 @@ from src.environment.rllib_utils import (
     register_sumo_env,
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalTemporalMGMQTorchModel
+from src.models.dirichlet_distribution import register_dirichlet_distribution
 from src.config import (
     load_model_config,
     get_mgmq_config,
@@ -47,6 +48,9 @@ from src.config import (
 # Register custom models (same as training)
 ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
 ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalTemporalMGMQTorchModel)
+
+# Register Dirichlet distribution for action space
+register_dirichlet_distribution()
 
 
 
@@ -236,7 +240,7 @@ def evaluate_mgmq(
                 "render_mode": "human" if render else None,
                 "num_seconds": int(stored_env_config.get("num_seconds", 8000)),
                 "max_green": int(stored_env_config.get("max_green", 90)),
-                "min_green": int(stored_env_config.get("min_green", 10)),
+                "min_green": int(stored_env_config.get("min_green", 5)),
                 "cycle_time": int(stored_env_config.get("cycle_time", stored_env_config.get("delta_time", 90))),
                 "yellow_time": int(stored_env_config.get("yellow_time", 3)),
                 # Force enable teleport for evaluation to prevent permanent deadlocks

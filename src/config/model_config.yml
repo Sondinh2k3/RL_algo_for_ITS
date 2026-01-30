@@ -68,10 +68,10 @@ mgmq:
 # PPO Training Parameters
 # ============================================
 ppo:
-  learning_rate: 0.0003  # 3e-4
+  learning_rate: 0.0008  # 1e-3
   gamma: 0.99             # Discount factor
   lambda_: 0.95           # GAE lambda
-  entropy_coeff: 0.01     # Entropy coefficient
+  entropy_coeff: 0.02     # Entropy coefficient
   clip_param: 0.2         # PPO clip parameter
   vf_clip_param: 10.0     # Value function clip parameter
   train_batch_size: 512  # Training batch size
@@ -87,7 +87,7 @@ training:
   num_workers: 2          # Number of parallel workers
   num_envs_per_worker: 1  # Environments per worker
   checkpoint_interval: 5 # Checkpoint frequency
-  patience: 50            # Early stopping patience (iterations without improvement)
+  patience: 500            # Early stopping patience (iterations without improvement)
   seed: 42                # Random seed
   use_gpu: false          # Use GPU for training
   output_dir: "./results_mgmq"  # Output directory

@@ -41,6 +41,7 @@ from src.environment.rllib_utils import (
     override_config,
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalTemporalMGMQTorchModel
+from src.models.dirichlet_distribution import register_dirichlet_distribution
 from src.config import (
     load_model_config,
     get_mgmq_config,
@@ -57,6 +58,10 @@ from src.config import (
 # Register custom MGMQ models with RLlib
 ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
 ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalTemporalMGMQTorchModel)
+
+# Register Dirichlet distribution for proper simplex-constrained actions
+# This solves the "Scale Ambiguity & Vanishing Gradient" problem
+register_dirichlet_distribution()
 
 
 
@@ -116,10 +121,10 @@ def create_mgmq_ppo_config(
     mgmq_config: dict,
     num_workers: int = 2,
     num_envs_per_worker: int = 1,
-    learning_rate: float = 3e-4,
+    learning_rate: float = 8e-4,
     gamma: float = 0.99,
     lambda_: float = 0.95,
-    entropy_coeff: float = 0.01,
+    entropy_coeff: float = 0.02,
     clip_param: float = 0.2,
     use_gpu: bool = False,
     custom_model_name: str = "mgmq_model",
@@ -188,6 +193,9 @@ def create_mgmq_ppo_config(
                 "custom_model": custom_model_name,
                 "custom_model_config": mgmq_config,
                 "vf_share_layers": False,  # Separate policy and value networks
+                # Use Dirichlet distribution for proper simplex-constrained actions
+                # Actions automatically sum=1 with proper gradient flow
+                "custom_action_dist": "dirichlet",
             },
         )
         .resources(num_gpus=1 if use_gpu else 0)
@@ -217,7 +225,7 @@ def train_mgmq_ppo(
     # Environment parameters from YAML config
     num_seconds: int = 8000,  # Simulation duration
     max_green: int = 90,
-    min_green: int = 10,
+    min_green: int = 5,
     cycle_time: int = 90,
     yellow_time: int = 3,
     time_to_teleport: int = 500,
