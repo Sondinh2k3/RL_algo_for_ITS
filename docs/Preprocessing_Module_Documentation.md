@@ -127,6 +127,7 @@ standard_map: Dict[str, Optional[str]] = {
 | `get_direction_edge(direction)` | `str` | `Optional[str]` | Trả về edge của hướng |
 | `get_lanes_by_direction()` | None | `Dict[str, List[str]]` | Lanes grouped by direction |
 | `export_config()` | None | `Dict[str, Any]` | Export cấu hình để lưu JSON |
+| `load_config()` | `dict` | None | Load từ intersection_config.json |
 
 ### 1.6 Ví dụ sử dụng
 
@@ -243,6 +244,9 @@ class Phase:
     movements: Set[MovementType]       # Các movements được phục vụ trong phase này
     duration_range: Tuple[int, int]    # (min, max) duration in seconds
     is_yellow: bool                    # True nếu là yellow phase
+    state: str                         # Phase state string (e.g., "GGGrrr")
+    duration: float                    # Phase duration
+    green_indices: List[int]           # Indices of green signals
 ```
 
 ### 2.4 Thuật toán chuẩn hóa Phase
@@ -298,18 +302,9 @@ class Phase:
 │                                                                 │
 │  BƯỚC 5: Tạo standard phase mapping                             │
 │  ──────────────────────────────────                             │
-│  Chọn pattern phù hợp:                                          │
-│    - num_phases <= 2 → dùng STANDARD_PHASES_2                   │
-│    - num_phases > 2  → dùng STANDARD_PHASES                     │
-│                                                                 │
 │  Với mỗi actual phase:                                          │
 │    - Tính overlap với từng standard phase                       │
 │    - Map actual → standard có overlap lớn nhất                  │
-│                                                                 │
-│  Ví dụ:                                                         │
-│    actual_phase[0].movements = {NT, ST, NR, SR}                 │
-│    → overlap với standard[0]={NT,ST} = 2 ✓ (cao nhất)           │
-│    → actual_to_standard[0] = 0                                  │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -340,6 +335,7 @@ Ví dụ:
 | Method | Input | Output | Mô tả |
 |--------|-------|--------|-------|
 | `configure()` | None | None | Thực hiện cấu hình FRAP (gọi 1 lần) |
+| `load_config()` | `Dict` | None | Load từ intersection_config.json |
 | `get_phase_demand_features()` | `density_by_dir, queue_by_dir` | `np.ndarray` (8,) | Feature vector cho 4 phases × 2 metrics |
 | `standardize_action()` | `np.ndarray` (4,) | `np.ndarray` (num_phases,) | Convert standard → actual action |
 | `get_movement_mask()` | None | `np.ndarray` (8,) | Binary mask cho 8 movements |
@@ -508,16 +504,53 @@ phase_mask = frap.get_phase_mask()
 │   │   actual_action = FRAP.standardize_action(standard_action)          │
 │   │           │                                         # shape (num_phases,)
 │   │           ▼                                                          │
-│   └─→ env.step(actual_action)                                           │
+│   └─→ TrafficSignal.set_next_phase(actual_action)                       │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 5. Lưu ý quan trọng
+## 5. intersection_config.json Format
 
-### 5.1 Thứ tự khởi tạo
+Khi chạy `preprocess_network.py`, file `intersection_config.json` được tạo ra với format:
+
+```json
+{
+  "network_name": "grid4x4",
+  "intersections": {
+    "A0": {
+      "gpi": {
+        "direction_map": {"N": "A0_N", "E": "A0_E", "S": "A0_S", "W": "A0_W"},
+        "observation_mask": [1.0, 1.0, 1.0, 1.0],
+        "lanes_by_direction": {
+          "N": ["A0_N_0", "A0_N_1"],
+          "E": ["A0_E_0", "A0_E_1"],
+          "S": ["A0_S_0", "A0_S_1"],
+          "W": ["A0_W_0", "A0_W_1"]
+        }
+      },
+      "frap": {
+        "num_phases": 4,
+        "num_green_phases": 4,
+        "actual_to_standard": [0, 1, 2, 3],
+        "standard_to_actual": [[0], [1], [2], [3]],
+        "phase_mask": [1.0, 1.0, 1.0, 1.0],
+        "movement_mask": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        "phases": [
+          {"phase_id": 0, "state": "GGGrrrGGGrrr", "duration": 30.0, "movements": ["NT", "ST"]}
+        ]
+      }
+    }
+  }
+}
+```
+
+---
+
+## 6. Lưu ý quan trọng
+
+### 6.1 Thứ tự khởi tạo
 ```python
 # 1. GPI phải được khởi tạo và map trước
 gpi = IntersectionStandardizer(junction_id, data_provider)
@@ -528,29 +561,28 @@ frap = PhaseStandardizer(junction_id, gpi_standardizer=gpi, data_provider)
 frap.configure()  # PHẢI gọi
 ```
 
-### 5.2 T-junction và Irregular Intersections
+### 6.2 T-junction và Irregular Intersections
 - GPI tự động xử lý missing directions (set None, mask = 0)
 - FRAP map phases dựa trên movements có sẵn
 - RL agent sử dụng masks để ignore invalid directions/phases
 
-### 5.3 Caching
-- Cả GPI và FRAP đều có caching internal
-- Gọi `reset()` nếu cần re-compute (ví dụ: new simulation)
+### 6.3 Caching và Load từ Config
+- Cả GPI và FRAP đều có `load_config()` method
+- Trong production, load từ `intersection_config.json` để tránh TraCI calls
+- Chỉ cần chạy `preprocess_network.py` một lần cho mỗi network mới
 
-### 5.4 Export/Import Configuration
-```python
-# Export để lưu vào JSON
-config = gpi.export_config()
-with open("gpi_config.json", "w") as f:
-    json.dump(config, f)
+### 6.4 Scripts
 
-# Load lại không cần re-compute
-# (chưa implement, cần thêm from_config() method)
+```bash
+# Preprocessing một network
+python scripts/preprocess_network.py --network grid4x4
+
+# Output: network/grid4x4/intersection_config.json
 ```
 
 ---
 
-## 6. References
+## 7. References
 
 1. **GESA Architecture**: "Geometry-agnostic State-Action for Traffic Signal Control"
 2. **FRAP Concept**: IntelliLight - "Feature Relation Attention Processing"

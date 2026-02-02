@@ -268,7 +268,7 @@ def get_lane_conflict_matrix() -> torch.Tensor:
 def get_lane_cooperation_matrix() -> torch.Tensor:
     """
     Returns a static 12x12 adjacency matrix representing lane cooperation.
-    Lanes are connected if they belong to the same standard signal phase.
+    Lanes are connected if they belong to ANY of the same standard signal phases.
     
     IMPORTANT: Node ordering follows PREPROCESSED observation vector where lanes 
     are ordered by direction (N, E, S, W) and within each direction REVERSED
@@ -278,20 +278,41 @@ def get_lane_cooperation_matrix() -> torch.Tensor:
     3: EL (East-Left),     4: ET (East-Through),    5: ER (East-Right)
     6: SL (South-Left),    7: ST (South-Through),   8: SR (South-Right)
     9: WL (West-Left),    10: WT (West-Through),   11: WR (West-Right)
+    
+    8 Standard Phases (lanes that can move together):
+    ================================================
+    Phase A (0): NS Through  - NT(1), ST(7), NR(2), SR(8)
+    Phase B (1): EW Through  - ET(4), WT(10), ER(5), WR(11)
+    Phase C (2): NS Left     - NL(0), SL(6)
+    Phase D (3): EW Left     - EL(3), WL(9)
+    Phase E (4): North Green - NL(0), NT(1), NR(2)
+    Phase F (5): South Green - SL(6), ST(7), SR(8)
+    Phase G (6): East Green  - EL(3), ET(4), ER(5)
+    Phase H (7): West Green  - WL(9), WT(10), WR(11)
     """
     # Initialize 12x12 matrix
     adj = torch.zeros((12, 12))
     
-    # Define phase groups (lanes that move together)
-    # Standard 4-phase NEMA pattern with PREPROCESSED ordering (Left=0, Through=1, Right=2)
+    # Define phase groups (lanes that move together in each phase)
+    # Using PREPROCESSED ordering: NL=0, NT=1, NR=2, EL=3, ET=4, ER=5, SL=6, ST=7, SR=8, WL=9, WT=10, WR=11
     phases = [
-        [0, 6],             # Phase 0: NS Left (NL=0, SL=6)
-        [1, 2, 7, 8],       # Phase 1: NS Through + Right (NT=1, NR=2, ST=7, SR=8)
-        [3, 9],             # Phase 2: EW Left (EL=3, WL=9)
-        [4, 5, 10, 11],     # Phase 3: EW Through + Right (ET=4, ER=5, WT=10, WR=11)
+        # Group 1: Dual-Through Phases
+        [1, 2, 7, 8],       # Phase A (0): NS Through + Right (NT, NR, ST, SR)
+        [4, 5, 10, 11],     # Phase B (1): EW Through + Right (ET, ER, WT, WR)
+        
+        # Group 2: Dual-Left Phases
+        [0, 6],             # Phase C (2): NS Left (NL, SL)
+        [3, 9],             # Phase D (3): EW Left (EL, WL)
+        
+        # Group 3: Single-Approach Phases
+        [0, 1, 2],          # Phase E (4): North Green (NL, NT, NR)
+        [6, 7, 8],          # Phase F (5): South Green (SL, ST, SR)
+        [3, 4, 5],          # Phase G (6): East Green (EL, ET, ER)
+        [9, 10, 11],        # Phase H (7): West Green (WL, WT, WR)
     ]
     
     # Connect all lanes within the same phase
+    # Two lanes cooperate if they appear in ANY phase together
     for phase_lanes in phases:
         for i in phase_lanes:
             for j in phase_lanes:
@@ -387,7 +408,7 @@ class DualStreamGATLayer(nn.Module):
         
         self.final_proj = nn.Sequential(
             nn.Linear(concat_dim, self.final_output_dim),
-            nn.LeakyReLU(alpha) # "Activation" in spec, usually LeakyReLU or ELU in GAT
+            nn.ELU()  # ELU for fusion layer as per MGMQ specification
         )
         
     def forward(

@@ -53,16 +53,20 @@ from ray.rllib.utils.typing import TensorType, ModelConfigDict
 # Lower α → higher entropy (less peaked) → more exploration
 # Higher α → lower entropy (more peaked) → deterministic actions
 #
-# IMPORTANT: With 4 phases, if all α_i = MAX, mode = [0.25, 0.25, 0.25, 0.25]
-# To allow extreme ratios like [0.7, 0.1, 0.1, 0.1], we need MAX >> MIN
-# With α = [20, 1, 1, 1], mode ≈ [0.86, 0.045, 0.045, 0.045]
+# IMPORTANT: With 8 phases, if all α_i = MAX, mode = [0.125, 0.125, ..., 0.125]
+# To allow extreme ratios like [0.7, 0.05, 0.05, ...], we need MAX >> MIN
+# With α = [20, 1, 1, 1, 1, 1, 1, 1], mode ≈ [0.78, 0.035, 0.035, ...]
 CONCENTRATION_MIN = 0.5    # Avoid extreme corners (α < 0.5 causes very spread dist)
-CONCENTRATION_MAX = 20.0   # INCREASED from 5.0 to allow more extreme ratios
+CONCENTRATION_MAX = 20.0   # Allows wide range of concentration ratios
 
 # Entropy offset: Add this to make reported entropy non-negative for monitoring
-# With CONCENTRATION_MAX=20 and 4 phases, minimum entropy ≈ -5.13
-# Use offset of 6.0 to ensure positive entropy for all valid alpha values
-ENTROPY_OFFSET = 6.0
+# With 8 standard phases (FRAP) and CONCENTRATION_MAX=20:
+#   - Minimum raw entropy (all α=MAX): ≈ -16.26
+#   - Maximum raw entropy (all α=MIN): ≈ -10.09
+#   - Typical raw entropy: ≈ -13.5
+# Use offset of 17.0 to ensure positive entropy for all valid alpha values
+NUM_STANDARD_PHASES = 8
+ENTROPY_OFFSET = 17.0
 
 
 class TorchDirichlet(TorchDistributionWrapper):

@@ -11,14 +11,15 @@ Tài liệu này cung cấp hướng dẫn chi tiết về tất cả các tham 
 3. [Tham Số Model MGMQ](#3-tham-số-model-mgmq)
 4. [Tham Số Environment (SUMO)](#4-tham-số-environment-sumo)
 5. [Tham Số Preprocessing](#5-tham-số-preprocessing)
-6. [Hướng Dẫn Tinh Chỉnh Theo Scenario](#6-hướng-dẫn-tinh-chỉnh-theo-scenario)
-7. [Best Practices](#7-best-practices)
+6. [Tham Số Reward](#6-tham-số-reward)
+7. [Hướng Dẫn Tinh Chỉnh Theo Scenario](#7-hướng-dẫn-tinh-chỉnh-theo-scenario)
+8. [Best Practices](#8-best-practices)
 
 ---
 
 ## 1. Tổng Quan
 
-Hệ thống MGMQ-PPO có 4 nhóm tham số chính cần được tinh chỉnh:
+Hệ thống MGMQ-PPO có 5 nhóm tham số chính cần được tinh chỉnh:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -28,13 +29,19 @@ Hệ thống MGMQ-PPO có 4 nhóm tham số chính cần được tinh chỉnh:
 │  │  Training   │  │    Model    │  │   Environment      │  │
 │  │   (PPO)     │──│   (MGMQ)    │──│     (SUMO)         │  │
 │  └─────────────┘  └─────────────┘  └────────────────────┘  │
-│         ▲                                      ▲            │
-│         │           ┌─────────────┐            │            │
-│         └───────────│Preprocessing│────────────┘            │
-│                     │ (GPI+FRAP)  │                         │
-│                     └─────────────┘                         │
+│         ▲                ▲                  ▲              │
+│         │           ┌────┴────┐             │              │
+│         └───────────│ Reward  │─────────────┘              │
+│                     └─────────┘                            │
+│                          │                                 │
+│                 ┌────────┴────────┐                        │
+│                 │  Preprocessing  │                        │
+│                 │   (GPI+FRAP)    │                        │
+│                 └─────────────────┘                        │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+File cấu hình chính: `src/config/model_config.yml`
 
 ---
 
@@ -42,19 +49,19 @@ Hệ thống MGMQ-PPO có 4 nhóm tham số chính cần được tinh chỉnh:
 
 ### 2.1. Tham Số Huấn Luyện Cơ Bản
 
-| Tham số | CLI Flag | Mặc định | Ý nghĩa | Phạm vi khuyến nghị |
-|---------|----------|----------|---------|---------------------|
-| `num_iterations` | `--iterations` | 200 | Số iteration training | 100 - 1000 |
-| `num_workers` | `--workers` | 2 | Số worker song song | 1 - 8 (tùy CPU) |
-| `checkpoint_interval` | `--checkpoint-interval` | 20 | Lưu checkpoint mỗi N iterations | 10 - 50 |
-| `patience` | `--patience` | 50 | Early stopping sau N iter không cải thiện | 30 - 100 |
-| `seed` | `--seed` | 42 | Random seed | Bất kỳ số nguyên |
+| Tham số | Config Key | Mặc định | Ý nghĩa | Phạm vi khuyến nghị |
+|---------|------------|----------|---------|---------------------|
+| `num_iterations` | `training.num_iterations` | 200 | Số iteration training | 100 - 500 |
+| `num_workers` | `training.num_workers` | 2 | Số worker song song | 1 - 8 (tùy CPU) |
+| `checkpoint_interval` | `training.checkpoint_interval` | 5 | Lưu checkpoint mỗi N iterations | 5 - 20 |
+| `patience` | `training.patience` | 500 | Early stopping sau N iter không cải thiện | 100 - 500 |
+| `seed` | `training.seed` | 42 | Random seed | Bất kỳ số nguyên |
+| `use_gpu` | `training.use_gpu` | false | Sử dụng GPU | true/false |
 
 #### Chi tiết từng tham số:
 
 **`num_iterations`**
 - **Ý nghĩa**: Số lần lặp huấn luyện. Mỗi iteration bao gồm việc thu thập dữ liệu từ môi trường và cập nhật mạng nơ-ron.
-- **Cách hoạt động**: Tăng số iterations giúp model hội tụ tốt hơn nhưng tốn nhiều thời gian hơn.
 - **Tinh chỉnh**:
   - Mạng lưới nhỏ (4x4): 100-200 iterations
   - Mạng lưới lớn (nhiều ngã tư): 300-500 iterations
@@ -62,7 +69,6 @@ Hệ thống MGMQ-PPO có 4 nhóm tham số chính cần được tinh chỉnh:
 
 **`num_workers`**
 - **Ý nghĩa**: Số môi trường SUMO chạy song song để thu thập dữ liệu.
-- **Cách hoạt động**: Nhiều worker = thu thập dữ liệu nhanh hơn nhưng tốn nhiều RAM/CPU.
 - **Tinh chỉnh**:
   - Máy yếu (8GB RAM): 1-2 workers
   - Máy trung bình (16GB RAM): 2-4 workers
@@ -73,72 +79,61 @@ Hệ thống MGMQ-PPO có 4 nhóm tham số chính cần được tinh chỉnh:
 
 **`patience`**
 - **Ý nghĩa**: Số iterations liên tiếp không có cải thiện reward trước khi dừng sớm.
-- **Cách hoạt động**: Ngăn chặn overfitting và tiết kiệm thời gian.
 - **Tinh chỉnh**:
-  - Nếu training dừng quá sớm: tăng patience lên 80-100
-  - Nếu muốn thử nghiệm nhanh: giảm xuống 20-30
+  - Nếu training dừng quá sớm: tăng patience lên 300-500
+  - Nếu muốn thử nghiệm nhanh: giảm xuống 50-100
 
 ### 2.2. Tham Số PPO Algorithm
 
-Các tham số này được cấu hình trong `create_mgmq_ppo_config()`:
-
-| Tham số | CLI Flag | Mặc định | Ý nghĩa |
-|---------|----------|----------|---------|
-| `learning_rate` | `--learning-rate` | 3e-4 | Tốc độ học |
-| `gamma` | - | 0.99 | Discount factor |
-| `lambda_` | - | 0.95 | GAE lambda |
-| `entropy_coeff` | - | 0.01 | Hệ số entropy |
-| `clip_param` | - | 0.2 | PPO clip parameter |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `learning_rate` | `ppo.learning_rate` | 0.0008 | Tốc độ học |
+| `gamma` | `ppo.gamma` | 0.99 | Discount factor |
+| `lambda_` | `ppo.lambda_` | 0.95 | GAE lambda |
+| `entropy_coeff` | `ppo.entropy_coeff` | 0.02 | Hệ số entropy |
+| `clip_param` | `ppo.clip_param` | 0.2 | PPO clip parameter |
+| `vf_clip_param` | `ppo.vf_clip_param` | 10.0 | Value function clip |
+| `grad_clip` | `ppo.grad_clip` | 0.5 | Gradient clipping |
 
 #### Chi tiết:
 
 **`learning_rate`**
 - **Ý nghĩa**: Tốc độ cập nhật trọng số mạng nơ-ron.
-- **Cách hoạt động**: Giá trị nhỏ → học chậm nhưng ổn định, giá trị lớn → học nhanh nhưng có thể không hội tụ.
 - **Tinh chỉnh**:
   ```
-  Quá chậm (reward không tăng): Tăng lên 5e-4 hoặc 1e-3
-  Không ổn định (reward dao động mạnh): Giảm xuống 1e-4 hoặc 5e-5
+  Quá chậm (reward không tăng): Tăng lên 1e-3 hoặc 2e-3
+  Không ổn định (reward dao động mạnh): Giảm xuống 3e-4 hoặc 1e-4
   ```
 
 **`gamma` (Discount Factor)**
 - **Ý nghĩa**: Mức độ quan trọng của reward tương lai so với reward hiện tại.
-- **Cách hoạt động**: 
+- **Tinh chỉnh**: 
   - γ = 0.99: Agent quan tâm nhiều đến phần thưởng xa (tốt cho traffic control)
   - γ = 0.9: Agent quan tâm nhiều hơn đến phần thưởng gần
-- **Tinh chỉnh**: Giữ nguyên 0.99 cho traffic control (đây là bài toán cần tầm nhìn dài hạn)
 
 **`entropy_coeff`**
 - **Ý nghĩa**: Khuyến khích sự đa dạng trong hành động (exploration).
-- **Cách hoạt động**: 
-  - Cao (0.05-0.1): Agent thử nhiều hành động khác nhau
-  - Thấp (0.001): Agent hội tụ nhanh hơn về một policy
 - **Tinh chỉnh**:
   ```
-  Training ban đầu: 0.01-0.02 (exploration)
-  Fine-tuning: 0.001-0.005 (exploitation)
+  Training ban đầu: 0.02-0.05 (exploration)
+  Fine-tuning: 0.005-0.01 (exploitation)
   ```
 
 **`clip_param`**
 - **Ý nghĩa**: Giới hạn mức độ thay đổi policy mỗi lần update.
-- **Cách hoạt động**: Ngăn chặn update quá lớn gây destabilization.
 - **Tinh chỉnh**: Thường giữ 0.2 (giá trị chuẩn của PPO)
 
 ### 2.3. Tham Số Batch Size
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `train_batch_size` | 256 | Tổng số samples cho mỗi update |
-| `minibatch_size` | 32 | Kích thước minibatch cho SGD |
-| `num_sgd_iter` | 10 | Số epochs trên mỗi batch |
-| `rollout_fragment_length` | 20 | Số steps thu thập trước khi gửi về |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `train_batch_size` | `ppo.train_batch_size` | 512 | Tổng số samples cho mỗi update |
+| `minibatch_size` | `ppo.minibatch_size` | 64 | Kích thước minibatch cho SGD |
+| `num_sgd_iter` | `ppo.num_sgd_iter` | 10 | Số epochs trên mỗi batch |
 
 **Tinh chỉnh batch size**:
-- Mạng lưới nhỏ: `train_batch_size=128`, `minibatch_size=16`
-- Mạng lưới lớn: `train_batch_size=512`, `minibatch_size=64`
-
-> [!TIP]
-> `rollout_fragment_length=20` phù hợp với traffic control vì mỗi episode chỉ có ~40 steps (với `num_seconds=3600` và `delta_time=90`)
+- Mạng lưới nhỏ: `train_batch_size=256`, `minibatch_size=32`
+- Mạng lưới lớn: `train_batch_size=1024`, `minibatch_size=128`
 
 ---
 
@@ -146,76 +141,64 @@ Các tham số này được cấu hình trong `create_mgmq_ppo_config()`:
 
 ### 3.1. Tham Số GAT Layer (Intersection Embedding)
 
-| Tham số | CLI Flag | Mặc định | Ý nghĩa |
-|---------|----------|----------|---------|
-| `gat_hidden_dim` | `--gat-hidden-dim` | 256 | Dimension ẩn của GAT |
-| `gat_output_dim` | `--gat-output-dim` | 128 | Dimension output mỗi head |
-| `gat_num_heads` | `--gat-num-heads` | 4 | Số attention heads |
-
-#### Chi tiết:
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `gat_hidden_dim` | `mgmq.gat.hidden_dim` | 128 | Dimension ẩn của GAT |
+| `gat_output_dim` | `mgmq.gat.output_dim` | 64 | Dimension output mỗi head |
+| `gat_num_heads` | `mgmq.gat.num_heads` | 4 | Số attention heads |
 
 **`gat_hidden_dim`**
 - **Ý nghĩa**: Kích thước không gian ẩn cho mỗi làn đường sau projection.
-- **Cách hoạt động**: 
-  - Input: 4 features/lane (density, queue, occupancy, speed)
-  - Sau projection: `gat_hidden_dim` features/lane
 - **Tinh chỉnh**:
   ```
-  Mạng lưới đơn giản: 32
-  Mạng lưới phức tạp: 64-128
+  Mạng lưới đơn giản: 64
+  Mạng lưới phức tạp: 128-256
   Nếu overfitting (train tốt, test kém): giảm xuống
   ```
 
 **`gat_num_heads`**
 - **Ý nghĩa**: Số cơ chế attention độc lập học các mối quan hệ khác nhau.
-- **Cách hoạt động**: 
-  - Mỗi head học một "góc nhìn" khác về quan hệ giữa các lanes
-  - Output được concatenate: `total_output = gat_output_dim * gat_num_heads`
 - **Tinh chỉnh**:
   - 2-4 heads cho bài toán traffic (đủ để học conflict/cooperation)
   - Không nên quá 8 heads (overly complex)
 
 **`gat_output_dim`**
 - **Ý nghĩa**: Dimension output của mỗi attention head.
-- **Tinh chỉnh**: Tổng dimension = `gat_output_dim * gat_num_heads` nên vào khoảng 64-256
+- **Tinh chỉnh**: Tổng dimension = `gat_output_dim × gat_num_heads` nên vào khoảng 128-256
 
 ### 3.2. Tham Số GraphSAGE Layer (Spatial Aggregation)
 
-| Tham số | CLI Flag | Mặc định | Ý nghĩa |
-|---------|----------|----------|---------|
-| `graphsage_hidden_dim` | `--graphsage-hidden-dim` | 256 | Dimension ẩn của GraphSAGE |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `graphsage_hidden_dim` | `mgmq.graphsage.hidden_dim` | 128 | Dimension ẩn của GraphSAGE |
 
 **`graphsage_hidden_dim`**
 - **Ý nghĩa**: Kích thước embedding sau khi tổng hợp thông tin từ các ngã tư lân cận.
-- **Cách hoạt động**: Chiếu features thành 5 hướng (N, E, S, W, Self) → Ghép cặp luồng (Neighbor Out -> Self In) → Bi-GRU Aggregation.
 - **Tinh chỉnh**:
   ```
-  Mạng lưới 4x4: 32-64
-  Mạng lưới lớn (8x8 trở lên): 64-128
+  Mạng lưới 4x4: 64-128
+  Mạng lưới lớn (8x8 trở lên): 128-256
   ```
 
 ### 3.3. Tham Số Bi-GRU (Temporal Processing)
 
-| Tham số | CLI Flag | Mặc định | Ý nghĩa |
-|---------|----------|----------|---------|
-| `gru_hidden_dim` | `--gru-hidden-dim` | 128 | Dimension ẩn của GRU |
-| `history_length` | `--history-length` | 4 | Độ dài chuỗi thời gian |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `gru_hidden_dim` | `mgmq.gru.hidden_dim` | 64 | Dimension ẩn của GRU |
+| `history_length` | `mgmq.history_length` | 1 | Độ dài chuỗi thời gian |
 
 **`gru_hidden_dim`**
 - **Ý nghĩa**: Kích thước bộ nhớ của GRU để lưu trữ thông tin temporal.
 - **Tinh chỉnh**:
-  - 16-32: cho `history_length` ngắn (1-3)
-  - 32-64: cho `history_length` dài hơn (5-10)
+  - 32-64: cho `history_length` ngắn (1-3)
+  - 64-128: cho `history_length` dài hơn (5-10)
 
 **`history_length` (window_size)**
 - **Ý nghĩa**: Số bước thời gian lịch sử được xem xét.
-- **Cách hoạt động**:
-  - `history_length=1`: Không dùng temporal (chỉ trạng thái hiện tại)
-  - `history_length>1`: Model học patterns theo thời gian
 - **Tinh chỉnh**:
   ```
   Bắt đầu: history_length=1 (đơn giản hơn để debug)
-  Nâng cao: history_length=5-10 (để học xu hướng traffic)
+  Nâng cao: history_length=3-5 (để học xu hướng traffic)
   ```
 
 > [!IMPORTANT]
@@ -223,17 +206,19 @@ Các tham số này được cấu hình trong `create_mgmq_ppo_config()`:
 
 ### 3.4. Tham Số Policy/Value Networks
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `policy_hidden_dims` | [128, 64] | Kiến trúc policy network |
-| `value_hidden_dims` | [128, 64] | Kiến trúc value network |
-| `dropout` | 0.3 | Tỷ lệ dropout |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `policy_hidden_dims` | `mgmq.policy.hidden_dims` | [128, 64] | Kiến trúc policy network |
+| `value_hidden_dims` | `mgmq.value.hidden_dims` | [128, 64] | Kiến trúc value network |
+| `dropout` | `mgmq.dropout` | 0.3 | Tỷ lệ dropout |
 
-**`dropout`**
-- **Ý nghĩa**: Tỷ lệ neurons bị tắt trong training để chống overfitting.
-- **Tinh chỉnh**:
-  - 0.1-0.2: Mạng lưới nhỏ
-  - 0.3-0.5: Mạng lưới lớn hoặc có nhiều dữ liệu
+### 3.5. Local GNN Settings
+
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `enabled` | `mgmq.local_gnn.enabled` | false | Kích hoạt Local Temporal GNN |
+| `max_neighbors` | `mgmq.local_gnn.max_neighbors` | 4 | Số hàng xóm tối đa (K) |
+| `obs_dim` | `mgmq.local_gnn.obs_dim` | 48 | 4 features × 12 detectors |
 
 ---
 
@@ -241,21 +226,17 @@ Các tham số này được cấu hình trong `create_mgmq_ppo_config()`:
 
 ### 4.1. Tham Số Thời Gian Mô Phỏng
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `num_seconds` | 8000 | Thời gian mô phỏng (giây) |
-| `begin_time` | 0 | Thời điểm bắt đầu (giây) |
-| `delta_time` | 5 | Delta time chính (giây) |
-| `cycle_time` | 90 | Chu kỳ đèn (giây) |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `num_seconds` | `environment.num_seconds` | 8000 | Thời gian mô phỏng (giây) |
+| `cycle_time` | `environment.cycle_time` | 90 | Chu kỳ đèn (giây) |
 
 **`num_seconds`**
 - **Ý nghĩa**: Độ dài một episode (giây thực trong simulation).
-- **Cách hoạt động**: Episode kết thúc khi đạt `num_seconds`.
 - **Tinh chỉnh**:
   ```
-  Training nhanh: 1800-3600 (30-60 phút mô phỏng)
-  Evaluation đầy đủ: 7200-14400 (2-4 giờ mô phỏng)
-  Peak hour testing: Chọn begin_time tương ứng giờ cao điểm
+  Training nhanh: 3600-5000 (1-1.5 giờ mô phỏng)
+  Evaluation đầy đủ: 7200-10000 (2-3 giờ mô phỏng)
   ```
 
 **`cycle_time`**
@@ -267,44 +248,36 @@ Các tham số này được cấu hình trong `create_mgmq_ppo_config()`:
 
 ### 4.2. Tham Số Điều Khiển Đèn
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `yellow_time` | 3 | Thời gian đèn vàng (giây) |
-| `min_green` | 15 | Thời gian xanh tối thiểu (giây) |
-| `max_green` | 90 | Thời gian xanh tối đa (giây) |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `yellow_time` | `environment.yellow_time` | 3 | Thời gian đèn vàng (giây) |
+| `min_green` | `environment.min_green` | 5 | Thời gian xanh tối thiểu (giây) |
+| `max_green` | `environment.max_green` | 90 | Thời gian xanh tối đa (giây) |
 
-**`yellow_time`**
-- **Ý nghĩa**: Thời gian đèn vàng cố định giữa các pha.
-- **Tinh chỉnh**: Thường 3 giây theo quy chuẩn. Có thể tăng lên 4-5 giây cho đường lớn.
-
-**`min_green` và `max_green`**
-- **Ý nghĩa**: Ràng buộc thời gian xanh cho mỗi pha.
+**`min_green`**
 - **Tinh chỉnh**:
-  ```
-  min_green: 
-    - Tối thiểu 3-5 giây để xe có thể đi qua
-    - Tăng lên 7-10 giây nếu có người đi bộ
-    
-  max_green:
-    - 45-60 giây cho đường bình thường
-    - 60-90 giây cho đường chính
-  ```
+  - Tối thiểu 3-5 giây để xe có thể đi qua
+  - Tăng lên 7-10 giây nếu có người đi bộ
+
+**`max_green`**
+- **Tinh chỉnh**:
+  - 45-60 giây cho đường bình thường
+  - 60-90 giây cho đường chính
 
 > [!CAUTION]
-> Đảm bảo: `min_green * num_phases + yellow_time * num_phases < cycle_time`
+> Đảm bảo: `min_green × num_phases + yellow_time × num_phases < cycle_time`
 
 ### 4.3. Tham Số SUMO
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `time_to_teleport` | 300 | Teleport xe kẹt sau N giây |
-| `max_depart_delay` | -1 | Hủy xe không xuất phát được |
-| `waiting_time_memory` | 1000 | Thời gian nhớ waiting time |
+| Tham số | Config Key | Mặc định | Ý nghĩa |
+|---------|------------|----------|---------|
+| `time_to_teleport` | `environment.time_to_teleport` | 500 | Teleport xe kẹt sau N giây |
+| `use_phase_standardizer` | `environment.use_phase_standardizer` | true | Map 4-value action to signal phases |
 
 **`time_to_teleport`**
 - **Ý nghĩa**: Nếu xe bị kẹt (không di chuyển) sau N giây, SUMO sẽ teleport xe đó.
 - **Tinh chỉnh**:
-  - 120-300 giây: Cho phép kẹt xe tự nhiên
+  - 300-500 giây: Cho phép kẹt xe tự nhiên
   - -1: Tắt teleport (xe kẹt vĩnh viễn - không khuyến nghị)
   
 > [!WARNING]
@@ -333,18 +306,6 @@ preprocessing:
 | `missing_lane_strategy` | "zero" | Xử lý làn thiếu |
 | `merge_strategy` | "mean" | Cách gộp làn thừa |
 
-**`standard_lanes_per_direction`**
-- **Ý nghĩa**: Số làn xe được chuẩn hóa cho mỗi hướng (N/E/S/W).
-- **Tinh chỉnh**:
-  - 2: Cho mạng lưới đơn giản (grid)
-  - 3: Cho mạng lưới có đường lớn (major arterials)
-
-**`merge_strategy`**
-- **Các lựa chọn**:
-  - `"mean"`: Trung bình features các làn (khuyến nghị)
-  - `"max"`: Lấy giá trị lớn nhất
-  - `"sum"`: Cộng tổng
-
 ### 5.2. Tham Số FRAP (Phase Standardization)
 
 ```yaml
@@ -357,77 +318,121 @@ preprocessing:
 |---------|----------|---------|
 | `standard_pattern` | "4phase" | Pattern pha chuẩn |
 
-**`standard_pattern`**
-- `"4phase"`: 4 pha chuẩn (NS-left, NS-through, EW-left, EW-through)
-- `"2phase"`: 2 pha đơn giản (NS, EW)
-
 ---
 
-## 6. Hướng Dẫn Tinh Chỉnh Theo Scenario
+## 6. Tham Số Reward
 
-### 6.1. Mạng Lưới Nhỏ (Grid 4x4)
+### 6.1. Cấu hình Reward Functions
 
-```bash
-python scripts/train_mgmq_ppo.py \
-  --network grid4x4 \
-  --iterations 200 \
-  --workers 2 \
-  --gat-hidden-dim 32 \
-  --gat-num-heads 4 \
-  --graphsage-hidden-dim 32 \
-  --gru-hidden-dim 16 \
-  --learning-rate 3e-4 \
-  --history-length 1
+```yaml
+reward:
+  functions:
+    - halt-veh-by-detectors    # Penalty for halting vehicles
+    - diff-departed-veh        # Outflow efficiency reward
+    - occupancy               # Occupancy penalty
+  weights: null               # Auto-compute equal weights if null
 ```
 
-### 6.2. Mạng Lưới Lớn (Zurich, Real-world)
+### 6.2. Available Reward Functions
 
-```bash
-python scripts/train_mgmq_ppo.py \
-  --network zurich \
-  --iterations 500 \
-  --workers 4 \
-  --gat-hidden-dim 64 \
-  --gat-num-heads 4 \
-  --graphsage-hidden-dim 64 \
-  --gru-hidden-dim 32 \
-  --learning-rate 1e-4 \
-  --patience 80 \
-  --history-length 5
-```
+| Function | Range | Mục tiêu |
+|----------|-------|----------|
+| `halt-veh-by-detectors` | [-3, 0] | Phạt xe dừng chờ |
+| `diff-departed-veh` | [0, 3] | Khuyến khích xả xe |
+| `occupancy` | [-3, 0] | Phạt độ chiếm dụng cao |
+| `average-speed` | [-3, 3] | Tối đa hóa tốc độ |
+| `queue` | [-3, 0] | Giảm hàng đợi |
+| `pressure` | [-3, 3] | Cân bằng lưu lượng |
+| `diff-waiting-time` | [-3, 3] | Giảm thời gian chờ |
+| `teleport-penalty` | [-3, 0] | Phạt xe bị teleport |
 
-### 6.3. Luồng Giao Thông Cao (High Traffic)
+### 6.3. Reward Weights
 
-```bash
-python scripts/train_mgmq_ppo.py \
-  --network grid4x4 \
-  --iterations 300 \
-  --learning-rate 1e-4 \
-  --patience 100 \
-  --history-length 5
-```
+```yaml
+# Equal weights (default)
+weights: null  # Auto: 1/n for each function
 
-**Lưu ý cho High Traffic:**
-- Tăng `time_to_teleport` lên 300-600 giây
-- Giảm `learning_rate` để ổn định hơn
-- Tăng `history_length` để học patterns tắc nghẽn
-
-### 6.4. Fine-tuning Model Đã Có
-
-```bash
-python scripts/train_mgmq_ppo.py \
-  --network grid4x4 \
-  --iterations 100 \
-  --learning-rate 1e-5 \
-  --patience 30 \
-  --checkpoint-interval 10
+# Custom weights (must sum to 1.0 for 3 functions)
+weights: [0.4, 0.4, 0.2]  # halt, departed, occupancy
 ```
 
 ---
 
-## 7. Best Practices
+## 7. Hướng Dẫn Tinh Chỉnh Theo Scenario
 
-### 7.1. Quy Trình Tinh Chỉnh Khuyến Nghị
+### 7.1. Mạng Lưới Nhỏ (Grid 4x4)
+
+```yaml
+# model_config.yml overrides
+mgmq:
+  gat:
+    hidden_dim: 64
+    output_dim: 32
+    num_heads: 4
+  graphsage:
+    hidden_dim: 64
+  gru:
+    hidden_dim: 32
+
+ppo:
+  learning_rate: 0.0008
+  train_batch_size: 256
+
+training:
+  num_iterations: 150
+  num_workers: 2
+```
+
+### 7.2. Mạng Lưới Lớn (8x8+, Real-world)
+
+```yaml
+mgmq:
+  gat:
+    hidden_dim: 128
+    output_dim: 64
+    num_heads: 4
+  graphsage:
+    hidden_dim: 128
+  gru:
+    hidden_dim: 64
+  history_length: 3
+
+ppo:
+  learning_rate: 0.0003
+  train_batch_size: 1024
+
+training:
+  num_iterations: 500
+  num_workers: 4
+  patience: 200
+```
+
+### 7.3. Luồng Giao Thông Cao (High Traffic)
+
+```yaml
+ppo:
+  learning_rate: 0.0003
+  entropy_coeff: 0.03
+
+training:
+  patience: 300
+
+environment:
+  time_to_teleport: 600
+  cycle_time: 120
+
+reward:
+  functions:
+    - halt-veh-by-detectors
+    - diff-departed-veh
+    - teleport-penalty
+```
+
+---
+
+## 8. Best Practices
+
+### 8.1. Quy Trình Tinh Chỉnh Khuyến Nghị
 
 ```mermaid
 graph TD
@@ -447,7 +452,7 @@ graph TD
     K --> L[Đánh giá trên test set]
 ```
 
-### 7.2. Monitoring Metrics
+### 8.2. Monitoring Metrics
 
 Các metrics quan trọng cần theo dõi:
 
@@ -456,8 +461,9 @@ Các metrics quan trọng cần theo dõi:
 3. **policy_loss**: Policy loss - nên giảm rồi ổn định
 4. **vf_loss**: Value function loss - nên giảm
 5. **entropy**: Entropy - nên giảm từ từ (không quá nhanh)
+6. **custom_metrics**: Traffic-specific (waiting_time, throughput)
 
-### 7.3. Debugging Common Issues
+### 8.3. Debugging Common Issues
 
 | Vấn đề | Nguyên nhân có thể | Giải pháp |
 |--------|-------------------|-----------|
@@ -466,43 +472,88 @@ Các metrics quan trọng cần theo dõi:
 | Memory error | Quá nhiều workers | Giảm workers hoặc tăng RAM |
 | SUMO crashed | Timeout hoặc config sai | Kiểm tra network files |
 | All rewards = 0 | Detector không hoạt động | Kiểm tra detector.add.xml |
+| NaN rewards | Episode không hoàn thành | Tăng time_to_teleport, kiểm tra route files |
 
-### 7.4. Lưu và Load Checkpoint
+### 8.4. Checkpoints
 
 ```python
 # Checkpoint được lưu tự động tại:
 # results_mgmq/{experiment_name}/checkpoint_XXXXXX/
 
-# Load checkpoint để tiếp tục training:
-# (Sử dụng Ray Tune restore functionality)
+# Load checkpoint để tiếp tục training hoặc evaluation:
+# python scripts/eval_mgmq_ppo.py --checkpoint <path>
 ```
 
 ---
 
-## Phụ Lục: Bảng Tham Chiếu Nhanh
+## Phụ Lục: model_config.yml Template
 
-### Command Line Arguments
+```yaml
+# Full template with all configurable parameters
+network:
+  name: grid4x4
+  net_file: grid4x4.net.xml
+  route_files:
+    - grid4x4.rou.xml
+    - grid4x4-demo.rou.xml
+  detector_file: detector.add.xml
+  intersection_config: intersection_config.json
 
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `--network` | str | grid4x4 | Tên network |
-| `--iterations` | int | 200 | Số iterations |
-| `--workers` | int | 2 | Số workers |
-| `--checkpoint-interval` | int | 20 | Tần suất checkpoint |
-| `--reward-threshold` | float | None | Ngưỡng reward để dừng |
-| `--experiment-name` | str | None | Tên experiment |
-| `--gui` | flag | False | Bật SUMO GUI |
-| `--gpu` | flag | False | Sử dụng GPU |
-| `--seed` | int | 42 | Random seed |
-| `--output-dir` | str | ./results_mgmq | Thư mục output |
-| `--gat-hidden-dim` | int | 256 | GAT hidden dim |
-| `--gat-output-dim` | int | 128 | GAT output dim |
-| `--gat-num-heads` | int | 4 | Số GAT heads |
-| `--graphsage-hidden-dim` | int | 256 | GraphSAGE hidden dim |
-| `--gru-hidden-dim` | int | 128 | GRU hidden dim |
-| `--dropout` | float | 0.3 | Dropout rate |
-| `--learning-rate` | float | 3e-4 | Learning rate |
-| `--patience` | int | 50 | Early stopping patience |
-| `--history-length` | int | 4 | Observation history length |
+mgmq:
+  gat:
+    hidden_dim: 128
+    output_dim: 64
+    num_heads: 4
+  graphsage:
+    hidden_dim: 128
+  gru:
+    hidden_dim: 64
+  policy:
+    hidden_dims: [128, 64]
+  value:
+    hidden_dims: [128, 64]
+  dropout: 0.3
+  history_length: 1
+  local_gnn:
+    enabled: false
+    max_neighbors: 4
+    obs_dim: 48
 
----
+ppo:
+  learning_rate: 0.0008
+  gamma: 0.99
+  lambda_: 0.95
+  entropy_coeff: 0.02
+  clip_param: 0.2
+  vf_clip_param: 10.0
+  train_batch_size: 512
+  minibatch_size: 64
+  num_sgd_iter: 10
+  grad_clip: 0.5
+
+training:
+  num_iterations: 200
+  num_workers: 2
+  num_envs_per_worker: 1
+  checkpoint_interval: 5
+  patience: 500
+  seed: 42
+  use_gpu: false
+  output_dir: "./results_mgmq"
+
+reward:
+  functions:
+    - halt-veh-by-detectors
+    - diff-departed-veh
+    - occupancy
+  weights: null
+
+environment:
+  num_seconds: 8000
+  max_green: 90
+  min_green: 5
+  cycle_time: 90
+  yellow_time: 3
+  time_to_teleport: 500
+  use_phase_standardizer: true
+```

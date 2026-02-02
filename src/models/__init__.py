@@ -1,12 +1,13 @@
 """MGMQ Models for Traffic Signal Control."""
 
 from .gat_layer import GATLayer, MultiHeadGATLayer
-from .graphsage_bigru import GraphSAGE_BiGRU
+from .graphsage_bigru import GraphSAGE_BiGRU, DirectionalGraphSAGE, NeighborGraphSAGE_BiGRU
 from .mgmq_model import (
-    MGMQModel, 
+    MGMQModel,
+    MGMQEncoder,
     MGMQTorchModel,
-    LocalTemporalMGMQEncoder,
-    LocalTemporalMGMQTorchModel,
+    LocalMGMQEncoder,
+    LocalMGMQTorchModel,
 )
 from .dirichlet_distribution import TorchDirichlet, register_dirichlet_distribution
 
@@ -14,10 +15,13 @@ __all__ = [
     "GATLayer",
     "MultiHeadGATLayer", 
     "GraphSAGE_BiGRU",
+    "DirectionalGraphSAGE",
+    "NeighborGraphSAGE_BiGRU",
     "MGMQModel",
+    "MGMQEncoder",
     "MGMQTorchModel",
-    "LocalTemporalMGMQEncoder",
-    "LocalTemporalMGMQTorchModel",
+    "LocalMGMQEncoder",
+    "LocalMGMQTorchModel",
     "TorchDirichlet",
     "register_dirichlet_distribution",
 ]

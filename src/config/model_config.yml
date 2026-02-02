@@ -33,13 +33,13 @@ network:
 mgmq:
   # GAT (Graph Attention Network) parameters
   gat:
-    hidden_dim: 128       # GAT hidden dimension
-    output_dim: 64       # GAT output dimension per head
+    hidden_dim: 32       # GAT hidden dimension
+    output_dim: 32       # GAT output dimension per head
     num_heads: 4          # Number of GAT attention heads
     
   # GraphSAGE parameters
   graphsage:
-    hidden_dim: 128       # GraphSAGE hidden dimension
+    hidden_dim: 64       # GraphSAGE hidden dimension
     
   # Bi-GRU parameters
   gru:
@@ -50,7 +50,7 @@ mgmq:
     hidden_dims: [128, 64]   # Policy network hidden dimensions
     
   value:
-    hidden_dims: [128, 64]   # Value network hidden dimensions
+    hidden_dims: [128, 128, 64]   # Value network hidden dimensions
     
   # Regularization
   dropout: 0.3
@@ -60,7 +60,7 @@ mgmq:
   
   # Local GNN settings
   local_gnn:
-    enabled: false        # Use LocalTemporalMGMQTorchModel
+    enabled: false        # Use LocalMGMQTorchModel
     max_neighbors: 4      # Maximum neighbors (K) for local GNN
     obs_dim: 48           # 4 features * 12 detectors
 
@@ -73,7 +73,7 @@ ppo:
   lambda_: 0.95           # GAE lambda
   entropy_coeff: 0.02     # Entropy coefficient
   clip_param: 0.2         # PPO clip parameter
-  vf_clip_param: 10.0     # Value function clip parameter
+  vf_clip_param: 5.0     # Value function clip parameter
   train_batch_size: 512  # Training batch size
   minibatch_size: 64     # Mini batch size
   num_sgd_iter: 10        # Number of SGD iterations

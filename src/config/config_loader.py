@@ -9,6 +9,7 @@ Date: 2025
 """
 
 import yaml
+import json
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -288,3 +289,71 @@ def get_history_length(config: Dict[str, Any]) -> int:
         History length value
     """
     return config.get("mgmq", {}).get("history_length", 4)
+
+
+def load_training_config(checkpoint_path: str) -> Optional[Dict[str, Any]]:
+    """
+    Load training configuration from the experiment directory.
+    
+    Args:
+        checkpoint_path: Path to the checkpoint
+        
+    Returns:
+        Training configuration dict or None if not found
+    """
+    try:
+        checkpoint_dir = Path(checkpoint_path)
+        
+        # Add support for simple string paths that might handle PyArrow paths
+        if not checkpoint_dir.exists():
+            print(f"⚠ Warning: Checkpoint path does not exist: {checkpoint_path}")
+            return None
+        
+        # Try to find mgmq_training_config.json in parent directories
+        search_dirs = [
+            checkpoint_dir.parent,  # checkpoint parent
+            checkpoint_dir.parent.parent,  # experiment dir
+            checkpoint_dir.parent.parent.parent,  # results dir
+        ]
+        
+        for search_dir in search_dirs:
+            config_file = search_dir / "mgmq_training_config.json"
+            if config_file.exists():
+                print(f"✓ Found training config: {config_file}")
+                with open(config_file, "r") as f:
+                    return json.load(f)
+        
+        # Also try to find in the checkpoint directory itself
+        for parent in checkpoint_dir.parents:
+            config_file = parent / "mgmq_training_config.json"
+            if config_file.exists():
+                print(f"✓ Found training config: {config_file}")
+                with open(config_file, "r") as f:
+                    return json.load(f)
+        
+        # Fallback: Try to load from params.json (RLlib default checkpoint config)
+        params_file = checkpoint_dir.parent / "params.json"
+        if params_file.exists():
+            print(f"✓ Found RLlib params.json: {params_file}")
+            with open(params_file, "r") as f:
+                full_config = json.load(f)
+                # Extract env_config from params.json
+                if "env_config" in full_config:
+                    # Also try to retrieve network name if possible
+                    result = {"env_config": full_config["env_config"]}
+                    
+                    # Try to infer network name from path
+                    path_str = str(checkpoint_path)
+                    for net in ["grid4x4", "4x4loop", "zurich", "PhuQuoc"]:
+                        if net in path_str:
+                            result["network_name"] = net
+                            break
+                            
+                    return result
+        
+        print("⚠ Warning: Training config not found")
+        return None
+        
+    except Exception as e:
+        print(f"⚠ Error loading training config: {e}")
+        return None

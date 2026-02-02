@@ -22,7 +22,7 @@ from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import ModelConfigDict, TensorType
 
 from .gat_layer import GATLayer, MultiHeadGATLayer, DualStreamGATLayer, get_lane_conflict_matrix, get_lane_cooperation_matrix
-from .graphsage_bigru import GraphSAGE_BiGRU, TemporalGraphSAGE_BiGRU
+from .graphsage_bigru import GraphSAGE_BiGRU, NeighborGraphSAGE_BiGRU
 
 
 # Log std bounds to prevent entropy explosion
@@ -195,7 +195,7 @@ class MGMQEncoder(nn.Module):
            -> Joint Embedding (concatenation)
     
     Args:
-        obs_dim: Observation dimension per agent (flattened if temporal)
+        obs_dim: Observation dimension per agent
         num_agents: Number of traffic signals/agents
         gat_hidden_dim: Hidden dimension for GAT
         gat_output_dim: Output dimension for GAT
@@ -205,7 +205,6 @@ class MGMQEncoder(nn.Module):
         dropout: Dropout rate
         network_adjacency: Pre-computed directional adjacency matrix [4, N, N]
                           or simple adjacency [N, N] (will be expanded)
-        window_size: Size of observation history window (1 for non-temporal)
     """
     
     def __init__(
@@ -219,32 +218,22 @@ class MGMQEncoder(nn.Module):
         gru_hidden_dim: int = 32,
         dropout: float = 0.3,
         network_adjacency: Optional[torch.Tensor] = None,
-        window_size: int = 1
     ):
         super(MGMQEncoder, self).__init__()
         self.obs_dim = obs_dim
         self.num_agents = num_agents
         self.gat_output_dim = gat_output_dim
         self.gat_num_heads = gat_num_heads
-        self.window_size = window_size
-        
-        # Calculate feature dimension per time step
-        self.total_feature_dim = obs_dim // window_size
         
         # Assume features are organized by lane (12 lanes)
-        # If not divisible by 12, we might need a different approach or projection
         self.num_lanes = 12
-        if self.total_feature_dim % self.num_lanes == 0:
-            self.lane_feature_dim = self.total_feature_dim // self.num_lanes
+        if obs_dim % self.num_lanes == 0:
+            self.lane_feature_dim = obs_dim // self.num_lanes
         else:
-            # Fallback: Project entire observation to 12 * hidden
-            self.lane_feature_dim = self.total_feature_dim # Treat as 1 node if not divisible? 
-            # Actually, let's force projection to 12 nodes
-            print(f"Warning: Feature dim {self.total_feature_dim} not divisible by 12 lanes. Using projection.")
-            self.lane_feature_dim = gat_hidden_dim # Arbitrary, will be handled by input_proj
+            print(f"Warning: Feature dim {obs_dim} not divisible by 12 lanes. Using projection.")
+            self.lane_feature_dim = gat_hidden_dim
             
         # Layer 1: Dual-Stream GAT for intersection embedding (Lane-level)
-        # Replaces separate input_proj and dual GAT layers
         self.dual_stream_gat = DualStreamGATLayer(
             in_features=self.lane_feature_dim,
             hidden_dim=gat_hidden_dim,
@@ -255,26 +244,14 @@ class MGMQEncoder(nn.Module):
         )
         
         # Layer 2: GraphSAGE + Bi-GRU for network embedding
-        # Output dimension of DualStreamGATLayer is n_heads * gat_output_dim
         gat_total_output = gat_output_dim * gat_num_heads
         
-        if window_size > 1:
-            # Use Temporal version if history is provided
-            self.graphsage_bigru = TemporalGraphSAGE_BiGRU(
-                in_features=gat_total_output,
-                hidden_features=graphsage_hidden_dim,
-                gru_hidden_size=gru_hidden_dim,
-                history_length=window_size,
-                dropout=dropout
-            )
-        else:
-            # Use standard version
-            self.graphsage_bigru = GraphSAGE_BiGRU(
-                in_features=gat_total_output,
-                hidden_features=graphsage_hidden_dim,
-                gru_hidden_size=gru_hidden_dim,
-                dropout=dropout
-            )
+        self.graphsage_bigru = GraphSAGE_BiGRU(
+            in_features=gat_total_output,
+            hidden_features=graphsage_hidden_dim,
+            gru_hidden_size=gru_hidden_dim,
+            dropout=dropout
+        )
         
         # Store network adjacency matrix (directional: [4, N, N] or simple: [N, N])
         if network_adjacency is not None:
@@ -335,127 +312,78 @@ class MGMQEncoder(nn.Module):
         # Handle single vs multi-agent observations
         if obs.dim() == 2:
             # Single agent observation: [batch, obs_dim]
-            # Reshape to [batch, 1, obs_dim]
             obs = obs.unsqueeze(1)
             num_agents = 1
         else:
             # Multi-agent: [batch, num_agents, obs_dim]
             num_agents = obs.size(1)
             
-        # Reshape for temporal processing
-        # obs: [batch, num_agents, window_size * total_feature_dim]
-        # -> [batch, num_agents, window_size, total_feature_dim]
-        obs_reshaped = obs.reshape(batch_size, num_agents, self.window_size, self.total_feature_dim)
-        
         # --- Layer 1: Lane-level GAT (Intersection Embedding) ---
         
-        # We need to process each agent and each time step
-        # Flatten: [batch * num_agents * window_size, total_feature_dim]
-        # NOTE: Use .reshape() instead of .view() to handle non-contiguous tensors
-        obs_flat = obs_reshaped.reshape(-1, self.total_feature_dim)
+        # Flatten: [batch * num_agents, obs_dim]
+        obs_flat = obs.reshape(-1, self.obs_dim)
         
-        # Reshape to 12 lanes: [batch * ..., 12, lane_feature_dim]
-        if self.total_feature_dim % 12 == 0:
-            lane_features = obs_flat.view(-1, 12, self.total_feature_dim // 12)
-        # Apply Dual-Stream GAT on lanes
+        # Reshape to 12 lanes: [batch * num_agents, 12, lane_feature_dim]
+        if self.obs_dim % 12 == 0:
+            lane_features = obs_flat.view(-1, 12, self.obs_dim // 12)
+        else:
+            raise ValueError(f"obs_dim {self.obs_dim} must be divisible by 12 for GAT.")
+
         # Expand adj matrices
         lane_adj_coop_batch = self.lane_adj_coop.unsqueeze(0).expand(lane_features.size(0), -1, -1)
         lane_adj_conf_batch = self.lane_adj_conf.unsqueeze(0).expand(lane_features.size(0), -1, -1)
         
         # Run Dual-Stream GAT
-        # Input to dual_stream_gat is raw lane features (it handles projection)
-        # h_lanes here is raw features if we removed input_proj
-        # Wait, I removed input_proj in __init__ but need to adjust the reshape logic above.
-        
-        # Let's fix the reshape logic first.
-        # obs_flat: [batch * ..., total_feature_dim]
-        if self.total_feature_dim % 12 == 0:
-             lane_features = obs_flat.view(-1, 12, self.total_feature_dim // 12)
-        else:
-             # Fallback: we need to project first if not divisible, but DualStreamGAT expects raw features per lane.
-             # If not divisible, we can't easily split into lanes.
-             # For now, let's assume it is divisible or we project to 12*F first.
-             # If we use the fallback projection from before, we need to keep a projection layer for this case.
-             # But standard MGMQ assumes 5 features per lane * 12 lanes = 60 features.
-             # If total_feature_dim is not divisible by 12, something is wrong with input or it's not lane-based.
-             # I will assume it is divisible for now as per standard MGMQ.
-             raise ValueError(f"Total feature dim {self.total_feature_dim} must be divisible by 12 for GAT.")
-
         gat_out = self.dual_stream_gat(lane_features, lane_adj_coop_batch, lane_adj_conf_batch)
         
         # Pooling (Mean) over lanes to get Intersection Embedding
-        # [batch * ..., gat_output_dim * heads]
+        # [batch * num_agents, gat_output_dim * heads]
         intersection_emb_flat = gat_out.mean(dim=1)
         
-        # Reshape back to [batch, window_size, num_agents, emb_dim]
-        # Note: obs_reshaped was [batch, num_agents, window_size, ...]
-        # So intersection_emb_flat corresponds to batch * num_agents * window_size
-        intersection_emb_temporal = intersection_emb_flat.view(
-            batch_size, num_agents, self.window_size, -1
-        )
-        
-        # Permute to [batch, window_size, num_agents, emb_dim] for GraphSAGE compatibility if needed
-        # But GraphSAGE expects [batch, T, N, feat]
-        intersection_emb_temporal = intersection_emb_temporal.permute(0, 2, 1, 3)
-        
-        # Get current time step embedding
-        # [batch, num_agents, emb_dim]
-        intersection_emb = intersection_emb_temporal[:, -1, :, :]
+        # Reshape back to [batch, num_agents, emb_dim]
+        intersection_emb = intersection_emb_flat.view(batch_size, num_agents, -1)
         
         # --- Layer 2: Network-level GraphSAGE (Network Embedding) ---
         
         # Get network adjacency (directional: [4, N, N])
         if num_agents == 1:
-            # Single agent: create dummy directional adjacency
             net_adj = torch.ones(4, 1, 1, device=obs.device)
         else:
-            # self.network_adj is [4, N, N]
-            net_adj = self.network_adj[:, :num_agents, :num_agents]  # [4, num_agents, num_agents]
+            net_adj = self.network_adj[:, :num_agents, :num_agents]
         
-        if self.window_size > 1:
-            # Temporal GraphSAGE
-            # Input: [batch, T, N, features], adj_directions: [4, N, N]
-            network_emb = self.graphsage_bigru(intersection_emb_temporal, net_adj)
-        else:
-            # Standard GraphSAGE
-            # Input: [batch, N, features], adj_directions: [4, N, N]
-            # Output sequence: [batch, num_agents, graphsage_hidden_dim]
-            network_emb_seq = self.graphsage_bigru(intersection_emb, net_adj, return_sequence=True)
-            # Mean pooling over agents
-            network_emb = network_emb_seq.mean(dim=1)
+        # GraphSAGE: Input [batch, N, features], adj [4, N, N]
+        # Returns [batch, num_agents, hidden_features]
+        network_emb_seq = self.graphsage_bigru(intersection_emb, net_adj)
+        # Mean pooling over agents for network embedding
+        network_emb = network_emb_seq.mean(dim=1)
         
         # Select intersection embedding for specific agent or use mean
         if agent_idx is not None and num_agents > 1:
-            # [batch, intersection_emb_dim]
             agent_intersection_emb = intersection_emb[:, agent_idx, :]
         else:
-            # Mean pooling for single-agent or when no specific agent
             agent_intersection_emb = intersection_emb.mean(dim=1)
         
         # Joint embedding: concatenate intersection and network embeddings
-        # [batch, joint_emb_dim]
         joint_emb = torch.cat([agent_intersection_emb, network_emb], dim=-1)
         
         return joint_emb, agent_intersection_emb, network_emb
 
 
-class LocalTemporalMGMQEncoder(nn.Module):
+class LocalMGMQEncoder(nn.Module):
     """
-    Local Temporal MGMQ Encoder for Pre-packaged Observations.
+    Local MGMQ Encoder with Spatial Neighbor Aggregation.
     
-    This encoder is designed for use with NeighborTemporalObservationFunction,
-    which packages neighbor features directly in the observation. This makes it
-    compatible with RLlib's batch shuffling since each sample is self-contained.
+    Used when --use-local-gnn is enabled. Each agent aggregates information
+    from its neighbors using BiGRU for SPATIAL aggregation.
     
     Architecture:
-    1. Time-distributed GAT on lanes (for self and each neighbor)
-    2. Combine self + neighbors into local graph
-    3. TemporalGraphSAGE_BiGRU on local star adjacency
+    1. GAT on lanes for self node
+    2. GAT on lanes for each neighbor node  
+    3. NeighborGraphSAGE_BiGRU for SPATIAL aggregation over neighbors
     
     Args:
-        obs_dim: Feature dimension per timestep (typically 48 = 4 features * 12 detectors)
+        obs_dim: Feature dimension (48 = 4 features * 12 detectors)
         max_neighbors: Maximum number of neighbors (K)
-        window_size: History length (T)
         gat_hidden_dim: GAT hidden dimension
         gat_output_dim: GAT output dimension per head
         gat_num_heads: Number of GAT attention heads
@@ -468,7 +396,6 @@ class LocalTemporalMGMQEncoder(nn.Module):
         self,
         obs_dim: int = 48,
         max_neighbors: int = 4,
-        window_size: int = 5,
         gat_hidden_dim: int = 64,
         gat_output_dim: int = 32,
         gat_num_heads: int = 4,
@@ -476,13 +403,10 @@ class LocalTemporalMGMQEncoder(nn.Module):
         gru_hidden_dim: int = 32,
         dropout: float = 0.3,
     ):
-        super(LocalTemporalMGMQEncoder, self).__init__()
+        super(LocalMGMQEncoder, self).__init__()
         self.obs_dim = obs_dim
         self.max_neighbors = max_neighbors
-        self.window_size = window_size
         self.num_lanes = 12
-        
-        # Calculate lane feature dimension
         self.lane_feature_dim = obs_dim // self.num_lanes  # 48/12 = 4
         
         # Dual-Stream GAT
@@ -502,24 +426,14 @@ class LocalTemporalMGMQEncoder(nn.Module):
         # GAT output dimension
         self.gat_total_output = gat_output_dim * gat_num_heads
         
-        # GraphSAGE for local graph - choose based on window_size
-        if window_size > 1:
-            # Use Temporal version if history is provided
-            self.graphsage_layer = TemporalGraphSAGE_BiGRU(
-                in_features=self.gat_total_output,
-                hidden_features=graphsage_hidden_dim,
-                gru_hidden_size=gru_hidden_dim,
-                history_length=window_size,
-                dropout=dropout
-            )
-        else:
-            # Use standard DirectionalGraphSAGE (no temporal component)
-            self.graphsage_layer = GraphSAGE_BiGRU(
-                in_features=self.gat_total_output,
-                hidden_features=graphsage_hidden_dim,
-                gru_hidden_size=gru_hidden_dim,
-                dropout=dropout
-            )
+        # NeighborGraphSAGE_BiGRU for SPATIAL aggregation
+        self.neighbor_aggregator = NeighborGraphSAGE_BiGRU(
+            in_features=self.gat_total_output,
+            hidden_features=graphsage_hidden_dim,
+            gru_hidden_size=gru_hidden_dim,
+            max_neighbors=max_neighbors,
+            dropout=dropout
+        )
         
         # Output dimensions
         self.intersection_emb_dim = self.gat_total_output
@@ -536,137 +450,52 @@ class LocalTemporalMGMQEncoder(nn.Module):
         
         Args:
             obs_dict: Dict with keys:
-                - self_features: [B, T, 48]
-                - neighbor_features: [B, K, T, 48]
+                - self_features: [B, 48]
+                - neighbor_features: [B, K, 48]
                 - neighbor_mask: [B, K]
                 
         Returns:
             joint_emb: [B, joint_emb_dim]
         """
-        self_feat = obs_dict["self_features"]        # [B, T, 48]
-        neighbor_feat = obs_dict["neighbor_features"] # [B, K, T, 48]
+        self_feat = obs_dict["self_features"]         # [B, 48]
+        neighbor_feat = obs_dict["neighbor_features"] # [B, K, 48]
         mask = obs_dict["neighbor_mask"]              # [B, K]
         
-        B, T, feat_dim = self_feat.shape
+        B = self_feat.size(0)
         K = neighbor_feat.size(1)
         
-        # ======== 1. Time-distributed GAT for self ========
-        # [B, T, 48] -> [B, T, gat_dim]
-        self_emb = self._run_gat_temporal(self_feat)
+        # 1. GAT for self features
+        self_emb = self._run_gat(self_feat)
         
-        # ======== 2. Time-distributed GAT for neighbors ========
-        # [B, K, T, 48] -> [B*K, T, 48] -> [B*K, T, gat_dim] -> [B, K, T, gat_dim]
-        neighbor_feat_flat = neighbor_feat.reshape(B * K, T, feat_dim)
-        neighbor_emb_flat = self._run_gat_temporal(neighbor_feat_flat)
-        neighbor_emb = neighbor_emb_flat.reshape(B, K, T, -1)
+        # 2. GAT for neighbor features
+        neighbor_feat_flat = neighbor_feat.reshape(B * K, -1)
+        neighbor_emb_flat = self._run_gat(neighbor_feat_flat)
+        neighbor_emb = neighbor_emb_flat.reshape(B, K, -1)
         
-        # ======== 3. Combine into local graph ========
-        # Stack: [B, T, 1+K, gat_dim]
-        # self_emb: [B, T, gat_dim] -> [B, T, 1, gat_dim]
-        # neighbor_emb: [B, K, T, gat_dim] -> [B, T, K, gat_dim]
-        all_nodes = torch.cat([
-            self_emb.unsqueeze(2),                    # [B, T, 1, gat_dim]
-            neighbor_emb.permute(0, 2, 1, 3)          # [B, T, K, gat_dim]
-        ], dim=2)  # -> [B, T, 1+K, gat_dim]
+        # 3. Spatial Neighbor Aggregation using BiGRU
+        network_emb = self.neighbor_aggregator(
+            self_features=self_emb,
+            neighbor_features=neighbor_emb,
+            neighbor_mask=mask
+        )
         
-        # ======== 4. Build local star adjacency ========
-        local_adj = self._build_star_adjacency(mask)  # [B, 4, 1+K, 1+K]
-        
-        # ======== 5. GraphSAGE (Temporal or Standard based on window_size) ========
-        if self.window_size > 1:
-            # Temporal mode: Input [B, T, N, features] where N = 1+K
-            network_emb = self.graphsage_layer(all_nodes, local_adj)  # [B, hidden]
-        else:
-            # Non-temporal mode: Input [B, N, features] - use last timestep only
-            # all_nodes: [B, T, 1+K, gat_dim] -> [B, 1+K, gat_dim]
-            all_nodes_last = all_nodes[:, -1, :, :]  # [B, 1+K, gat_dim]
-            # GraphSAGE_BiGRU expects [B, N, features] and [4, N, N] or [B, 4, N, N]
-            network_emb_seq = self.graphsage_layer(all_nodes_last, local_adj, return_sequence=True)  # [B, N, hidden]
-            network_emb = network_emb_seq.mean(dim=1)  # [B, hidden]
-        
-        # ======== 6. Joint Embedding ========
-        # Intersection embedding: last timestep của self
-        intersection_emb = self_emb[:, -1, :]  # [B, gat_dim]
-        
-        joint_emb = torch.cat([intersection_emb, network_emb], dim=-1)
+        # 4. Joint Embedding
+        joint_emb = torch.cat([self_emb, network_emb], dim=-1)
         
         return joint_emb
         
-    def _run_gat_temporal(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply time-distributed GAT.
+    def _run_gat(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply GAT to features."""
+        batch_size = x.size(0)
+        lane_feat = x.view(batch_size, self.num_lanes, self.lane_feature_dim)
         
-        Args:
-            x: [B, T, 48] hoặc [B*K, T, 48]
-        Returns:
-            [B, T, gat_dim] hoặc [B*K, T, gat_dim]
-        """
-        batch_size, T, feat_dim = x.shape
+        adj_coop = self.lane_adj_coop.unsqueeze(0).expand(batch_size, -1, -1)
+        adj_conf = self.lane_adj_conf.unsqueeze(0).expand(batch_size, -1, -1)
         
-        # Flatten B and T: [B*T, 48]
-        x_flat = x.reshape(-1, feat_dim)
+        gat_out = self.dual_stream_gat(lane_feat, adj_coop, adj_conf)
+        gat_pooled = gat_out.mean(dim=1)
         
-        # Reshape to lanes: [B*T, 12, 4]
-        lane_feat = x_flat.view(-1, self.num_lanes, self.lane_feature_dim)
-        
-        # Reshape to lanes: [B*T, 12, 4]
-        lane_feat = x_flat.view(-1, self.num_lanes, self.lane_feature_dim)
-        
-        # Expand lane adjacency
-        adj_coop = self.lane_adj_coop.unsqueeze(0).expand(lane_feat.size(0), -1, -1)
-        adj_conf = self.lane_adj_conf.unsqueeze(0).expand(lane_feat.size(0), -1, -1)
-        
-        # Dual-Stream GAT forward
-        gat_out = self.dual_stream_gat(lane_feat, adj_coop, adj_conf)  # [B*T, 12, gat_dim]
-        gat_pooled = gat_out.mean(dim=1)  # [B*T, gat_dim]
-        
-        # Reshape back: [B, T, gat_dim]
-        return gat_pooled.view(batch_size, T, -1)
-        
-    def _build_star_adjacency(self, mask: torch.Tensor) -> torch.Tensor:
-        """Build 1-hop star graph directional adjacency for local observation.
-        
-        Constructs a directional adjacency matrix for a star graph where:
-        - Node 0: Self (central node)
-        - Node 1: North neighbor (direction 0)
-        - Node 2: East neighbor (direction 1)
-        - Node 3: South neighbor (direction 2)
-        - Node 4: West neighbor (direction 3)
-        
-        Edge Logic:
-        - Self -> North neighbor: edge in direction 0 (North)
-        - North neighbor -> Self: edge in direction 2 (South)
-        (and similarly for other directions)
-        
-        Args:
-            mask: [B, K] - Binary mask, 1 if neighbor valid, 0 otherwise
-                  K should be 4 for standard 4-way intersection
-        Returns:
-            adj: [B, 4, 1+K, 1+K] - Directional adjacency matrices
-                 Channel 0: North edges
-                 Channel 1: East edges
-                 Channel 2: South edges
-                 Channel 3: West edges
-        """
-        B, K = mask.shape
-        N = 1 + K  # Total nodes: Self + K neighbors
-        
-        # Create directional adjacency: [B, 4, N, N]
-        adj = torch.zeros(B, 4, N, N, device=mask.device)
-        
-        # Build edges for each direction
-        for direction in range(min(K, 4)):
-            neighbor_idx = direction + 1  # Neighbor position in adj (1-indexed)
-            
-            # Edge: Self (idx 0) -> Neighbor in this direction
-            # Apply mask so invalid neighbors have 0 weight
-            adj[:, direction, 0, neighbor_idx] = mask[:, direction]
-            
-            # Edge: Neighbor -> Self (opposite direction)
-            # If neighbor is to North (dir 0), self is to South (dir 2) from its view
-            opposite_dir = (direction + 2) % 4
-            adj[:, opposite_dir, neighbor_idx, 0] = mask[:, direction]
-            
-        return adj
+        return gat_pooled
 
 
 """
@@ -1080,17 +909,17 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         return joint_emb
 
 
-class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
+class LocalMGMQTorchModel(TorchModelV2, nn.Module):
     """
-    RLlib wrapper for LocalTemporalMGMQEncoder with Dict observation space.
+    RLlib wrapper for LocalMGMQEncoder with Dict observation space.
     
-    This model is designed for use with NeighborTemporalObservationFunction,
+    This model is designed for use with NeighborObservationFunction,
     which provides pre-packaged observations with neighbor features.
     
     Observation space expected:
         Dict({
-            "self_features": Box[T, feature_dim],
-            "neighbor_features": Box[K, T, feature_dim],
+            "self_features": Box[feature_dim],
+            "neighbor_features": Box[K, feature_dim],
             "neighbor_mask": Box[K]
         })
     """
@@ -1104,18 +933,17 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
         name: str,
         **kwargs
     ):
-        """Initialize the local temporal MGMQ model for RLlib."""
+        """Initialize the local MGMQ model for RLlib."""
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         nn.Module.__init__(self)
         
         custom_config = model_config.get("custom_model_config", {})
         
         # Extract dimensions from Dict observation space
-        # obs_space should be a Dict space
         if hasattr(obs_space, 'spaces'):
             # Dict space
-            self_shape = obs_space.spaces["self_features"].shape  # (T, feature_dim)
-            neighbor_shape = obs_space.spaces["neighbor_features"].shape  # (K, T, feature_dim)
+            self_shape = obs_space.spaces["self_features"].shape  # (feature_dim,)
+            neighbor_shape = obs_space.spaces["neighbor_features"].shape  # (K, feature_dim)
         elif hasattr(obs_space, 'original_space'):
             # Flattened Dict - get original
             orig = obs_space.original_space
@@ -1123,13 +951,12 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
             neighbor_shape = orig.spaces["neighbor_features"].shape
         else:
             # Fallback defaults
-            T = custom_config.get("window_size", 5)
             feature_dim = custom_config.get("obs_dim", 48)
             K = custom_config.get("max_neighbors", 4)
-            self_shape = (T, feature_dim)
-            neighbor_shape = (K, T, feature_dim)
+            self_shape = (feature_dim,)
+            neighbor_shape = (K, feature_dim)
         
-        T, feature_dim = self_shape
+        feature_dim = self_shape[0] if len(self_shape) == 1 else self_shape[-1]
         K = neighbor_shape[0]
         
         # Model hyperparameters
@@ -1142,18 +969,16 @@ class LocalTemporalMGMQTorchModel(TorchModelV2, nn.Module):
         value_hidden_dims = custom_config.get("value_hidden_dims", [128, 64])
         dropout = custom_config.get("dropout", 0.3)
         
-        # NEW: Softmax-based output option to fix Scale Ambiguity problem
-        # === ACTION DISTRIBUTION OPTIONS ===
-        self.use_dirichlet = custom_config.get("use_dirichlet", True)  # Default: True
-        self.use_softmax_output = custom_config.get("use_softmax_output", False)  # Legacy fallback
+        # Action distribution options
+        self.use_dirichlet = custom_config.get("use_dirichlet", True)
+        self.use_softmax_output = custom_config.get("use_softmax_output", False)
         self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
-        self.action_dim = int(np.prod(action_space.shape))  # Store for forward()
+        self.action_dim = int(np.prod(action_space.shape))
         
         # MGMQ Encoder
-        self.mgmq_encoder = LocalTemporalMGMQEncoder(
+        self.mgmq_encoder = LocalMGMQEncoder(
             obs_dim=feature_dim,
             max_neighbors=K,
-            window_size=T,
             gat_hidden_dim=gat_hidden_dim,
             gat_output_dim=gat_output_dim,
             gat_num_heads=gat_num_heads,

@@ -65,17 +65,31 @@ class Phase:
 class PhaseStandardizer:
     """Standardizes traffic signal phases based on movement patterns.
     
-    The FRAP module maps actual signal phases to standard movement combinations.
+    The FRAP module maps actual signal phases to 8 standard movement combinations.
     This allows the RL agent to learn phase selection based on traffic demand
     for specific movements, regardless of the actual phase definitions.
     
-    Standard Phase Patterns (NEMA-like):
-    - Phase 1: NS Through (NT + ST)
-    - Phase 2: NS Left (NL + SL)
-    - Phase 3: EW Through (ET + WT)
-    - Phase 4: EW Left (EL + WL)
+    8 Standard Phase Patterns:
+    ============================================
+    Group 1: Dual-Through Phases (High throughput)
+    - Phase A (0): N-S Through (NT + ST + NR + SR) - North-South through + right
+    - Phase B (1): E-W Through (ET + WT + ER + WR) - East-West through + right
     
-    For simpler signals, phases may be combined or some may be missing.
+    Group 2: Dual-Left Phases (Protected left turns)
+    - Phase C (2): N-S Left (NL + SL) - North-South left turns
+    - Phase D (3): E-W Left (EL + WL) - East-West left turns
+    
+    Group 3: Single-Approach Phases (One direction green)
+    - Phase E (4): North Green (NT + NL + NR) - All North movements
+    - Phase F (5): South Green (ST + SL + SR) - All South movements
+    - Phase G (6): East Green (ET + EL + ER) - All East movements
+    - Phase H (7): West Green (WT + WL + WR) - All West movements
+    
+    Note: Right turns (NR, SR, ER, WR) are often treated as "free movements"
+    and accompany their corresponding through phase.
+    
+    Action Masking: A phase is VALID only if ALL its required movements exist.
+    Example: T-junction missing West -> Phases B, D, H are MASKED.
     
     Attributes:
         junction_id: Traffic signal/junction ID
@@ -84,15 +98,47 @@ class PhaseStandardizer:
         data_provider: Interface for getting signal data
     """
     
-    # Standard 4-phase pattern
+    # Number of standard phases
+    NUM_STANDARD_PHASES = 8
+    
+    # Standard 8-phase pattern (comprehensive)
+    # Each phase defines REQUIRED movements that must ALL exist for the phase to be valid
     STANDARD_PHASES = {
-        0: {MovementType.NORTH_THROUGH, MovementType.SOUTH_THROUGH},  # NS Through
-        1: {MovementType.NORTH_LEFT, MovementType.SOUTH_LEFT},        # NS Left
-        2: {MovementType.EAST_THROUGH, MovementType.WEST_THROUGH},    # EW Through
-        3: {MovementType.EAST_LEFT, MovementType.WEST_LEFT},          # EW Left
+        # Group 1: Dual-Through (high throughput for main corridors)
+        0: {MovementType.NORTH_THROUGH, MovementType.SOUTH_THROUGH},  # Phase A: NS Through
+        1: {MovementType.EAST_THROUGH, MovementType.WEST_THROUGH},    # Phase B: EW Through
+        
+        # Group 2: Dual-Left (protected left turns)
+        2: {MovementType.NORTH_LEFT, MovementType.SOUTH_LEFT},        # Phase C: NS Left
+        3: {MovementType.EAST_LEFT, MovementType.WEST_LEFT},          # Phase D: EW Left
+        
+        # Group 3: Single-Approach (one direction gets full green)
+        4: {MovementType.NORTH_THROUGH, MovementType.NORTH_LEFT},     # Phase E: North Green
+        5: {MovementType.SOUTH_THROUGH, MovementType.SOUTH_LEFT},     # Phase F: South Green
+        6: {MovementType.EAST_THROUGH, MovementType.EAST_LEFT},       # Phase G: East Green
+        7: {MovementType.WEST_THROUGH, MovementType.WEST_LEFT},       # Phase H: West Green
     }
     
-    # Standard 2-phase pattern (simpler intersections)
+    # Extended phase info with optional right-turn movements
+    # Right turns are "free" and accompany their through/approach phase
+    STANDARD_PHASES_EXTENDED = {
+        0: {MovementType.NORTH_THROUGH, MovementType.SOUTH_THROUGH, 
+            MovementType.NORTH_RIGHT, MovementType.SOUTH_RIGHT},       # Phase A + Right
+        1: {MovementType.EAST_THROUGH, MovementType.WEST_THROUGH,
+            MovementType.EAST_RIGHT, MovementType.WEST_RIGHT},         # Phase B + Right
+        2: {MovementType.NORTH_LEFT, MovementType.SOUTH_LEFT},         # Phase C (no right)
+        3: {MovementType.EAST_LEFT, MovementType.WEST_LEFT},           # Phase D (no right)
+        4: {MovementType.NORTH_THROUGH, MovementType.NORTH_LEFT,
+            MovementType.NORTH_RIGHT},                                  # Phase E + Right
+        5: {MovementType.SOUTH_THROUGH, MovementType.SOUTH_LEFT,
+            MovementType.SOUTH_RIGHT},                                  # Phase F + Right
+        6: {MovementType.EAST_THROUGH, MovementType.EAST_LEFT,
+            MovementType.EAST_RIGHT},                                   # Phase G + Right
+        7: {MovementType.WEST_THROUGH, MovementType.WEST_LEFT,
+            MovementType.WEST_RIGHT},                                   # Phase H + Right
+    }
+    
+    # Standard 2-phase pattern (simpler intersections - fallback)
     STANDARD_PHASES_2 = {
         0: {MovementType.NORTH_THROUGH, MovementType.SOUTH_THROUGH,
             MovementType.NORTH_LEFT, MovementType.SOUTH_LEFT},        # All NS
@@ -340,21 +386,22 @@ class PhaseStandardizer:
     def _create_standard_mapping(self):
         """Create mapping between actual and standard phases.
         
-        This method maps each actual phase to a standard phase (0-3) based on:
+        This method maps each actual phase to a standard phase (0-7) based on:
         1. Movement overlap if movements are identified
         2. Fallback heuristics based on phase index and green patterns
         
-        Standard phases:
-        - 0: NS Through (N-S direction, through movements)
-        - 1: NS Left (N-S direction, left turn movements)  
-        - 2: EW Through (E-W direction, through movements)
-        - 3: EW Left (E-W direction, left turn movements)
+        Standard 8 phases:
+        - 0: NS Through (Phase A) - N-S direction through
+        - 1: EW Through (Phase B) - E-W direction through
+        - 2: NS Left (Phase C) - N-S direction left turns
+        - 3: EW Left (Phase D) - E-W direction left turns
+        - 4: North Green (Phase E) - All North movements
+        - 5: South Green (Phase F) - All South movements
+        - 6: East Green (Phase G) - All East movements
+        - 7: West Green (Phase H) - All West movements
         """
-        # Choose standard pattern based on number of phases
-        if self.num_phases <= 2:
-            standard = self.STANDARD_PHASES_2
-        else:
-            standard = self.STANDARD_PHASES
+        # Use extended phases for better matching (includes right turns)
+        standard = self.STANDARD_PHASES_EXTENDED
         
         # Track which phases have valid movement mappings
         phases_with_movements = [p for p in self.phases if len(p.movements) > 0]
@@ -377,38 +424,37 @@ class PhaseStandardizer:
             # Method 2: Fallback - use phase index pattern
             # Common patterns:
             # - 2 phases: alternate NS (0) and EW (1)
-            # - 4 phases: NS-T(0), NS-L(1), EW-T(2), EW-L(3)
-            # - 8 phases: cycle through 4 standard phases twice
+            # - 4 phases: NS-T(0), EW-T(1), NS-L(2), EW-L(3)
+            # - 8 phases: direct mapping to standard phases
             self._create_fallback_mapping()
     
     def _create_fallback_mapping(self):
         """Create fallback mapping when movement info is unavailable.
         
         Uses heuristics based on common signal timing patterns:
-        - First half of phases tend to serve one direction group
-        - Second half serves the perpendicular direction
+        - 2-phase: NS-through (0), EW-through (1)
+        - 4-phase: NS-T (0), EW-T (1), NS-L (2), EW-L (3)
+        - 8-phase: Direct mapping to all 8 standard phases
         """
         if self.num_phases <= 2:
-            # Simple 2-phase: NS then EW
+            # Simple 2-phase: NS-through then EW-through
             for i in range(self.num_phases):
-                self.actual_to_standard[i] = i  # 0 -> 0 (NS), 1 -> 1 (EW)
+                self.actual_to_standard[i] = i  # 0 -> 0 (NS-T), 1 -> 1 (EW-T)
                 self.standard_to_actual[i] = i
         elif self.num_phases <= 4:
-            # 4-phase NEMA-like: direct mapping
+            # 4-phase NEMA-like: map to first 4 standard phases
+            # Typical order: NS-Through, EW-Through, NS-Left, EW-Left
             for i in range(self.num_phases):
                 std_idx = i % 4
                 self.actual_to_standard[i] = std_idx
                 self.standard_to_actual[std_idx] = i
         else:
-            # 8+ phases: distribute across 4 standard phases
-            # Phases 0-3 get assigned to standard 0-3
-            # Phases 4-7 get assigned to standard 0-3 again (overlapping groups)
-            num_groups = 4
-            phases_per_group = self.num_phases // num_groups
+            # 8+ phases: distribute across 8 standard phases
+            num_groups = self.NUM_STANDARD_PHASES  # 8
             
             for i in range(self.num_phases):
-                # Map to one of 4 standard phases
-                # Using modulo to cycle through: 0,1,2,3,0,1,2,3,...
+                # Map to one of 8 standard phases
+                # Using modulo to cycle through: 0,1,2,3,4,5,6,7,0,1,...
                 std_idx = i % num_groups
                 self.actual_to_standard[i] = std_idx
                 
@@ -424,17 +470,19 @@ class PhaseStandardizer:
         """Compute standardized phase-based demand features.
         
         This creates a fixed-size feature vector representing traffic demand
-        for each standard phase, enabling shared policy learning.
+        for each of the 8 standard phases, enabling shared policy learning.
         
         Args:
             density_by_direction: Traffic density per direction {N/E/S/W: value}
             queue_by_direction: Queue length per direction {N/E/S/W: value}
             
         Returns:
-            Feature vector [phase_0_demand, phase_1_demand, ...]
+            Feature vector [phase_0_demand, ..., phase_7_demand] for density,
+            then [phase_0_queue, ..., phase_7_queue] for queue
+            Total: 16 values (8 phases * 2 metrics)
         """
         # Aggregate demand by standard phase
-        num_standard_phases = 4  # Always use 4-phase encoding
+        num_standard_phases = self.NUM_STANDARD_PHASES  # 8 phases
         demands = np.zeros(num_standard_phases * 2)  # density + queue per phase
         
         direction_to_demand = {
@@ -444,36 +492,53 @@ class PhaseStandardizer:
             'W': (density_by_direction.get('W', 0), queue_by_direction.get('W', 0)),
         }
         
-        # Phase 0: NS Through
+        # Phase 0 (A): NS Through - average of N and S through traffic
         demands[0] = (direction_to_demand['N'][0] + direction_to_demand['S'][0]) / 2
-        demands[4] = (direction_to_demand['N'][1] + direction_to_demand['S'][1]) / 2
+        demands[8] = (direction_to_demand['N'][1] + direction_to_demand['S'][1]) / 2
         
-        # Phase 1: NS Left (estimate as portion of NS demand)
-        demands[1] = demands[0] * 0.3  # Assume 30% left turn
-        demands[5] = demands[4] * 0.3
+        # Phase 1 (B): EW Through - average of E and W through traffic
+        demands[1] = (direction_to_demand['E'][0] + direction_to_demand['W'][0]) / 2
+        demands[9] = (direction_to_demand['E'][1] + direction_to_demand['W'][1]) / 2
         
-        # Phase 2: EW Through
-        demands[2] = (direction_to_demand['E'][0] + direction_to_demand['W'][0]) / 2
-        demands[6] = (direction_to_demand['E'][1] + direction_to_demand['W'][1]) / 2
+        # Phase 2 (C): NS Left - estimate as portion of NS demand (typically ~30%)
+        demands[2] = demands[0] * 0.3
+        demands[10] = demands[8] * 0.3
         
-        # Phase 3: EW Left
-        demands[3] = demands[2] * 0.3
-        demands[7] = demands[6] * 0.3
+        # Phase 3 (D): EW Left - estimate as portion of EW demand
+        demands[3] = demands[1] * 0.3
+        demands[11] = demands[9] * 0.3
+        
+        # Phase 4 (E): North Green - all North movements
+        demands[4] = direction_to_demand['N'][0]
+        demands[12] = direction_to_demand['N'][1]
+        
+        # Phase 5 (F): South Green - all South movements
+        demands[5] = direction_to_demand['S'][0]
+        demands[13] = direction_to_demand['S'][1]
+        
+        # Phase 6 (G): East Green - all East movements
+        demands[6] = direction_to_demand['E'][0]
+        demands[14] = direction_to_demand['E'][1]
+        
+        # Phase 7 (H): West Green - all West movements
+        demands[7] = direction_to_demand['W'][0]
+        demands[15] = direction_to_demand['W'][1]
         
         return demands.astype(np.float32)
 
     def standardize_action(self, action: np.ndarray) -> np.ndarray:
         """Convert standard action to actual phase durations.
         
-        Maps actions from standard 4-phase format to actual signal phases.
+        Maps actions from standard 8-phase format to actual signal phases.
         Handles cases where:
-        - num_phases < 4: aggregates standard phase values
-        - num_phases == 4: direct mapping
-        - num_phases > 4: multiple actual phases may share same standard index
+        - num_phases < 8: aggregates standard phase values
+        - num_phases == 8: direct mapping
+        - num_phases > 8: multiple actual phases may share same standard index
         
         Args:
-            action: Standard phase durations/ratios (typically 4 values for NEMA-4)
-                   [NS_Through, NS_Left, EW_Through, EW_Left]
+            action: Standard phase durations/ratios (8 values)
+                   [NS_Through, EW_Through, NS_Left, EW_Left,
+                    North_Green, South_Green, East_Green, West_Green]
             
         Returns:
             Actual phase durations matching signal program (num_phases values)
@@ -524,15 +589,45 @@ class PhaseStandardizer:
         ], dtype=np.float32)
 
     def get_phase_mask(self) -> np.ndarray:
-        """Get mask indicating which standard phases are available.
+        """Get mask indicating which standard phases are available/valid.
+        
+        A phase is VALID (mask=1) if and only if ALL its required movements exist.
+        This implements the Action Masking described in the GESA specification.
+        
+        Example for T-junction missing West:
+        - Phase B (EW Through): MASKED (needs WT which doesn't exist)
+        - Phase D (EW Left): MASKED (needs WL which doesn't exist)
+        - Phase H (West Green): MASKED (needs WT, WL)
+        - Result: [1, 0, 1, 0, 1, 1, 1, 0]
         
         Returns:
-            Binary array for 4 standard phases
+            Binary array for 8 standard phases [A, B, C, D, E, F, G, H]
         """
-        mask = np.zeros(4)
-        for std_idx in self.standard_to_actual.keys():
-            if std_idx < 4:
-                mask[std_idx] = 1
+        mask = np.zeros(self.NUM_STANDARD_PHASES)  # 8 phases
+        
+        # Collect all movements that exist at this intersection
+        all_movements = set()
+        for phase in self.phases:
+            all_movements.update(phase.movements)
+        
+        # Also check lane_to_movement for additional coverage
+        all_movements.update(self.lane_to_movement.values())
+        
+        # Check each standard phase
+        for std_idx, required_movements in self.STANDARD_PHASES.items():
+            if std_idx < self.NUM_STANDARD_PHASES:
+                # Phase is valid only if ALL required movements exist
+                if required_movements.issubset(all_movements):
+                    mask[std_idx] = 1
+                # Special case: if we have the actual mapping, also mark as valid
+                elif std_idx in self.standard_to_actual:
+                    mask[std_idx] = 1
+        
+        # If no phases are valid (fallback), enable basic phases 0 and 1
+        if mask.sum() == 0:
+            mask[0] = 1  # NS Through always available as fallback
+            mask[1] = 1  # EW Through always available as fallback
+        
         return mask.astype(np.float32)
 
     def reset(self):

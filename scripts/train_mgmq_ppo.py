@@ -40,7 +40,7 @@ from src.environment.rllib_utils import (
     register_sumo_env,
     override_config,
 )
-from src.models.mgmq_model import MGMQTorchModel, LocalTemporalMGMQTorchModel
+from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
 from src.models.dirichlet_distribution import register_dirichlet_distribution
 from src.config import (
     load_model_config,
@@ -57,7 +57,7 @@ from src.config import (
 
 # Register custom MGMQ models with RLlib
 ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
-ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalTemporalMGMQTorchModel)
+ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
 
 # Register Dirichlet distribution for proper simplex-constrained actions
 # This solves the "Scale Ambiguity & Vanishing Gradient" problem
@@ -244,7 +244,7 @@ def train_mgmq_ppo(
     history_length: int = 1,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
     reward_weights: list = None,  # Default: equal weights for all reward functions
-    use_local_gnn: bool = False,  # Use LocalTemporalMGMQTorchModel with pre-packaged neighbor obs
+    use_local_gnn: bool = False,  # Use LocalMGMQTorchModel with pre-packaged neighbor obs
     max_neighbors: int = 4,  # Max neighbors (K) for local GNN
 ):
     """
@@ -322,8 +322,8 @@ def train_mgmq_ppo(
     
     ray.init(
         ignore_reinit_error=True,
-        object_store_memory=int(200e6),  # 500MB object store (reduced for low-memory systems)
-        _memory=int(200e6),  # 500MB for tasks/actors
+        # object_store_memory=int(200e6),  # 500MB object store (reduced for low-memory systems)
+        # _memory=int(200e6),  # 500MB for tasks/actors
         include_dashboard=False,  # Disable dashboard to save memory
         _temp_dir=None,
         log_to_driver=True,  # Forward worker stdout/stderr to driver terminal
@@ -424,7 +424,7 @@ def train_mgmq_ppo(
         }
         
         # Select custom model based on use_local_gnn flag
-        custom_model_name = "local_temporal_mgmq_model" if use_local_gnn else "mgmq_model"
+        custom_model_name = "local_mgmq_model" if use_local_gnn else "mgmq_model"
         
         # Register environment
         register_sumo_env(env_config)
@@ -610,7 +610,7 @@ if __name__ == "__main__":
     
     # Local GNN arguments
     parser.add_argument("--use-local-gnn", action="store_true",
-                        help="Use LocalTemporalMGMQTorchModel with pre-packaged neighbor observations")
+                        help="Use LocalMGMQTorchModel with pre-packaged neighbor observations")
     parser.add_argument("--max-neighbors", type=int, default=None,
                         help="Maximum neighbors (K) for local GNN. Default: 4")
     

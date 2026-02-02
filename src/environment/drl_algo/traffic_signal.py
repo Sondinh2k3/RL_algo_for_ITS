@@ -58,11 +58,21 @@ class TrafficSignal:
     You can change the observation space by implementing a custom observation class. See :py:class:`sumo_rl.environment.observations.ObservationFunction`.
 
     # Action Space
-    Action space is a continuous vector of size equal to the number of green phases 
-    of the traffic signal. Each element of the vector represents the proportion of 
-    green time allocated to the corresponding green phase in the next cycle. The 
-    actual green time for each phase is computed by normalizing the action vector 
-    and scaling it to fit
+    Action space is a continuous vector of size 8 (NUM_STANDARD_PHASES) representing
+    the time ratios for each of the 8 standard phases:
+    
+    - Phase A (0): N-S Through - North-South through movements
+    - Phase B (1): E-W Through - East-West through movements  
+    - Phase C (2): N-S Left - North-South left turn movements
+    - Phase D (3): E-W Left - East-West left turn movements
+    - Phase E (4): North Green - All North approach movements
+    - Phase F (5): South Green - All South approach movements
+    - Phase G (6): East Green - All East approach movements
+    - Phase H (7): West Green - All West approach movements
+    
+    Invalid phases for the specific intersection topology are masked using
+    Action Masking. The FRAP module converts standard phase actions to actual
+    signal phases for the SUMO network.
 
     # Reward Function
     The default reward function is 'diff-waiting-time'. You can change the reward function by implementing a custom reward function and passing to the constructor of :py:class:`sumo_rl.environment.env.SumoEnvironment`.
@@ -70,6 +80,10 @@ class TrafficSignal:
 
     # Default min gap of SUMO (see https://sumo.dlr.de/docs/Simulation/Safety.html). Should this be parameterized?
     MIN_GAP = 2.5
+    
+    # Number of standard phases (fixed for all intersections)
+    # This enables transfer learning across different network topologies
+    NUM_STANDARD_PHASES = 8
 
     def __init__(
         self,
@@ -185,11 +199,17 @@ class TrafficSignal:
             }
 
         self.observation_space = self.observation_fn.observation_space()
+        
+        # Action space: 8 standard phases (GESA specification)
+        # Actions are time ratios for each standard phase
+        # Invalid phases will be masked and redistributed by action masking
         self.action_space = spaces.Box(
-            low=np.array([(self.min_green / self.total_green_time) for _ in range(self.num_green_phases)], dtype=np.float32), 
-            high=np.array([1.0 for _ in range(self.num_green_phases)], dtype=np.float32), 
+            low=np.zeros(self.NUM_STANDARD_PHASES, dtype=np.float32),
+            high=np.ones(self.NUM_STANDARD_PHASES, dtype=np.float32), 
             dtype=np.float32
         )
+        
+        # Validate that min_green constraints are feasible
         assert (self.min_green * self.num_green_phases) <= self.total_green_time, (
             "Minimum green time too high for traffic signal " + self.id + " cycle time"
         )
@@ -274,7 +294,8 @@ class TrafficSignal:
             self._last_sampling_time = current_time
             
             # Số lượng mẫu tối đa để giữ trong cửa sổ delta_time
-            max_samples = max(1, int(self.aggregation_interval_s / self.sampling_interval_s))
+            # max_samples = max(1, int(self.aggregation_interval_s / self.sampling_interval_s))
+            max_samples = 5
             
             # Define metrics and their compute functions for detectors
             detector_metrics = [
@@ -388,26 +409,22 @@ class TrafficSignal:
         """Sets what will be the next green phase.
 
         Args:
-            new_phase (int): Action representing green time ratios for each phase.
-                            This is the STANDARD action from the model.
-                            If use_phase_standardizer is True, it will be translated
-                            to actual phase order before applying.
+            new_phase: Action representing green time ratios for 8 STANDARD phases.
+                      Shape: [8] = [Phase_A, Phase_B, Phase_C, Phase_D, Phase_E, Phase_F, Phase_G, Phase_H]
+                      
+                      The _get_green_time_from_ratio method will:
+                      1. Apply action mask to filter invalid phases
+                      2. Convert 8 standard phases to actual phases via FRAP
+                      3. Compute actual green times
         """
-        # Translate standard action to actual phase order if phase standardizer is enabled
-        if self.use_phase_standardizer and self.phase_standardizer is not None:
-            try:
-                action_array = np.array(new_phase) if not isinstance(new_phase, np.ndarray) else new_phase
-                actual_action = self.phase_standardizer.standardize_action(action_array)
-                if self.debug_logging:
-                    print(f"[PhaseStd] {self.id}: Standard action {action_array} -> Actual action {actual_action}")
-            except Exception as e:
-                if self.debug_logging:
-                    print(f"[PhaseStd] Warning: Failed to standardize action for {self.id}: {e}")
-                actual_action = new_phase
-        else:
-            actual_action = new_phase
+        # Convert to numpy array if needed
+        standard_action = np.array(new_phase) if not isinstance(new_phase, np.ndarray) else new_phase
         
-        self.green_times = self._get_green_time_from_ratio(actual_action)
+        if self.debug_logging:
+            print(f"[SetPhase] {self.id}: Received 8-phase action: {standard_action}")
+        
+        # _get_green_time_from_ratio handles: action mask → FRAP convert → green time computation
+        self.green_times = self._get_green_time_from_ratio(standard_action)
 
         # Delegate phase setting to data provider (simulator)
         self.data_provider.set_traffic_light_phase(self.id, self.green_times)
@@ -447,74 +464,93 @@ class TrafficSignal:
 
     def _get_green_time_from_ratio(self, green_time_set: np.ndarray):
         """
-        Computes the green time for each phase based on the provided green time rates.
+        Computes the green time for each ACTUAL phase based on 8 STANDARD phase ratios.
         
-        Strictly enforces min_green for ALL phases to ensure cycle time consistency.
-        Algorithm:
-        1. Allocate min_green to every phase.
-        2. Distribute the remaining time (total_green - num_phases*min_green) 
-           according to the normalized ratios.
+        Pipeline:
+        1. Apply action mask to 8 standard phase ratios
+        2. Convert 8 standard phases → num_green_phases actual phases (via FRAP)
+        3. Enforce min_green for all actual phases
+        4. Distribute remaining time based on ratios
         
         Args:
-            green_time_set (np.ndarray): An array of green time rates for each phase.
+            green_time_set (np.ndarray): Array of 8 standard phase time ratios
+                [Phase_A, Phase_B, Phase_C, Phase_D, Phase_E, Phase_F, Phase_G, Phase_H]
         Returns:
-            List[int]: A list of green times for each phase.
+            List[int]: Green times for each ACTUAL phase (length = num_green_phases)
         """
-        green_time_set = np.array(green_time_set, dtype=float, copy=True)
+        standard_ratios = np.array(green_time_set, dtype=float, copy=True)
         
-        # ACTION MASKING: Apply phase mask to zero out invalid phases
-        # and redistribute their allocation to valid phases
+        # Ensure input is 8 standard phases
+        if len(standard_ratios) < self.NUM_STANDARD_PHASES:
+            # Pad with zeros if input is shorter (backward compatibility)
+            padded = np.zeros(self.NUM_STANDARD_PHASES)
+            padded[:len(standard_ratios)] = standard_ratios
+            standard_ratios = padded
+        elif len(standard_ratios) > self.NUM_STANDARD_PHASES:
+            # Truncate if longer
+            standard_ratios = standard_ratios[:self.NUM_STANDARD_PHASES]
+        
+        # Step 1: Apply 8-phase action mask
         action_mask = self.get_action_mask()
-        if action_mask is not None:
-            # Get the mask matching the green_time_set length
-            mask = action_mask[:len(green_time_set)] if len(action_mask) >= len(green_time_set) else action_mask
-            
-            # Zero out invalid phases
-            green_time_set = green_time_set * mask
+        if action_mask is not None and len(action_mask) >= self.NUM_STANDARD_PHASES:
+            mask = action_mask[:self.NUM_STANDARD_PHASES]
+            standard_ratios = standard_ratios * mask
             
             if self.debug_logging:
-                print(f"[ActionMask] {self.id}: mask={mask}, after_mask={green_time_set}")
+                print(f"[ActionMask] {self.id}: 8-phase mask={mask}, masked_ratios={standard_ratios}")
         
-        # Normalize to ensure sum = 1
-        if np.sum(green_time_set) == 0:
-            # If all phases are masked or zero, use equal distribution for valid phases
+        # Step 2: Normalize standard ratios
+        if np.sum(standard_ratios) == 0:
+            # If all phases masked/zero, use equal distribution for valid phases
             if action_mask is not None:
-                mask = action_mask[:self.num_green_phases]
+                mask = action_mask[:self.NUM_STANDARD_PHASES]
                 if np.sum(mask) > 0:
-                    green_time_set = mask / np.sum(mask)
+                    standard_ratios = mask / np.sum(mask)
                 else:
-                    green_time_set = np.ones(self.num_green_phases) / self.num_green_phases
+                    # Fallback: enable first two phases (A, B)
+                    standard_ratios = np.array([0.5, 0.5, 0, 0, 0, 0, 0, 0])
             else:
-                green_time_set = np.ones(self.num_green_phases) / self.num_green_phases
+                standard_ratios = np.ones(self.NUM_STANDARD_PHASES) / self.NUM_STANDARD_PHASES
         else:
-            green_time_set /= np.sum(green_time_set)
+            standard_ratios /= np.sum(standard_ratios)
         
-        # --- NEW LOGIC: Enforce min_green ---
+        # Step 3: Convert 8 standard phases → actual phases via FRAP
+        if self.use_phase_standardizer and self.phase_standardizer is not None:
+            actual_ratios = self.phase_standardizer.standardize_action(standard_ratios)
+            if self.debug_logging:
+                print(f"[FRAP] {self.id}: standard_ratios={standard_ratios} -> actual_ratios={actual_ratios}")
+        else:
+            # Fallback: Map first num_green_phases standard phases to actual phases
+            # This handles cases without phase standardizer
+            actual_ratios = np.zeros(self.num_green_phases)
+            for i in range(min(self.num_green_phases, self.NUM_STANDARD_PHASES)):
+                actual_ratios[i] = standard_ratios[i]
+            # Normalize
+            if np.sum(actual_ratios) > 0:
+                actual_ratios /= np.sum(actual_ratios)
+            else:
+                actual_ratios = np.ones(self.num_green_phases) / self.num_green_phases
         
-        # 1. Calculate available time for distribution
+        # Step 4: Enforce min_green and compute green times for actual phases
         min_green_total = self.min_green * self.num_green_phases
         remaining_time = self.total_green_time - min_green_total
         
         if remaining_time < 0:
-            # This should be caught by __init__ assertion, but as a fallback:
             print(f"Warning: total_green_time ({self.total_green_time}) < min_green_total ({min_green_total}). Clamping to min_green.")
             return [self.min_green] * self.num_green_phases
             
-        # 2. Distribute remaining time based on ratios
-        # green_times = min_green + (ratio * remaining_time)
-        green_times = self.min_green + (green_time_set * remaining_time)
+        # Distribute: green_times = min_green + (ratio * remaining_time)
+        green_times = self.min_green + (actual_ratios * remaining_time)
         
-        # 3. Round to integers
+        # Round to integers
         int_green_times = np.floor(green_times).astype(int)
         
-        # 4. Distribute the remainder (due to flooring)
+        # Distribute remainder (due to flooring)
         current_sum = np.sum(int_green_times)
         remainder = int(self.total_green_time - current_sum)
         
         if remainder > 0:
-            # Add remainder to phases with highest fractional parts
             fractional_parts = green_times - int_green_times
-            # Get indices sorted by fractional part descending
             indices = np.argsort(fractional_parts)[::-1]
             
             for i in range(remainder):
@@ -524,20 +560,27 @@ class TrafficSignal:
         return int_green_times.tolist()
     
     def get_action_mask(self) -> np.ndarray:
-        """Get binary mask indicating which phases are valid for this intersection.
+        """Get binary mask indicating which standard phases are valid for this intersection.
         
-        This enables Action Masking for the Time Ratio distribution problem:
-        - Invalid phases (non-existent at this intersection) get mask = 0
-        - Valid phases get mask = 1
-        - Time allocated to invalid phases gets redistributed to valid ones
+        This enables Action Masking for the 8 standard phases:
+        - A phase is VALID (mask=1) if ALL its required movements exist
+        - A phase is INVALID (mask=0) if ANY required movement is missing
+        
+        Example for T-junction missing West direction:
+        - Phase B (EW Through): MASKED (needs WT which doesn't exist)
+        - Phase D (EW Left): MASKED (needs WL which doesn't exist)  
+        - Phase H (West Green): MASKED (needs WT, WL)
+        - Result: [1, 0, 1, 0, 1, 1, 1, 0]
         
         Returns:
-            np.ndarray: Binary mask [num_green_phases], or None if no masking needed
+            np.ndarray: Binary mask [NUM_STANDARD_PHASES=8]
         """
         if self.use_phase_standardizer and self.phase_standardizer is not None:
             return self.phase_standardizer.get_phase_mask()
-        # Default: all phases are valid
-        return np.ones(self.num_green_phases, dtype=np.float32)
+        # Default: enable basic through phases (A=NS-Through, B=EW-Through)
+        # and left phases (C=NS-Left, D=EW-Left) for standard 4-way intersection
+        default_mask = np.array([1, 1, 1, 1, 1, 1, 1, 1], dtype=np.float32)
+        return default_mask
 
     def compute_observation(self):
         """Computes the observation of the traffic signal."""

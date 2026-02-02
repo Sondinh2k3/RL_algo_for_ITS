@@ -33,7 +33,7 @@ from src.environment.rllib_utils import (
     get_network_ts_ids,
     register_sumo_env,
 )
-from src.models.mgmq_model import MGMQTorchModel, LocalTemporalMGMQTorchModel
+from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
 from src.models.dirichlet_distribution import register_dirichlet_distribution
 from src.config import (
     load_model_config,
@@ -41,13 +41,17 @@ from src.config import (
     get_env_config,
     get_reward_config,
     get_network_config,
-    is_local_gnn_enabled
+    get_network_config,
+    is_local_gnn_enabled,
+    load_training_config,
 )
 
 
 # Register custom models (same as training)
 ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
-ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalTemporalMGMQTorchModel)
+ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
+# Backward compatibility: alias for old checkpoint trained with temporal naming
+ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalMGMQTorchModel)
 
 # Register Dirichlet distribution for action space
 register_dirichlet_distribution()
@@ -56,52 +60,7 @@ register_dirichlet_distribution()
 
 
 
-def load_training_config(checkpoint_path: str) -> Optional[Dict]:
-    """
-    Load training configuration from the experiment directory.
-    
-    Args:
-        checkpoint_path: Path to the checkpoint
-        
-    Returns:
-        Training configuration dict or None if not found
-    """
-    checkpoint_dir = Path(checkpoint_path)
-    
-    # Try to find mgmq_training_config.json in parent directories
-    search_dirs = [
-        checkpoint_dir.parent,  # checkpoint parent
-        checkpoint_dir.parent.parent,  # experiment dir
-        checkpoint_dir.parent.parent.parent,  # results dir
-    ]
-    
-    for search_dir in search_dirs:
-        config_file = search_dir / "mgmq_training_config.json"
-        if config_file.exists():
-            print(f"✓ Found training config: {config_file}")
-            with open(config_file, "r") as f:
-                return json.load(f)
-    
-    # Also try to find in the checkpoint directory itself
-    for parent in checkpoint_dir.parents:
-        config_file = parent / "mgmq_training_config.json"
-        if config_file.exists():
-            print(f"✓ Found training config: {config_file}")
-            with open(config_file, "r") as f:
-                return json.load(f)
-    
-    # Fallback: Try to load from params.json (RLlib default checkpoint config)
-    params_file = checkpoint_dir.parent / "params.json"
-    if params_file.exists():
-        print(f"✓ Found RLlib params.json: {params_file}")
-        with open(params_file, "r") as f:
-            full_config = json.load(f)
-            # Extract env_config from params.json
-            if "env_config" in full_config:
-                return {"env_config": full_config["env_config"]}
-    
-    print("⚠ Warning: Training config not found, using default parameters")
-    return None
+
 
 
 
