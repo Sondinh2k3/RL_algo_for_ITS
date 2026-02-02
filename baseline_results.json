@@ -1,80 +1,80 @@
 {
   "network": "grid4x4",
   "num_episodes": 1,
-  "mean_reward": -775.1195833333348,
+  "mean_reward": -381.40666666666647,
   "std_reward": 0.0,
-  "min_reward": -775.1195833333348,
-  "max_reward": -775.1195833333348,
-  "mean_length": 89.0,
+  "min_reward": -381.40666666666647,
+  "max_reward": -381.40666666666647,
+  "mean_length": 40.0,
   "episode_rewards": [
-    -775.1195833333348
+    -381.40666666666647
   ],
   "episode_lengths": [
-    89
+    40
   ],
   "per_agent_stats": {
     "A0": {
-      "mean_reward": -39.69166666666667,
+      "mean_reward": -31.226249999999993,
       "std_reward": 0.0
     },
     "A1": {
-      "mean_reward": -39.627500000000005,
+      "mean_reward": -24.135833333333338,
       "std_reward": 0.0
     },
     "A2": {
-      "mean_reward": -60.93083333333334,
+      "mean_reward": -21.89458333333333,
       "std_reward": 0.0
     },
     "A3": {
-      "mean_reward": -47.90499999999999,
+      "mean_reward": -30.635000000000005,
       "std_reward": 0.0
     },
     "B0": {
-      "mean_reward": -52.401249999999976,
+      "mean_reward": -26.8675,
       "std_reward": 0.0
     },
     "B1": {
-      "mean_reward": -55.40791666666669,
+      "mean_reward": -26.07,
       "std_reward": 0.0
     },
     "B2": {
-      "mean_reward": -42.67083333333335,
+      "mean_reward": -24.630833333333328,
       "std_reward": 0.0
     },
     "B3": {
-      "mean_reward": -44.52708333333335,
+      "mean_reward": -21.339999999999996,
       "std_reward": 0.0
     },
     "C0": {
-      "mean_reward": -38.348749999999995,
+      "mean_reward": -15.345000000000006,
       "std_reward": 0.0
     },
     "C1": {
-      "mean_reward": -44.57291666666667,
+      "mean_reward": -22.650833333333335,
       "std_reward": 0.0
     },
     "C2": {
-      "mean_reward": -39.47166666666667,
+      "mean_reward": -27.032500000000006,
       "std_reward": 0.0
     },
     "C3": {
-      "mean_reward": -30.144583333333337,
+      "mean_reward": -20.744166666666665,
       "std_reward": 0.0
     },
     "D0": {
-      "mean_reward": -58.19916666666667,
+      "mean_reward": -21.161250000000003,
       "std_reward": 0.0
     },
     "D1": {
-      "mean_reward": -56.727916666666694,
+      "mean_reward": -30.616666666666667,
       "std_reward": 0.0
     },
     "D2": {
-      "mean_reward": -77.26124999999998,
+      "mean_reward": -19.602916666666665,
       "std_reward": 0.0
     },
     "D3": {
-      "mean_reward": -47.231249999999996,
+      "mean_reward": -17.453333333333337,
       "std_reward": 0.0
     },
     "J12": {

@@ -242,6 +242,12 @@ class NeighborTemporalObservationFunction(ObservationFunction):
             
         # Get list of neighbor IDs
         neighbor_ids = self.neighbor_provider.get_neighbor_ids(self.ts.id)
+
+        # === FIX: SORT NEIGHBOR IDS TO ENSURE CONSISTENT ORDER FOR BiGRU ===
+        # BiGRU is sequence-sensitive. Random order from Set causes fluctuation.
+        if neighbor_ids:
+            neighbor_ids = sorted(neighbor_ids)
+        # ===================================================================
         
         for i, neighbor_id in enumerate(neighbor_ids[:K]):
             if neighbor_id is None:

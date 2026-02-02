@@ -41,7 +41,6 @@ from src.config import (
     get_env_config,
     get_reward_config,
     get_network_config,
-    get_network_config,
     is_local_gnn_enabled,
     load_training_config,
 )

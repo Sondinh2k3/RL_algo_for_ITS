@@ -16,6 +16,7 @@ from .config_loader import (
     get_network_config,
     is_local_gnn_enabled,
     get_history_length,
+    load_training_config,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "get_network_config",
     "is_local_gnn_enabled",
     "get_history_length",
+    "load_training_config",
 ]

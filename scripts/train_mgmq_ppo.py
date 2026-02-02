@@ -121,7 +121,7 @@ def create_mgmq_ppo_config(
     mgmq_config: dict,
     num_workers: int = 2,
     num_envs_per_worker: int = 1,
-    learning_rate: float = 8e-4,
+    learning_rate: float = 5e-5,
     gamma: float = 0.99,
     lambda_: float = 0.95,
     entropy_coeff: float = 0.02,
@@ -184,7 +184,7 @@ def create_mgmq_ppo_config(
             # Episode-based training: 1 episode = ~89 env steps × 16 agents = ~1424 samples
             # CRITICAL FIX 3: Increase batch size for multi-agent PPO
             # With 16 agents, need more samples for stable gradient estimates
-            train_batch_size=1072,  # Increased from 1424 for better gradient estimates
+            train_batch_size=640,  # Increased from 1424 for better gradient estimates
             minibatch_size=64,     # Increased from 64 for better batch normalization
             num_epochs=5,          # Increased from 4 for more thorough updates
             grad_clip=0.5,
@@ -322,8 +322,8 @@ def train_mgmq_ppo(
     
     ray.init(
         ignore_reinit_error=True,
-        # object_store_memory=int(200e6),  # 500MB object store (reduced for low-memory systems)
-        # _memory=int(200e6),  # 500MB for tasks/actors
+        object_store_memory=int(500e6),  # 500MB object store (reduced for low-memory systems)
+        _memory=int(500e6),  # 500MB for tasks/actors
         include_dashboard=False,  # Disable dashboard to save memory
         _temp_dir=None,
         log_to_driver=True,  # Forward worker stdout/stderr to driver terminal
