@@ -35,6 +35,7 @@ from src.environment.rllib_utils import (
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
 from src.models.dirichlet_distribution import register_dirichlet_distribution
+from src.models.masked_softmax_distribution import register_masked_softmax_distribution
 from src.config import (
     load_model_config,
     get_mgmq_config,
@@ -52,8 +53,11 @@ ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
 # Backward compatibility: alias for old checkpoint trained with temporal naming
 ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalMGMQTorchModel)
 
-# Register Dirichlet distribution for action space
+# Register Dirichlet distribution for action space (legacy)
 register_dirichlet_distribution()
+
+# Register Masked Softmax distribution (NEW - RECOMMENDED)
+register_masked_softmax_distribution()
 
 
 
@@ -213,6 +217,9 @@ def evaluate_mgmq(
                 "use_phase_standardizer": stored_env_config.get("use_phase_standardizer", yaml_env_cfg["use_phase_standardizer"]),
                 "use_neighbor_obs": stored_env_config.get("use_neighbor_obs", is_local_gnn_enabled(yaml_config)),
                 "max_neighbors": stored_env_config.get("max_neighbors", yaml_mgmq_cfg["max_neighbors"]),
+                # IMPORTANT: Do NOT normalize rewards for evaluation - we want raw values for comparison
+                "normalize_reward": False,
+                "clip_rewards": None,
             }
             print("\n✓ Using environment config from training:")
             print(f"  num_seconds: {env_config['num_seconds']}")
@@ -248,16 +255,19 @@ def evaluate_mgmq(
                 "min_green": yaml_env_cfg["min_green"],
                 "cycle_time": yaml_env_cfg["cycle_time"],
                 "yellow_time": yaml_env_cfg["yellow_time"],
-                "time_to_teleport": yaml_env_cfg["time_to_teleport"],
+                "time_to_teleport": yaml_env_cfg.get("time_to_teleport", 500),
                 "single_agent": False,
-                "window_size": yaml_mgmq_cfg["window_size"],
+                "window_size": yaml_mgmq_cfg.get("window_size", 1),
                 "preprocessing_config": preprocessing_config,
                 "additional_sumo_cmd": additional_sumo_cmd,
                 "reward_fn": yaml_reward_cfg["reward_fn"],
                 "reward_weights": yaml_reward_cfg["reward_weights"],
-                "use_phase_standardizer": yaml_env_cfg["use_phase_standardizer"],
+                "use_phase_standardizer": yaml_env_cfg.get("use_phase_standardizer", True),
                 "use_neighbor_obs": is_local_gnn_enabled(yaml_config),
-                "max_neighbors": yaml_mgmq_cfg["max_neighbors"],
+                "max_neighbors": yaml_mgmq_cfg.get("max_neighbors", 4),
+                # IMPORTANT: Do NOT normalize rewards for evaluation - we want raw values for comparison
+                "normalize_reward": False,
+                "clip_rewards": None,
             }
             print("\n✓ Using environment config from YAML defaults")
         

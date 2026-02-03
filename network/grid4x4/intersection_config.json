@@ -1,7 +1,7 @@
 {
-  "network_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_v8_oke/network/grid4x4/grid4x4.net.xml",
-  "detector_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_v8_oke/network/grid4x4/detector.add.xml",
-  "num_intersections": 33,
+  "network_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/grid4x4/grid4x4.net.xml",
+  "detector_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/grid4x4/detector.add.xml",
+  "num_intersections": 16,
   "intersections": {
     "A0": {
       "direction_map": {
@@ -124,104 +124,6 @@
         "e2_1": 60.0,
         "e2_0": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "A1A0_0",
-            "A1A0_1",
-            "A1A0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "B0A0_0",
-            "B0A0_1",
-            "B0A0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "bottom0A0_0",
-            "bottom0A0_1",
-            "bottom0A0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "left0A0_0",
-            "left0A0_1",
-            "left0A0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -311,41 +213,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -470,104 +372,6 @@
         "e2_12": 60.0,
         "e2_14": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "A2A1_0",
-            "A2A1_1",
-            "A2A1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "B1A1_0",
-            "B1A1_1",
-            "B1A1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "A0A1_0",
-            "A0A1_1",
-            "A0A1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "left1A1_0",
-            "left1A1_1",
-            "left1A1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -657,41 +461,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -816,104 +620,6 @@
         "e2_25": 60.0,
         "e2_24": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "A3A2_0",
-            "A3A2_1",
-            "A3A2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "B2A2_0",
-            "B2A2_1",
-            "B2A2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "A1A2_0",
-            "A1A2_1",
-            "A1A2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "left2A2_0",
-            "left2A2_1",
-            "left2A2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -1003,41 +709,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -1162,104 +868,6 @@
         "e2_37": 60.0,
         "e2_38": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "top0A3_0",
-            "top0A3_1",
-            "top0A3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "B3A3_0",
-            "B3A3_1",
-            "B3A3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "A2A3_0",
-            "A2A3_1",
-            "A2A3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "left3A3_0",
-            "left3A3_1",
-            "left3A3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -1349,41 +957,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -1508,104 +1116,6 @@
         "e2_48": 60.0,
         "e2_50": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "B1B0_0",
-            "B1B0_1",
-            "B1B0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "C0B0_0",
-            "C0B0_1",
-            "C0B0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "bottom1B0_0",
-            "bottom1B0_1",
-            "bottom1B0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "A0B0_0",
-            "A0B0_1",
-            "A0B0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -1695,41 +1205,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -1854,104 +1364,6 @@
         "e2_61": 60.0,
         "e2_62": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "B2B1_0",
-            "B2B1_1",
-            "B2B1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "C1B1_0",
-            "C1B1_1",
-            "C1B1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "B0B1_0",
-            "B0B1_1",
-            "B0B1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "A1B1_0",
-            "A1B1_1",
-            "A1B1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -2041,41 +1453,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -2200,104 +1612,6 @@
         "e2_72": 60.0,
         "e2_74": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "B3B2_0",
-            "B3B2_1",
-            "B3B2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "C2B2_0",
-            "C2B2_1",
-            "C2B2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "B1B2_0",
-            "B1B2_1",
-            "B1B2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "A2B2_0",
-            "A2B2_1",
-            "A2B2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -2387,41 +1701,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -2546,104 +1860,6 @@
         "e2_84": 60.0,
         "e2_86": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "top1B3_0",
-            "top1B3_1",
-            "top1B3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "C3B3_0",
-            "C3B3_1",
-            "C3B3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "B2B3_0",
-            "B2B3_1",
-            "B2B3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "A3B3_0",
-            "A3B3_1",
-            "A3B3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -2733,41 +1949,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -2892,104 +2108,6 @@
         "e2_97": 60.0,
         "e2_98": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "C1C0_0",
-            "C1C0_1",
-            "C1C0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "D0C0_0",
-            "D0C0_1",
-            "D0C0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "bottom2C0_0",
-            "bottom2C0_1",
-            "bottom2C0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "B0C0_0",
-            "B0C0_1",
-            "B0C0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -3079,41 +2197,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -3238,104 +2356,6 @@
         "e2_110": 60.0,
         "e2_108": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "C2C1_0",
-            "C2C1_1",
-            "C2C1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "D1C1_0",
-            "D1C1_1",
-            "D1C1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "C0C1_0",
-            "C0C1_1",
-            "C0C1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "B1C1_0",
-            "B1C1_1",
-            "B1C1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -3425,41 +2445,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -3584,104 +2604,6 @@
         "e2_120": 60.0,
         "e2_122": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "C3C2_0",
-            "C3C2_1",
-            "C3C2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "D2C2_0",
-            "D2C2_1",
-            "D2C2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "C1C2_0",
-            "C1C2_1",
-            "C1C2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "B2C2_0",
-            "B2C2_1",
-            "B2C2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -3771,41 +2693,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -3930,104 +2852,6 @@
         "e2_133": 60.0,
         "e2_134": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "top2C3_0",
-            "top2C3_1",
-            "top2C3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "D3C3_0",
-            "D3C3_1",
-            "D3C3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "C2C3_0",
-            "C2C3_1",
-            "C2C3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "B3C3_0",
-            "B3C3_1",
-            "B3C3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -4117,41 +2941,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -4276,104 +3100,6 @@
         "e2_144": 60.0,
         "e2_146": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "D1D0_0",
-            "D1D0_1",
-            "D1D0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "right0D0_0",
-            "right0D0_1",
-            "right0D0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "bottom3D0_0",
-            "bottom3D0_1",
-            "bottom3D0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "C0D0_0",
-            "C0D0_1",
-            "C0D0_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -4463,41 +3189,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -4622,104 +3348,6 @@
         "e2_157": 60.0,
         "e2_158": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "D2D1_0",
-            "D2D1_1",
-            "D2D1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "right1D1_0",
-            "right1D1_1",
-            "right1D1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "D0D1_0",
-            "D0D1_1",
-            "D0D1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "C1D1_0",
-            "C1D1_1",
-            "C1D1_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -4809,41 +3437,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -4968,104 +3596,6 @@
         "e2_169": 60.0,
         "e2_170": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "D3D2_0",
-            "D3D2_1",
-            "D3D2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "right2D2_0",
-            "right2D2_1",
-            "right2D2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "D1D2_0",
-            "D1D2_1",
-            "D1D2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "C2D2_0",
-            "C2D2_1",
-            "C2D2_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -5155,41 +3685,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
+          "1": 0,
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
+          "0": 1,
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     },
@@ -5314,104 +3844,6 @@
         "e2_181": 60.0,
         "e2_182": 60.0
       },
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "top3D3_0",
-            "top3D3_1",
-            "top3D3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "right3D3_0",
-            "right3D3_1",
-            "right3D3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "D2D3_0",
-            "D2D3_1",
-            "D2D3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "C3D3_0",
-            "C3D3_1",
-            "C3D3_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
       "observation_mask": [
         1.0,
         1.0,
@@ -5501,3765 +3933,41 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
-            "MovementType.SOUTH_RIGHT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
             "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
             "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
+            "MovementType.NORTH_LEFT"
           ],
           "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT"
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_RIGHT"
           ],
           "2": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT"
           ],
           "3": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_RIGHT"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 2,
-          "2": 1,
-          "3": 3
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "2": 1,
-          "1": 2,
-          "3": 3
-        }
-      }
-    },
-    "J12": {
-      "direction_map": {
-        "N": "-E16",
-        "E": "E15.181",
-        "S": "-E19",
-        "W": "-E18"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E16_0",
-          "-E16_1",
-          "-E16_2"
-        ],
-        "E": [
-          "E15.181_0",
-          "E15.181_1",
-          "E15.181_2"
-        ],
-        "S": [
-          "-E19_0",
-          "-E19_1",
-          "-E19_2"
-        ],
-        "W": [
-          "-E18_0",
-          "-E18_1",
-          "-E18_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E16_0",
-            "-E16_1",
-            "-E16_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "E15.181_0",
-            "E15.181_1",
-            "E15.181_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E19_0",
-            "-E19_1",
-            "-E19_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E18_0",
-            "-E18_1",
-            "-E18_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
             "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
+            "MovementType.WEST_RIGHT"
           ]
         },
         "actual_to_standard": {
-          "0": 0,
-          "1": 1
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "1": 1
-        }
-      }
-    },
-    "J16": {
-      "direction_map": {
-        "N": "-E24",
-        "E": "E20",
-        "S": "-E21",
-        "W": "-E22"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E24_0",
-          "-E24_1",
-          "-E24_2"
-        ],
-        "E": [
-          "E20_0",
-          "E20_1",
-          "E20_2"
-        ],
-        "S": [
-          "-E21_0",
-          "-E21_1",
-          "-E21_2"
-        ],
-        "W": [
-          "-E22_0",
-          "-E22_1",
-          "-E22_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E24_0",
-            "-E24_1",
-            "-E24_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "E20_0",
-            "E20_1",
-            "E20_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E21_0",
-            "-E21_1",
-            "-E21_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E22_0",
-            "-E22_1",
-            "-E22_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 1
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "1": 1
-        }
-      }
-    },
-    "J24": {
-      "direction_map": {
-        "N": "E31",
-        "E": "-E34",
-        "S": "-E32",
-        "W": "-E33"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E31_0",
-          "E31_1",
-          "E31_2"
-        ],
-        "E": [
-          "-E34_0",
-          "-E34_1",
-          "-E34_2"
-        ],
-        "S": [
-          "-E32_0",
-          "-E32_1",
-          "-E32_2"
-        ],
-        "W": [
-          "-E33_0",
-          "-E33_1",
-          "-E33_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E31_0",
-            "E31_1",
-            "E31_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E34_0",
-            "-E34_1",
-            "-E34_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E32_0",
-            "-E32_1",
-            "-E32_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E33_0",
-            "-E33_1",
-            "-E33_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
           "1": 0,
-          "0": 1
-        }
-      }
-    },
-    "J40": {
-      "direction_map": {
-        "N": null,
-        "E": "-E50",
-        "S": "-E52",
-        "W": "E47"
-      },
-      "lanes_by_direction": {
-        "N": [],
-        "E": [
-          "-E50_0",
-          "-E50_1",
-          "-E50_2"
-        ],
-        "S": [
-          "-E52_0",
-          "-E52_1",
-          "-E52_2"
-        ],
-        "W": [
-          "E47_0",
-          "E47_1",
-          "E47_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [],
-          "num_original_lanes": 0,
-          "num_standard_lanes": 2,
-          "status": "missing",
-          "mask": [
-            0,
-            0
-          ],
-          "aggregation_indices": []
-        },
-        "E": {
-          "original_lanes": [
-            "-E50_0",
-            "-E50_1",
-            "-E50_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E52_0",
-            "-E52_1",
-            "-E52_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E47_0",
-            "E47_1",
-            "E47_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        0.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.WEST_THROUGH",
-            "MovementType.EAST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.SOUTH_LEFT"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 5
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "5": 1
-        }
-      }
-    },
-    "J43": {
-      "direction_map": {
-        "N": "E52",
-        "E": "-E54",
-        "S": "-E55",
-        "W": "E53"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E52_0",
-          "E52_1",
-          "E52_2"
-        ],
-        "E": [
-          "-E54_0",
-          "-E54_1",
-          "-E54_2"
-        ],
-        "S": [
-          "-E55_0",
-          "-E55_1",
-          "-E55_2"
-        ],
-        "W": [
-          "E53_0",
-          "E53_1",
-          "E53_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E52_0",
-            "E52_1",
-            "E52_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E54_0",
-            "-E54_1",
-            "-E54_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E55_0",
-            "-E55_1",
-            "-E55_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E53_0",
-            "E53_1",
-            "E53_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 1
-        }
-      }
-    },
-    "J45": {
-      "direction_map": {
-        "N": "E55",
-        "E": "-E57",
-        "S": "-E60",
-        "W": "E56.635"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E55_0",
-          "E55_1",
-          "E55_2"
-        ],
-        "E": [
-          "-E57_0",
-          "-E57_1",
-          "-E57_2"
-        ],
-        "S": [
-          "-E60_0",
-          "-E60_1",
-          "-E60_2"
-        ],
-        "W": [
-          "E56.635_0",
-          "E56.635_1",
-          "E56.635_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E55_0",
-            "E55_1",
-            "E55_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E57_0",
-            "-E57_1",
-            "-E57_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E60_0",
-            "-E60_1",
-            "-E60_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E56.635_0",
-            "E56.635_1",
-            "E56.635_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 1
-        }
-      }
-    },
-    "J5": {
-      "direction_map": {
-        "N": "-E8",
-        "E": "-E6",
-        "S": "E5",
-        "W": "-E10"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E8_0",
-          "-E8_1",
-          "-E8_2"
-        ],
-        "E": [
-          "-E6_0",
-          "-E6_1",
-          "-E6_2"
-        ],
-        "S": [
-          "E5_0",
-          "E5_1",
-          "E5_2"
-        ],
-        "W": [
-          "-E10_0",
-          "-E10_1",
-          "-E10_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E8_0",
-            "-E8_1",
-            "-E8_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E6_0",
-            "-E6_1",
-            "-E6_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "E5_0",
-            "E5_1",
-            "E5_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E10_0",
-            "-E10_1",
-            "-E10_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 1
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "1": 1
-        }
-      }
-    },
-    "J50": {
-      "direction_map": {
-        "N": "-E63",
-        "E": "-E64",
-        "S": "-E62",
-        "W": "E61"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E63_0",
-          "-E63_1",
-          "-E63_2"
-        ],
-        "E": [
-          "-E64_0",
-          "-E64_1",
-          "-E64_2"
-        ],
-        "S": [
-          "-E62_0",
-          "-E62_1",
-          "-E62_2"
-        ],
-        "W": [
-          "E61_0",
-          "E61_1",
-          "E61_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E63_0",
-            "-E63_1",
-            "-E63_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E64_0",
-            "-E64_1",
-            "-E64_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E62_0",
-            "-E62_1",
-            "-E62_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E61_0",
-            "E61_1",
-            "E61_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 1
-        }
-      }
-    },
-    "J8": {
-      "direction_map": {
-        "N": "-E12",
-        "E": "E11.252",
-        "S": "-E13",
-        "W": "-E14"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E12_0",
-          "-E12_1",
-          "-E12_2"
-        ],
-        "E": [
-          "E11.252_0",
-          "E11.252_1",
-          "E11.252_2"
-        ],
-        "S": [
-          "-E13_0",
-          "-E13_1",
-          "-E13_2"
-        ],
-        "W": [
-          "-E14_0",
-          "-E14_1",
-          "-E14_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E12_0",
-            "-E12_1",
-            "-E12_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "E11.252_0",
-            "E11.252_1",
-            "E11.252_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E13_0",
-            "-E13_1",
-            "-E13_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E14_0",
-            "-E14_1",
-            "-E14_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 1
-        }
-      }
-    },
-    "clusterJ19_J60": {
-      "direction_map": {
-        "N": "-E36",
-        "E": "E15",
-        "S": "E24",
-        "W": "-E15.181"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E36_0",
-          "-E36_1",
-          "-E36_2"
-        ],
-        "E": [
-          "E15_0",
-          "E15_1",
-          "E15_2"
-        ],
-        "S": [
-          "E24_0",
-          "E24_1",
-          "E24_2"
-        ],
-        "W": [
-          "-E15.181_0",
-          "-E15.181_1",
-          "-E15.181_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E36_0",
-            "-E36_1",
-            "-E36_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "E15_0",
-            "E15_1",
-            "E15_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "E24_0",
-            "E24_1",
-            "E24_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E15.181_0",
-            "-E15.181_1",
-            "-E15.181_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 3,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 41,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 4,
-            "state": "rrrrrrrrrrrrrrrrrrrr",
-            "duration": 1,
-            "green_indices": []
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "2": []
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0,
-          "2": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 2
-        }
-      }
-    },
-    "clusterJ21_J61": {
-      "direction_map": {
-        "N": "E26",
-        "E": "E25",
-        "S": "-E30",
-        "W": "-E25.370"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E26_0",
-          "E26_1",
-          "E26_2"
-        ],
-        "E": [
-          "E25_0",
-          "E25_1",
-          "E25_2"
-        ],
-        "S": [
-          "-E30_0",
-          "-E30_1",
-          "-E30_2"
-        ],
-        "W": [
-          "-E25.370_0",
-          "-E25.370_1",
-          "-E25.370_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E26_0",
-            "E26_1",
-            "E26_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "E25_0",
-            "E25_1",
-            "E25_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E30_0",
-            "-E30_1",
-            "-E30_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E25.370_0",
-            "-E25.370_1",
-            "-E25.370_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 1
-        }
-      }
-    },
-    "clusterJ28_J59": {
-      "direction_map": {
-        "N": null,
-        "E": "-E48",
-        "S": "E36",
-        "W": "-E11.252"
-      },
-      "lanes_by_direction": {
-        "N": [],
-        "E": [
-          "-E48_0",
-          "-E48_1",
-          "-E48_2"
-        ],
-        "S": [
-          "E36_0",
-          "E36_1",
-          "E36_2"
-        ],
-        "W": [
-          "-E11.252_0",
-          "-E11.252_1",
-          "-E11.252_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [],
-          "num_original_lanes": 0,
-          "num_standard_lanes": 2,
-          "status": "missing",
-          "mask": [
-            0,
-            0
-          ],
-          "aggregation_indices": []
-        },
-        "E": {
-          "original_lanes": [
-            "-E48_0",
-            "-E48_1",
-            "-E48_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "E36_0",
-            "E36_1",
-            "E36_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "-E11.252_0",
-            "-E11.252_1",
-            "-E11.252_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        0.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 7
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "7": 1
-        }
-      }
-    },
-    "clusterJ29_J7": {
-      "direction_map": {
-        "N": "-E7.369",
-        "E": "E10",
-        "S": "-E7",
-        "W": "E48"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "-E7.369_0",
-          "-E7.369_1",
-          "-E7.369_2"
-        ],
-        "E": [
-          "E10_0",
-          "E10_1",
-          "E10_2"
-        ],
-        "S": [
-          "-E7_0",
-          "-E7_1",
-          "-E7_2"
-        ],
-        "W": [
-          "E48_0",
-          "E48_1",
-          "E48_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "-E7.369_0",
-            "-E7.369_1",
-            "-E7.369_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "E10_0",
-            "E10_1",
-            "E10_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E7_0",
-            "-E7_1",
-            "-E7_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E48_0",
-            "E48_1",
-            "E48_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 3,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrrrrrrrrrrrrrrrr",
-            "duration": 1,
-            "green_indices": []
-          },
-          {
-            "index": 3,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 41,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [],
-          "2": [
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.WEST_THROUGH",
-            "MovementType.EAST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 0,
-          "2": 1
+          "3": 1,
+          "0": 4,
+          "2": 6
         },
         "standard_to_actual": {
           "0": 1,
-          "1": 2
-        }
-      }
-    },
-    "clusterJ31_J54": {
-      "direction_map": {
-        "N": "E37",
-        "E": "-E40",
-        "S": "-E37.245",
-        "W": "E38"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E37_0",
-          "E37_1",
-          "E37_2"
-        ],
-        "E": [
-          "-E40_0",
-          "-E40_1",
-          "-E40_2"
-        ],
-        "S": [
-          "-E37.245_0",
-          "-E37.245_1",
-          "-E37.245_2"
-        ],
-        "W": [
-          "E38_0",
-          "E38_1",
-          "E38_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E37_0",
-            "E37_1",
-            "E37_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E40_0",
-            "-E40_1",
-            "-E40_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E37.245_0",
-            "-E37.245_1",
-            "-E37.245_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E38_0",
-            "E38_1",
-            "E38_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 1
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "1": 1
-        }
-      }
-    },
-    "clusterJ34_J56": {
-      "direction_map": {
-        "N": "E39",
-        "E": "-E42",
-        "S": "-E39.240",
-        "W": "E40"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E39_0",
-          "E39_1",
-          "E39_2"
-        ],
-        "E": [
-          "-E42_0",
-          "-E42_1",
-          "-E42_2"
-        ],
-        "S": [
-          "-E39.240_0",
-          "-E39.240_1",
-          "-E39.240_2"
-        ],
-        "W": [
-          "E40_0",
-          "E40_1",
-          "E40_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E39_0",
-            "E39_1",
-            "E39_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E42_0",
-            "-E42_1",
-            "-E42_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E39.240_0",
-            "-E39.240_1",
-            "-E39.240_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E40_0",
-            "E40_1",
-            "E40_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 1
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "1": 1
-        }
-      }
-    },
-    "clusterJ36_J55": {
-      "direction_map": {
-        "N": "E41",
-        "E": "-E61",
-        "S": "-E41.262",
-        "W": "E42"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E41_0",
-          "E41_1",
-          "E41_2"
-        ],
-        "E": [
-          "-E61_0",
-          "-E61_1",
-          "-E61_2"
-        ],
-        "S": [
-          "-E41.262_0",
-          "-E41.262_1",
-          "-E41.262_2"
-        ],
-        "W": [
-          "E42_0",
-          "E42_1",
-          "E42_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E41_0",
-            "E41_1",
-            "E41_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E61_0",
-            "-E61_1",
-            "-E61_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E41.262_0",
-            "-E41.262_1",
-            "-E41.262_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E42_0",
-            "E42_1",
-            "E42_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          },
-          {
-            "index": 2,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ],
-          "1": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 0,
-          "1": 1
-        },
-        "standard_to_actual": {
-          "0": 0,
-          "1": 1
-        }
-      }
-    },
-    "clusterJ49_J57": {
-      "direction_map": {
-        "N": "E60",
-        "E": "-E59.909",
-        "S": "-E65",
-        "W": "E59"
-      },
-      "lanes_by_direction": {
-        "N": [
-          "E60_0",
-          "E60_1",
-          "E60_2"
-        ],
-        "E": [
-          "-E59.909_0",
-          "-E59.909_1",
-          "-E59.909_2"
-        ],
-        "S": [
-          "-E65_0",
-          "-E65_1",
-          "-E65_2"
-        ],
-        "W": [
-          "E59_0",
-          "E59_1",
-          "E59_2"
-        ]
-      },
-      "detectors_by_direction": {
-        "N": {
-          "e1": [],
-          "e2": []
-        },
-        "E": {
-          "e1": [],
-          "e2": []
-        },
-        "S": {
-          "e1": [],
-          "e2": []
-        },
-        "W": {
-          "e1": [],
-          "e2": []
-        }
-      },
-      "detectors_e1": [],
-      "detectors_e2": [],
-      "e2_detector_lengths": {},
-      "lane_aggregation": {
-        "N": {
-          "original_lanes": [
-            "E60_0",
-            "E60_1",
-            "E60_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "E": {
-          "original_lanes": [
-            "-E59.909_0",
-            "-E59.909_1",
-            "-E59.909_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "S": {
-          "original_lanes": [
-            "-E65_0",
-            "-E65_1",
-            "-E65_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        },
-        "W": {
-          "original_lanes": [
-            "E59_0",
-            "E59_1",
-            "E59_2"
-          ],
-          "num_original_lanes": 3,
-          "num_standard_lanes": 2,
-          "status": "merged",
-          "mask": [
-            1,
-            1
-          ],
-          "merge_strategy": "mean",
-          "aggregation_indices": [
-            [
-              0
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        }
-      },
-      "observation_mask": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ],
-      "phase_config": {
-        "num_phases": 2,
-        "phases": [
-          {
-            "index": 0,
-            "state": "rrrrrGGGGgrrrrrGGGGg",
-            "duration": 42,
-            "green_indices": [
-              5,
-              6,
-              7,
-              8,
-              9,
-              15,
-              16,
-              17,
-              18,
-              19
-            ]
-          },
-          {
-            "index": 2,
-            "state": "GGGGgrrrrrGGGGgrrrrr",
-            "duration": 42,
-            "green_indices": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              10,
-              11,
-              12,
-              13,
-              14
-            ]
-          }
-        ],
-        "movement_to_phase": {},
-        "phase_to_movements": {
-          "0": [
-            "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
-            "MovementType.WEST_LEFT",
-            "MovementType.EAST_RIGHT",
-            "MovementType.EAST_LEFT",
-            "MovementType.WEST_THROUGH"
-          ],
-          "1": [
-            "MovementType.SOUTH_RIGHT",
-            "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_LEFT",
-            "MovementType.NORTH_THROUGH"
-          ]
-        },
-        "actual_to_standard": {
-          "0": 1,
-          "1": 0
-        },
-        "standard_to_actual": {
-          "1": 0,
-          "0": 1
+          "1": 3,
+          "4": 0,
+          "6": 2
         }
       }
     }
@@ -9536,175 +4244,16 @@
         "direction": "W",
         "connecting_edge": "C3D3"
       }
-    ],
-    "J12": [
-      {
-        "neighbor_id": "clusterJ19_J60",
-        "direction": "E",
-        "connecting_edge": "E15.181"
-      }
-    ],
-    "J16": [
-      {
-        "neighbor_id": "clusterJ19_J60",
-        "direction": "N",
-        "connecting_edge": "-E24"
-      }
-    ],
-    "J24": [],
-    "J40": [
-      {
-        "neighbor_id": "J43",
-        "direction": "S",
-        "connecting_edge": "-E52"
-      }
-    ],
-    "J43": [
-      {
-        "neighbor_id": "J40",
-        "direction": "N",
-        "connecting_edge": "E52"
-      },
-      {
-        "neighbor_id": "J45",
-        "direction": "S",
-        "connecting_edge": "-E55"
-      }
-    ],
-    "J45": [
-      {
-        "neighbor_id": "J43",
-        "direction": "N",
-        "connecting_edge": "E55"
-      },
-      {
-        "neighbor_id": "clusterJ49_J57",
-        "direction": "S",
-        "connecting_edge": "-E60"
-      }
-    ],
-    "J5": [
-      {
-        "neighbor_id": "clusterJ29_J7",
-        "direction": "W",
-        "connecting_edge": "-E10"
-      }
-    ],
-    "J50": [
-      {
-        "neighbor_id": "clusterJ36_J55",
-        "direction": "W",
-        "connecting_edge": "E61"
-      }
-    ],
-    "J8": [
-      {
-        "neighbor_id": "clusterJ28_J59",
-        "direction": "E",
-        "connecting_edge": "E11.252"
-      }
-    ],
-    "clusterJ19_J60": [
-      {
-        "neighbor_id": "clusterJ28_J59",
-        "direction": "N",
-        "connecting_edge": "-E36"
-      },
-      {
-        "neighbor_id": "J16",
-        "direction": "S",
-        "connecting_edge": "E24"
-      },
-      {
-        "neighbor_id": "J12",
-        "direction": "W",
-        "connecting_edge": "-E15.181"
-      }
-    ],
-    "clusterJ21_J61": [],
-    "clusterJ28_J59": [
-      {
-        "neighbor_id": "clusterJ29_J7",
-        "direction": "E",
-        "connecting_edge": "-E48"
-      },
-      {
-        "neighbor_id": "clusterJ19_J60",
-        "direction": "S",
-        "connecting_edge": "E36"
-      },
-      {
-        "neighbor_id": "J8",
-        "direction": "W",
-        "connecting_edge": "-E11.252"
-      }
-    ],
-    "clusterJ29_J7": [
-      {
-        "neighbor_id": "J5",
-        "direction": "E",
-        "connecting_edge": "E10"
-      },
-      {
-        "neighbor_id": "clusterJ28_J59",
-        "direction": "W",
-        "connecting_edge": "E48"
-      }
-    ],
-    "clusterJ31_J54": [
-      {
-        "neighbor_id": "clusterJ34_J56",
-        "direction": "E",
-        "connecting_edge": "-E40"
-      }
-    ],
-    "clusterJ34_J56": [
-      {
-        "neighbor_id": "clusterJ36_J55",
-        "direction": "E",
-        "connecting_edge": "-E42"
-      },
-      {
-        "neighbor_id": "clusterJ31_J54",
-        "direction": "W",
-        "connecting_edge": "E40"
-      }
-    ],
-    "clusterJ36_J55": [
-      {
-        "neighbor_id": "J50",
-        "direction": "E",
-        "connecting_edge": "-E61"
-      },
-      {
-        "neighbor_id": "clusterJ34_J56",
-        "direction": "W",
-        "connecting_edge": "E42"
-      }
-    ],
-    "clusterJ49_J57": [
-      {
-        "neighbor_id": "J45",
-        "direction": "N",
-        "connecting_edge": "E60"
-      }
     ]
   },
   "config": {
     "output_dir": "network/grid4x4",
     "output_file": "intersection_config.json",
     "gpi": {
-      "enabled": true,
-      "lane_aggregation": {
-        "enabled": true,
-        "missing_lane_strategy": "zero",
-        "merge_strategy": "mean",
-        "standard_lanes_per_direction": 2
-      }
+      "enabled": true
     },
     "frap": {
-      "enabled": true,
-      "standard_pattern": "4phase"
+      "enabled": true
     }
   }
 }

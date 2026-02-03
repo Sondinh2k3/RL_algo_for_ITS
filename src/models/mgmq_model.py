@@ -28,6 +28,9 @@ from .graphsage_bigru import GraphSAGE_BiGRU, NeighborGraphSAGE_BiGRU
 # Log std bounds to prevent entropy explosion
 LOG_STD_MIN = -20.0  # Minimum log_std (very deterministic)
 LOG_STD_MAX = 0.5    # FIXED: Reduced from 2.0 to 0.5 for faster entropy convergence
+
+# Number of standard phases for action masking
+NUM_STANDARD_PHASES = 8
                      # std = e^0.5 ≈ 1.65, which is reasonable for normalized actions
 
 # Softmax temperature for action output (lower = more deterministic)
@@ -244,7 +247,10 @@ class MGMQEncoder(nn.Module):
         )
         
         # Layer 2: GraphSAGE + Bi-GRU for network embedding
-        gat_total_output = gat_output_dim * gat_num_heads
+        # GAT outputs [12, gat_output_dim * gat_num_heads] per intersection
+        # After Flatten: 12 * gat_output_dim * gat_num_heads
+        gat_per_lane_output = gat_output_dim * gat_num_heads  # e.g., 32*4 = 128
+        gat_total_output = self.num_lanes * gat_per_lane_output  # 12 * 128 = 1536
         
         self.graphsage_bigru = GraphSAGE_BiGRU(
             in_features=gat_total_output,
@@ -334,11 +340,14 @@ class MGMQEncoder(nn.Module):
         lane_adj_conf_batch = self.lane_adj_conf.unsqueeze(0).expand(lane_features.size(0), -1, -1)
         
         # Run Dual-Stream GAT
+        # gat_out: [batch * num_agents, 12, gat_output_dim * heads]
         gat_out = self.dual_stream_gat(lane_features, lane_adj_coop_batch, lane_adj_conf_batch)
         
-        # Pooling (Mean) over lanes to get Intersection Embedding
-        # [batch * num_agents, gat_output_dim * heads]
-        intersection_emb_flat = gat_out.mean(dim=1)
+        # FLATTEN over lanes to preserve spatial semantics (NOT Mean Pooling!)
+        # Mean Pooling loses positional information (which lane is congested)
+        # Flatten preserves: index 0-127 = Lane 0, index 128-255 = Lane 1, etc.
+        # [batch * num_agents, 12 * gat_output_dim * heads] = [batch * num_agents, 1536]
+        intersection_emb_flat = gat_out.flatten(start_dim=1)
         
         # Reshape back to [batch, num_agents, emb_dim]
         intersection_emb = intersection_emb_flat.view(batch_size, num_agents, -1)
@@ -423,8 +432,11 @@ class LocalMGMQEncoder(nn.Module):
         self.register_buffer('lane_adj_coop', get_lane_cooperation_matrix())
         self.register_buffer('lane_adj_conf', get_lane_conflict_matrix())
         
-        # GAT output dimension
-        self.gat_total_output = gat_output_dim * gat_num_heads
+        # GAT output dimension (after Flatten over 12 lanes)
+        # Each lane outputs gat_output_dim * gat_num_heads features
+        # Flatten: 12 * gat_output_dim * gat_num_heads = 12 * 128 = 1536
+        self.gat_per_lane_output = gat_output_dim * gat_num_heads  # 128
+        self.gat_total_output = self.num_lanes * self.gat_per_lane_output  # 1536
         
         # NeighborGraphSAGE_BiGRU for SPATIAL aggregation
         self.neighbor_aggregator = NeighborGraphSAGE_BiGRU(
@@ -485,17 +497,32 @@ class LocalMGMQEncoder(nn.Module):
         return joint_emb
         
     def _run_gat(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply GAT to features."""
+        """Apply GAT to features and FLATTEN to preserve spatial semantics.
+        
+        IMPORTANT: We use Flatten instead of Mean Pooling to preserve
+        positional information. This allows the network to learn which
+        specific lanes (e.g., North-Left at index 0-127) are congested.
+        
+        Args:
+            x: [batch, 48] raw observation (12 lanes * 4 features)
+            
+        Returns:
+            [batch, 1536] flattened GAT embedding (12 lanes * 128 features)
+        """
         batch_size = x.size(0)
         lane_feat = x.view(batch_size, self.num_lanes, self.lane_feature_dim)
         
         adj_coop = self.lane_adj_coop.unsqueeze(0).expand(batch_size, -1, -1)
         adj_conf = self.lane_adj_conf.unsqueeze(0).expand(batch_size, -1, -1)
         
+        # gat_out: [batch, 12, gat_per_lane_output]
         gat_out = self.dual_stream_gat(lane_feat, adj_coop, adj_conf)
-        gat_pooled = gat_out.mean(dim=1)
         
-        return gat_pooled
+        # FLATTEN instead of Mean Pooling to preserve spatial semantics
+        # [batch, 12 * gat_per_lane_output] = [batch, 1536]
+        gat_flattened = gat_out.flatten(start_dim=1)
+        
+        return gat_flattened
 
 
 """
@@ -595,16 +622,24 @@ class MGMQModel(nn.Module):
         self._init_weights()
         
     def _init_weights(self):
-        """Initialize network weights."""
+        """Initialize network weights.
+        
+        NOTE: Value output uses smaller gain (0.1) to:
+        - Start predictions near 0
+        - Prevent large initial vf_loss
+        - Help vf_explained_var stay positive
+        """
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 nn.init.orthogonal_(module.weight, gain=np.sqrt(2))
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
         
-        # Smaller initialization for policy output
+        # Smaller initialization for policy output (stable actions)
         nn.init.orthogonal_(self.policy_mean.weight, gain=0.01)
-        nn.init.orthogonal_(self.value_out.weight, gain=1.0)
+        # CRITICAL: Small gain for value output to prevent large initial predictions
+        nn.init.orthogonal_(self.value_out.weight, gain=0.1)
+        nn.init.zeros_(self.value_out.bias)
         
     def forward(
         self, 
@@ -700,6 +735,14 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
     
     This class wraps the MGMQModel to be compatible with RLlib's
     model API for use with PPO and other algorithms.
+    
+    Supports 3 action distribution modes:
+    1. use_masked_softmax=True (RECOMMENDED): Masked Softmax + Gaussian
+       - Action mask applied BEFORE softmax
+       - Invalid phases get exactly 0.0
+       - Gradient flows only through valid phases
+    2. use_dirichlet=True: Dirichlet distribution (legacy)
+    3. use_softmax_output=True: Softmax + Gaussian (no masking)
     """
     
     def __init__(
@@ -719,8 +762,22 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         # Get custom model config
         custom_config = model_config.get("custom_model_config", {})
         
-        # Observation and action dimensions
-        obs_dim = int(np.prod(obs_space.shape))
+        # Handle Dict observation space (with action_mask)
+        # obs_space can be Dict or flattened version
+        if hasattr(obs_space, 'original_space'):
+            # Flattened Dict space - get original for dimensions
+            orig_space = obs_space.original_space
+            if hasattr(orig_space, 'spaces') and 'features' in orig_space.spaces:
+                obs_dim = int(np.prod(orig_space.spaces['features'].shape))
+            else:
+                obs_dim = int(np.prod(obs_space.shape))
+        elif hasattr(obs_space, 'spaces') and 'features' in obs_space.spaces:
+            # Direct Dict space
+            obs_dim = int(np.prod(obs_space.spaces['features'].shape))
+        else:
+            # Box space (legacy)
+            obs_dim = int(np.prod(obs_space.shape))
+            
         action_dim = int(np.prod(action_space.shape))
         
         # Model hyperparameters
@@ -735,20 +792,30 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         dropout = custom_config.get("dropout", 0.3)
         
         # === ACTION DISTRIBUTION OPTIONS ===
-        # Option 1: use_dirichlet=True (RECOMMENDED)
+        # Option 1: use_masked_softmax=True (RECOMMENDED - NEW)
+        #   - Model outputs logits + log_std → MaskedSoftmax distribution
+        #   - Actions sampled via: logits + noise → apply mask → softmax
+        #   - Invalid phases get exactly 0.0, gradient only for valid phases
+        #   - Proper entropy calculation over valid phases only
+        #
+        # Option 2: use_dirichlet=True (LEGACY - has post-hoc masking issues)
         #   - Model outputs raw logits → Dirichlet concentration params
         #   - Actions automatically sum=1, all positive
-        #   - No gradient saturation issues
+        #   - BUT: masking applied post-hoc → gradient waste for invalid phases
         #
-        # Option 2: use_softmax_output=True, use_dirichlet=False (LEGACY)
+        # Option 3: use_softmax_output=True, use_dirichlet=False (LEGACY)
         #   - Model outputs Softmax(logits) as mean for Gaussian
         #   - Still has issues: Gaussian sampling can break sum=1
         #
-        # Option 3: Both False (NOT RECOMMENDED - gradient death)
-        self.use_dirichlet = custom_config.get("use_dirichlet", True)  # Default: True
+        # Option 4: Both False (NOT RECOMMENDED - gradient death)
+        self.use_masked_softmax = custom_config.get("use_masked_softmax", True)  # Default: NEW mode
+        self.use_dirichlet = custom_config.get("use_dirichlet", False)  # Legacy fallback
         self.use_softmax_output = custom_config.get("use_softmax_output", False)  # Legacy fallback
         self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
         self.action_dim = int(np.prod(action_space.shape))  # Store for forward()
+        
+        # Store action_mask for MaskedSoftmax distribution to read
+        self._last_action_mask = None
         
         # Build directional adjacency matrix if ts_ids provided
         ts_ids = custom_config.get("ts_ids", None)
@@ -787,9 +854,12 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         self.policy_net = nn.Sequential(*policy_layers)
         
         # Output layer for policy
+        # MaskedSoftmax: num_outputs = 2 * action_dim (logits + log_std)
         # Dirichlet: num_outputs = action_dim (concentration params only)
         # Gaussian: num_outputs = 2 * action_dim (mean + log_std)
-        if self.use_dirichlet:
+        if self.use_masked_softmax:
+            self.policy_out = nn.Linear(prev_dim, 2 * self.action_dim)  # logits + log_std
+        elif self.use_dirichlet:
             self.policy_out = nn.Linear(prev_dim, self.action_dim)
         else:
             self.policy_out = nn.Linear(prev_dim, num_outputs)
@@ -814,15 +884,26 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         self._init_weights()
         
     def _init_weights(self):
-        """Initialize weights."""
+        """Initialize weights.
+        
+        NOTE: Value output uses smaller gain (0.1) to:
+        - Start predictions near 0
+        - Prevent large initial vf_loss  
+        - Help vf_explained_var stay positive
+        """
         for module in [self.policy_net, self.value_net]:
             for layer in module:
                 if isinstance(layer, nn.Linear):
                     nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
                     nn.init.zeros_(layer.bias)
         
+        # Policy output: small gain for stable initial actions
         nn.init.orthogonal_(self.policy_out.weight, gain=0.01)
-        nn.init.orthogonal_(self.value_out.weight, gain=1.0)
+        nn.init.zeros_(self.policy_out.bias)
+        
+        # CRITICAL: Small gain for value output to prevent large initial predictions
+        nn.init.orthogonal_(self.value_out.weight, gain=0.1)
+        nn.init.zeros_(self.value_out.bias)
         
     @override(TorchModelV2)
     def forward(
@@ -852,8 +933,27 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         1. Raw Logits from policy_out
         2. Apply Softmax (with temperature) → mean is now in [0,1] and sums to 1
         3. Log_std is clamped to smaller range for normalized output
+        
+        MaskedSoftmax Mode (NEW):
+        - Extract action_mask from flattened observation
+        - Store in _last_action_mask for distribution to read
+        - Output logits + log_std (distribution handles masking)
         """
-        obs = input_dict["obs_flat"].float()
+        obs_flat = input_dict["obs_flat"].float()
+        
+        # === EXTRACT ACTION MASK FROM FLATTENED OBS ===
+        # When obs_space is Dict({'features': [...], 'action_mask': [8]}),
+        # RLlib flattens to: [features..., action_mask...]
+        # The last NUM_STANDARD_PHASES (8) elements are the action_mask
+        if self.use_masked_softmax:
+            # Extract features (all except last 8) and action_mask (last 8)
+            obs = obs_flat[..., :-NUM_STANDARD_PHASES]
+            action_mask = obs_flat[..., -NUM_STANDARD_PHASES:]
+            # Store for MaskedSoftmax distribution to access
+            self._last_action_mask = action_mask
+        else:
+            obs = obs_flat
+            self._last_action_mask = None
         
         # Get joint embedding from MGMQ encoder
         joint_emb, _, _ = self.mgmq_encoder(obs)
@@ -865,11 +965,24 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
         
-        if self.use_dirichlet:
-            # === DIRICHLET MODE (RECOMMENDED) ===
+        if self.use_masked_softmax:
+            # === MASKED SOFTMAX MODE (RECOMMENDED - NEW) ===
+            # Output logits + log_std → MaskedSoftmax distribution handles:
+            # 1. Add Gaussian noise to logits
+            # 2. Apply mask: logits_masked = logits + (1-mask)*(-1e9)
+            # 3. Softmax to get action probabilities
+            # Invalid phases get exactly 0.0, gradient only for valid phases
+            action_dim = self.action_dim
+            logits = policy_out[..., :action_dim]
+            log_std = policy_out[..., action_dim:]
+            # Clamp log_std
+            log_std = torch.clamp(log_std, SOFTMAX_LOG_STD_MIN, SOFTMAX_LOG_STD_MAX)
+            policy_out = torch.cat([logits, log_std], dim=-1)
+        elif self.use_dirichlet:
+            # === DIRICHLET MODE (LEGACY) ===
             # Output raw logits → Dirichlet distribution transforms them to concentration params
             # Actions sampled from Dirichlet automatically sum=1 and are all positive
-            # No gradient saturation issues, no external normalization needed
+            # BUT: masking applied post-hoc → gradient waste for invalid phases
             pass  # policy_out is already correct (action_dim outputs)
         elif self.use_softmax_output:
             # === LEGACY: Softmax + Gaussian mode ===
@@ -920,7 +1033,8 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         Dict({
             "self_features": Box[feature_dim],
             "neighbor_features": Box[K, feature_dim],
-            "neighbor_mask": Box[K]
+            "neighbor_mask": Box[K],
+            "action_mask": Box[NUM_STANDARD_PHASES]  # For masked softmax
         })
     """
     
@@ -969,11 +1083,15 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         value_hidden_dims = custom_config.get("value_hidden_dims", [128, 64])
         dropout = custom_config.get("dropout", 0.3)
         
-        # Action distribution options
-        self.use_dirichlet = custom_config.get("use_dirichlet", True)
+        # Action distribution options (see MGMQTorchModel for detailed comments)
+        self.use_masked_softmax = custom_config.get("use_masked_softmax", True)  # NEW default
+        self.use_dirichlet = custom_config.get("use_dirichlet", False)  # Legacy
         self.use_softmax_output = custom_config.get("use_softmax_output", False)
         self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
         self.action_dim = int(np.prod(action_space.shape))
+        
+        # Store action_mask for MaskedSoftmax distribution to read
+        self._last_action_mask = None
         
         # MGMQ Encoder
         self.mgmq_encoder = LocalMGMQEncoder(
@@ -1003,9 +1121,12 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         self.policy_net = nn.Sequential(*policy_layers)
         
         # Output layer for policy
+        # MaskedSoftmax: 2 * action_dim outputs (logits + log_std)
         # Dirichlet: action_dim outputs (concentration params only)
         # Gaussian: 2 * action_dim outputs (mean + log_std)
-        if self.use_dirichlet:
+        if self.use_masked_softmax:
+            self.policy_out = nn.Linear(prev_dim, 2 * self.action_dim)
+        elif self.use_dirichlet:
             self.policy_out = nn.Linear(prev_dim, self.action_dim)
         else:
             self.policy_out = nn.Linear(prev_dim, num_outputs)
@@ -1030,15 +1151,26 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         self._init_weights()
         
     def _init_weights(self):
-        """Initialize weights."""
+        """Initialize weights.
+        
+        NOTE: Value output uses smaller gain (0.1) to:
+        - Start predictions near 0
+        - Prevent large initial vf_loss
+        - Help vf_explained_var stay positive
+        """
         for module in [self.policy_net, self.value_net]:
             for layer in module:
                 if isinstance(layer, nn.Linear):
                     nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
                     nn.init.zeros_(layer.bias)
         
+        # Policy output: small gain for stable initial actions
         nn.init.orthogonal_(self.policy_out.weight, gain=0.01)
-        nn.init.orthogonal_(self.value_out.weight, gain=1.0)
+        nn.init.zeros_(self.policy_out.bias)
+        
+        # CRITICAL: Small gain for value output to prevent large initial predictions
+        nn.init.orthogonal_(self.value_out.weight, gain=0.1)
+        nn.init.zeros_(self.value_out.bias)
         
     @override(TorchModelV2)
     def forward(
@@ -1058,8 +1190,10 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         Returns:
             Tuple of (policy_output, state)
             
-        IMPORTANT: When use_softmax_output=True, the mean output is normalized via Softmax.
-        This solves the "Scale Ambiguity & Vanishing Gradient" problem.
+        MaskedSoftmax Mode (NEW - RECOMMENDED):
+        - Extract action_mask from obs dict
+        - Store in _last_action_mask for distribution to read
+        - Output logits + log_std (distribution handles masking)
         """
         obs = input_dict["obs"]
         
@@ -1071,6 +1205,11 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
                 "neighbor_features": obs["neighbor_features"].float(),
                 "neighbor_mask": obs["neighbor_mask"].float(),
             }
+            # Extract action_mask for MaskedSoftmax distribution
+            if self.use_masked_softmax and "action_mask" in obs:
+                self._last_action_mask = obs["action_mask"].float()
+            else:
+                self._last_action_mask = None
         else:
             # Fallback: Should not happen with Dict obs space
             raise ValueError("Expected Dict observation, got tensor. Use NeighborTemporalObservationFunction.")
@@ -1085,8 +1224,16 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
         
-        if self.use_dirichlet:
-            # === DIRICHLET MODE (RECOMMENDED) ===
+        if self.use_masked_softmax:
+            # === MASKED SOFTMAX MODE (RECOMMENDED - NEW) ===
+            # Output logits + log_std → MaskedSoftmax distribution handles masking
+            action_dim = self.action_dim
+            logits = policy_out[..., :action_dim]
+            log_std = policy_out[..., action_dim:]
+            log_std = torch.clamp(log_std, SOFTMAX_LOG_STD_MIN, SOFTMAX_LOG_STD_MAX)
+            policy_out = torch.cat([logits, log_std], dim=-1)
+        elif self.use_dirichlet:
+            # === DIRICHLET MODE (LEGACY) ===
             # Output raw logits → Dirichlet distribution transforms them to concentration params
             pass  # policy_out is already correct (action_dim outputs)
         elif self.use_softmax_output:

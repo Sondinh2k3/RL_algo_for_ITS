@@ -324,13 +324,51 @@ class PhaseStandardizer:
         
         self.num_phases = len(phases_data)
         
+        # Build outgoing edge direction map for movement inference
+        # Outgoing edges are opposite to incoming edges at the same direction
+        # e.g., if incoming from North is edge "A1A0", outgoing to South would be "A0..." 
+        outgoing_direction_map = {}
+        if self.gpi is not None:
+            direction_map = self.gpi.map_intersection()
+            # Get outgoing edges and compute their directions
+            if self.data_provider is not None:
+                outgoing_edges = self.data_provider.get_outgoing_edges(self.junction_id)
+                for out_edge in outgoing_edges:
+                    # Compute direction using lane vector (opposite direction since outgoing)
+                    try:
+                        lane_id = f"{out_edge}_0"
+                        shape = self.data_provider.get_lane_shape(lane_id)
+                        if len(shape) >= 2:
+                            # Use first segment (leaving junction)
+                            p1 = np.array(shape[0])  # Start point
+                            p2 = np.array(shape[1])  # Next point
+                            vector = p2 - p1
+                            norm = np.linalg.norm(vector)
+                            if norm > 1e-6:
+                                vector = vector / norm
+                                # Compute angle and direction (this is where traffic goes TO)
+                                angle = np.degrees(np.arctan2(vector[1], vector[0])) % 360
+                                # Direction where traffic exits to
+                                if 45 <= angle < 135:  # Going North
+                                    outgoing_direction_map[out_edge] = 'N'
+                                elif 135 <= angle < 225:  # Going West  
+                                    outgoing_direction_map[out_edge] = 'W'
+                                elif 225 <= angle < 315:  # Going South
+                                    outgoing_direction_map[out_edge] = 'S'
+                                else:  # Going East
+                                    outgoing_direction_map[out_edge] = 'E'
+                    except Exception:
+                        pass
+        
         # Map controlled links to movements
         link_movements = []
         for link_idx, link_group in enumerate(controlled_links):
             if not link_group:
+                # IMPORTANT: Append None to maintain index alignment with green_indices
+                link_movements.append(None)
                 continue
                 
-            # Each link is (from_lane, to_lane, via_lane)
+            # Each link is [from_lane, to_lane, via_index] (sumolib format)
             from_lane_obj = link_group[0][0] if link_group else None
             to_lane_obj = link_group[0][1] if link_group else None
             
@@ -346,12 +384,14 @@ class PhaseStandardizer:
             from_edge = from_lane.rsplit('_', 1)[0]
             to_edge = to_lane.rsplit('_', 1)[0] if to_lane else None
             
-            # Get standard directions from GPI
+            # Get standard directions from GPI (incoming) and outgoing map
             from_dir = None
             to_dir = None
             if self.gpi is not None:
                 from_dir = self.gpi.get_edge_direction(from_edge)
-                to_dir = self.gpi.get_edge_direction(to_edge) if to_edge else None
+                # For outgoing edge, use our computed outgoing direction map
+                if to_edge:
+                    to_dir = outgoing_direction_map.get(to_edge)
             
             movement = self._infer_movement_type(from_lane, to_lane, from_dir, to_dir)
             link_movements.append(movement)
@@ -387,7 +427,7 @@ class PhaseStandardizer:
         """Create mapping between actual and standard phases.
         
         This method maps each actual phase to a standard phase (0-7) based on:
-        1. Movement overlap if movements are identified
+        1. Overlap ratio (overlap / standard_phase_size) - higher ratio = better match
         2. Fallback heuristics based on phase index and green patterns
         
         Standard 8 phases:
@@ -399,6 +439,13 @@ class PhaseStandardizer:
         - 5: South Green (Phase F) - All South movements
         - 6: East Green (Phase G) - All East movements
         - 7: West Green (Phase H) - All West movements
+        
+        Overlap Ratio Logic:
+        - ratio = overlap_count / len(standard_phase)
+        - Example: actual={NR,SR}, standard_0={NT,ST,NR,SR} -> ratio=2/4=50%
+        - Example: actual={NR,SR}, standard_2={NL,SL} -> ratio=0/2=0%
+        - Each actual phase picks its best available standard phase (highest ratio)
+        - Smaller phases are processed first (they have fewer good options)
         """
         # Use extended phases for better matching (includes right turns)
         standard = self.STANDARD_PHASES_EXTENDED
@@ -407,25 +454,63 @@ class PhaseStandardizer:
         phases_with_movements = [p for p in self.phases if len(p.movements) > 0]
         
         if len(phases_with_movements) > 0:
-            # Method 1: Use movement overlap (preferred)
-            for actual_idx, phase in enumerate(self.phases):
-                best_standard = 0
+            # Method 1: Use overlap ratio (preferred)
+            assigned_standards = set()
+            
+            # Process phases in order of size (smallest first)
+            # Smaller phases have fewer good matches, so they should pick first
+            phase_order = sorted(
+                range(self.num_phases),
+                key=lambda i: (len(self.phases[i].movements), i)
+            )
+            
+            for actual_idx in phase_order:
+                phase = self.phases[actual_idx]
+                if len(phase.movements) == 0:
+                    continue
+                
+                # Find best available standard phase for this actual phase
+                best_std = None
+                best_ratio = -1
                 best_overlap = 0
                 
                 for std_idx, std_movements in standard.items():
+                    if std_idx in assigned_standards:
+                        continue
+                        
                     overlap = len(phase.movements & std_movements)
-                    if overlap > best_overlap:
+                    std_size = len(std_movements)
+                    ratio = overlap / std_size if std_size > 0 else 0.0
+                    
+                    # Pick highest ratio, tie-break by overlap count, then lower std_idx
+                    if (ratio > best_ratio or 
+                        (ratio == best_ratio and overlap > best_overlap) or
+                        (ratio == best_ratio and overlap == best_overlap and 
+                         (best_std is None or std_idx < best_std))):
+                        best_ratio = ratio
                         best_overlap = overlap
-                        best_standard = std_idx
+                        best_std = std_idx
                 
-                self.actual_to_standard[actual_idx] = best_standard
-                self.standard_to_actual[best_standard] = actual_idx
+                if best_std is not None and best_ratio > 0:
+                    self.actual_to_standard[actual_idx] = best_std
+                    self.standard_to_actual[best_std] = actual_idx
+                    assigned_standards.add(best_std)
+            
+            # Handle any unassigned actual phases (fallback to sequential)
+            for actual_idx in range(self.num_phases):
+                if actual_idx not in self.actual_to_standard:
+                    # Find first unassigned standard phase
+                    for std_idx in range(self.NUM_STANDARD_PHASES):
+                        if std_idx not in assigned_standards:
+                            self.actual_to_standard[actual_idx] = std_idx
+                            self.standard_to_actual[std_idx] = actual_idx
+                            assigned_standards.add(std_idx)
+                            break
+                    else:
+                        # All standard phases assigned, use modulo
+                        self.actual_to_standard[actual_idx] = actual_idx % self.NUM_STANDARD_PHASES
         else:
             # Method 2: Fallback - use phase index pattern
-            # Common patterns:
-            # - 2 phases: alternate NS (0) and EW (1)
-            # - 4 phases: NS-T(0), EW-T(1), NS-L(2), EW-L(3)
-            # - 8 phases: direct mapping to standard phases
             self._create_fallback_mapping()
     
     def _create_fallback_mapping(self):

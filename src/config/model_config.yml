@@ -68,10 +68,10 @@ mgmq:
 # PPO Training Parameters
 # ============================================
 ppo:
-  learning_rate: 0.00005  # 1e-3
+  learning_rate: 0.0005  # 1e-3
   gamma: 0.99             # Discount factor
   lambda_: 0.95           # GAE lambda
-  entropy_coeff: 0.02     # Entropy coefficient
+  entropy_coeff: 0.01     # Entropy coefficient
   clip_param: 0.2         # PPO clip parameter
   vf_clip_param: 5.0     # Value function clip parameter
   train_batch_size: 512  # Training batch size
@@ -116,7 +116,7 @@ reward:
 # Environment Configuration
 # ============================================
 environment:
-  num_seconds: 3600       # Simulation duration (synced with grid4x4.sumocfg end=8000)
+  num_seconds: 6000       # Simulation duration (synced with grid4x4.sumocfg end=8000)
   max_green: 90           # Maximum green time
   min_green: 5           # Minimum green time
   cycle_time: 90          # Traffic light cycle time

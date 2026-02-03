@@ -1,148 +1,80 @@
 {
   "network": "grid4x4",
   "num_episodes": 1,
-  "mean_reward": -381.40666666666647,
+  "mean_reward": -490.94833333333366,
   "std_reward": 0.0,
-  "min_reward": -381.40666666666647,
-  "max_reward": -381.40666666666647,
-  "mean_length": 40.0,
+  "min_reward": -490.94833333333366,
+  "max_reward": -490.94833333333366,
+  "mean_length": 67.0,
   "episode_rewards": [
-    -381.40666666666647
+    -490.94833333333366
   ],
   "episode_lengths": [
-    40
+    67
   ],
   "per_agent_stats": {
     "A0": {
-      "mean_reward": -31.226249999999993,
+      "mean_reward": -33.60041666666667,
       "std_reward": 0.0
     },
     "A1": {
-      "mean_reward": -24.135833333333338,
+      "mean_reward": -31.221666666666675,
       "std_reward": 0.0
     },
     "A2": {
-      "mean_reward": -21.89458333333333,
+      "mean_reward": -26.936249999999998,
       "std_reward": 0.0
     },
     "A3": {
-      "mean_reward": -30.635000000000005,
+      "mean_reward": -32.615000000000016,
       "std_reward": 0.0
     },
     "B0": {
-      "mean_reward": -26.8675,
+      "mean_reward": -36.00666666666666,
       "std_reward": 0.0
     },
     "B1": {
-      "mean_reward": -26.07,
+      "mean_reward": -38.64208333333334,
       "std_reward": 0.0
     },
     "B2": {
-      "mean_reward": -24.630833333333328,
+      "mean_reward": -32.84416666666666,
       "std_reward": 0.0
     },
     "B3": {
-      "mean_reward": -21.339999999999996,
+      "mean_reward": -27.170000000000005,
       "std_reward": 0.0
     },
     "C0": {
-      "mean_reward": -15.345000000000006,
+      "mean_reward": -20.583750000000006,
       "std_reward": 0.0
     },
     "C1": {
-      "mean_reward": -22.650833333333335,
+      "mean_reward": -31.87708333333334,
       "std_reward": 0.0
     },
     "C2": {
-      "mean_reward": -27.032500000000006,
+      "mean_reward": -32.02833333333334,
       "std_reward": 0.0
     },
     "C3": {
-      "mean_reward": -20.744166666666665,
+      "mean_reward": -24.29625,
       "std_reward": 0.0
     },
     "D0": {
-      "mean_reward": -21.161250000000003,
+      "mean_reward": -30.712916666666676,
       "std_reward": 0.0
     },
     "D1": {
-      "mean_reward": -30.616666666666667,
+      "mean_reward": -40.86500000000001,
       "std_reward": 0.0
     },
     "D2": {
-      "mean_reward": -19.602916666666665,
+      "mean_reward": -23.617916666666662,
       "std_reward": 0.0
     },
     "D3": {
-      "mean_reward": -17.453333333333337,
-      "std_reward": 0.0
-    },
-    "J12": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J16": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J24": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J40": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J43": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J45": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J5": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J50": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "J8": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ19_J60": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ21_J61": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ28_J59": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ29_J7": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ31_J54": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ34_J56": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ36_J55": {
-      "mean_reward": 0.0,
-      "std_reward": 0.0
-    },
-    "clusterJ49_J57": {
-      "mean_reward": 0.0,
+      "mean_reward": -27.93083333333334,
       "std_reward": 0.0
     }
   }

@@ -136,7 +136,9 @@ def evaluate_baseline(
     print(f"✓ Reward Function: {yaml_reward_cfg['reward_fn']}")
     print(f"✓ Reward Weights: {yaml_reward_cfg['reward_weights']}")
     
-    # Build environment config (SAME as eval_mgmq_ppo.py, but with fixed_ts=True)
+    # Build environment config (SAME as training, but with fixed_ts=True)
+    # IMPORTANT: Do NOT use reward normalization for baseline evaluation
+    # We want raw reward values for fair comparison
     env_config = {
         "net_file": net_file,
         "route_file": route_file,
@@ -148,17 +150,20 @@ def evaluate_baseline(
         "min_green": yaml_env_cfg["min_green"],
         "cycle_time": yaml_env_cfg["cycle_time"],
         "yellow_time": yaml_env_cfg["yellow_time"],
-        # Match eval_mgmq_ppo.py: Force enable teleport for evaluation to prevent permanent deadlocks
-        "time_to_teleport": 500,
+        # Match training: time_to_teleport from config
+        "time_to_teleport": yaml_env_cfg.get("time_to_teleport", 500),
         "single_agent": False,
-        "window_size": yaml_mgmq_cfg["window_size"],
+        "window_size": yaml_mgmq_cfg.get("window_size", 1),
         "preprocessing_config": preprocessing_config,
         "additional_sumo_cmd": additional_sumo_cmd,
         "reward_fn": yaml_reward_cfg["reward_fn"],
         "reward_weights": yaml_reward_cfg["reward_weights"],
-        "use_phase_standardizer": yaml_env_cfg["use_phase_standardizer"],
+        "use_phase_standardizer": yaml_env_cfg.get("use_phase_standardizer", True),
         "use_neighbor_obs": False,  # Not needed for baseline
-        "max_neighbors": yaml_mgmq_cfg["max_neighbors"],
+        "max_neighbors": yaml_mgmq_cfg.get("max_neighbors", 4),
+        # CRITICAL: Do NOT normalize rewards for baseline - we need raw values
+        "normalize_reward": False,
+        "clip_rewards": None,
         # CRITICAL DIFFERENCE: fixed_ts=True means NO agent actions are applied
         # SUMO's default traffic light program (from .net.xml) controls the signals
         "fixed_ts": True,

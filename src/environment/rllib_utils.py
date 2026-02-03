@@ -69,10 +69,26 @@ class SumoMultiAgentEnv(SumoEnvironment, MultiAgentEnv):
         for agent_id in new_info:
             new_info[agent_id].update(common_info)
             
-        # Check for NaNs in rewards or obs
-        if any(np.isnan(r) for r in rewards.values()):
-            print(f"WARNING: NaN rewards detected: {rewards}")
-            rewards = {k: (0.0 if np.isnan(v) else v) for k, v in rewards.items()}
+        # Check for NaNs/Infs in rewards and fix them
+        nan_detected = False
+        for k, v in rewards.items():
+            if np.isnan(v) or np.isinf(v):
+                nan_detected = True
+                rewards[k] = 0.0
+        if nan_detected:
+            print(f"WARNING: NaN/Inf rewards detected and replaced with 0.0")
+        
+        # Check for NaNs in observations and fix them
+        for agent_id, agent_obs in obs.items():
+            if isinstance(agent_obs, np.ndarray):
+                if np.any(np.isnan(agent_obs)) or np.any(np.isinf(agent_obs)):
+                    print(f"WARNING: NaN/Inf in observation for {agent_id}, replacing with 0")
+                    obs[agent_id] = np.nan_to_num(agent_obs, nan=0.0, posinf=1.0, neginf=-1.0)
+            elif isinstance(agent_obs, dict):
+                for key, val in agent_obs.items():
+                    if isinstance(val, np.ndarray) and (np.any(np.isnan(val)) or np.any(np.isinf(val))):
+                        print(f"WARNING: NaN/Inf in observation[{key}] for {agent_id}, replacing")
+                        agent_obs[key] = np.nan_to_num(val, nan=0.0, posinf=1.0, neginf=-1.0)
             
         return obs, rewards, terminateds, truncateds, new_info
 

@@ -42,6 +42,7 @@ from src.environment.rllib_utils import (
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
 from src.models.dirichlet_distribution import register_dirichlet_distribution
+from src.models.masked_softmax_distribution import register_masked_softmax_distribution
 from src.config import (
     load_model_config,
     get_mgmq_config,
@@ -62,6 +63,13 @@ ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
 # Register Dirichlet distribution for proper simplex-constrained actions
 # This solves the "Scale Ambiguity & Vanishing Gradient" problem
 register_dirichlet_distribution()
+
+# Register Masked Softmax distribution (NEW - RECOMMENDED)
+# This applies action masking BEFORE softmax, not post-hoc
+# - Invalid phases get exactly 0.0
+# - Gradient only flows through valid phases
+# - Entropy correctly measures uncertainty over valid phases
+register_masked_softmax_distribution()
 
 
 
@@ -174,17 +182,21 @@ def create_mgmq_ppo_config(
             lambda_=lambda_,
             entropy_coeff=entropy_coeff,
             clip_param=clip_param,
-            vf_clip_param=10.0,
+            # CRITICAL FIX: vf_clip_param must be large enough for reward scale
+            # Episode reward ~ -400 to -500, so vf predictions can be large
+            # Too small vf_clip_param causes clipped gradients -> poor VF learning
+            vf_clip_param=100.0,  # Increased from 10.0 (was too restrictive)
             # CRITICAL FIX 1: Reduce value function loss coefficient
             # This prevents vf_loss from dominating the total loss
-            vf_loss_coeff=0.5,  # Default is 1.0, reduce to balance with policy_loss
+            # Lower coefficient = VF learns more slowly but more stably
+            vf_loss_coeff=0.25,  # Reduced from 0.5 for more stable VF learning
             # CRITICAL FIX 2: Normalize advantages for stable learning
             # Without this, advantage estimates have high variance
             use_gae=True,  # Ensure GAE is enabled (default is True)
             # Episode-based training: 1 episode = ~89 env steps × 16 agents = ~1424 samples
             # CRITICAL FIX 3: Increase batch size for multi-agent PPO
             # With 16 agents, need more samples for stable gradient estimates
-            train_batch_size=640,  # Increased from 1424 for better gradient estimates
+            train_batch_size=1067,  # Increased from 1424 for better gradient estimates
             minibatch_size=64,     # Increased from 64 for better batch normalization
             num_epochs=5,          # Increased from 4 for more thorough updates
             grad_clip=0.5,
@@ -193,9 +205,10 @@ def create_mgmq_ppo_config(
                 "custom_model": custom_model_name,
                 "custom_model_config": mgmq_config,
                 "vf_share_layers": False,  # Separate policy and value networks
-                # Use Dirichlet distribution for proper simplex-constrained actions
-                # Actions automatically sum=1 with proper gradient flow
-                "custom_action_dist": "dirichlet",
+                # Use Masked Softmax distribution (NEW - RECOMMENDED)
+                # Action masking applied BEFORE softmax → invalid phases = 0.0
+                # Better gradient flow than Dirichlet + post-hoc masking
+                "custom_action_dist": "masked_softmax",
             },
         )
         .resources(num_gpus=1 if use_gpu else 0)
@@ -402,6 +415,9 @@ def train_mgmq_ppo(
             # Local GNN config
             "use_neighbor_obs": use_local_gnn,  # Enable pre-packaged neighbor observation
             "max_neighbors": max_neighbors,
+            # Them phan chuan hoa reward o file env
+            "normalize_reward": True,   # Bật normalization
+            "clip_rewards": 10.0, # Clip về [-10, 10]
         }
         
         # MGMQ model configuration

@@ -15,6 +15,47 @@
 
 ## Nhật Ký Thay Đổi (Changelog)
 
+### [v1.5.0] - 2026-02-03
+#### ✨ Thêm mới (Added)
+- **Reward Normalization**: Implement cơ chế chuẩn hóa phần thưởng (z-score normalization) sử dụng `RunningMeanStd` (Welford algorithm) để ổn định quá trình training.
+- **Robust NaN Handling**: Thêm các lớp bảo vệ đa tầng để xử lý giá trị NaN/Inf trong quá trình training và simulation.
+- **New Module**: `src/preprocessing/observation_normalizer.py` chứa class `RunningMeanStd` và `RewardNormalizer`.
+- **Test Suite**: Thêm `tests/test_reward_normalization.py` để kiểm thử tính năng normalization.
+
+#### 🔄 Thay đổi (Changed)
+- **env.py**:
+  - Thêm tham số `normalize_reward` và `clip_rewards` vào `SumoEnvironment`.
+  - Tích hợp logic normalization vào `step()` với sample threshold (10) và variance check (`std > 1e-6`).
+  - Safe handling cho trường hợp Variance=0 hoặc tập mẫu quá nhỏ.
+- **traffic_signal.py**:
+  - Thêm hàm `_safe_mean` để tính trung bình an toàn cho history lists, tránh lỗi "Mean of empty slice".
+  - Refactor các hàm `get_aggregated_*` (halting, queued, occupancy, speed, waiting time) để sử dụng `_safe_mean`.
+  - Thêm clipping [0, 1] cho các observation functions (`density`, `queue`, `occupancy`, `speed`) để đảm bảo đầu ra hợp lệ cho Neural Network.
+  - Cập nhật `compute_reward` để thay thế NaN/Inf bằng 0.0 trước khi trả về.
+- **rllib_utils.py**:
+  - Tăng cường kiểm tra NaN trong `SumoMultiAgentEnv.step()` cho cả observations và rewards.
+  - Tự động thay thế tham số nhiễu (NaN/Inf) bằng giá trị an toàn (0.0).
+- **Evaluation Scripts**:
+  - `scripts/eval_mgmq_ppo.py`: Set `normalize_reward=False` để đánh giá model dựa trên reward gốc.
+  - `tools/eval_baseline_reward.py`: Set `normalize_reward=False` để so sánh công bằng với baseline.
+
+#### 🐛 Sửa lỗi (Fixed)
+- Fix lỗi `RuntimeWarning: Mean of empty slice` trong `traffic_signal.py` khi history lists rỗng.
+- Fix lỗi `WARNING: NaN rewards detected` gây crash hoặc training không ổn định.
+- Fix vấn đề asymmetric rewards làm cho việc học bị lệch (đã định hướng lại reward về symmetric range khi có thể, nhưng currently giữ nguyên logic cũ và chỉ thêm normalization).
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/preprocessing/observation_normalizer.py` | Added | Module chuẩn hóa RunningMeanStd |
+| `src/environment/drl_algo/env.py` | Modified | Thêm logic normalize reward & NaN check |
+| `src/environment/drl_algo/traffic_signal.py` | Modified | Fix aggregated getters & thêm safe mean |
+| `src/environment/rllib_utils.py` | Modified | Thêm safety wrapper cho RLlib env |
+| `scripts/eval_mgmq_ppo.py` | Modified | Disable normalization khi eval |
+| `tools/eval_baseline_reward.py` | Modified | Disable normalization khi eval |
+
+---
+
 ### [v1.0.0] - 2026-01-17
 #### ✨ Thêm mới (Added)
 - Tạo khung dự án

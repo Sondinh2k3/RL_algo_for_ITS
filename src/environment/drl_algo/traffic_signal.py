@@ -670,12 +670,18 @@ class TrafficSignal:
         
         if self.reward_dim == 1:
             self.last_reward = self.reward_list[0](self)
+            # Ensure reward is valid
+            if np.isnan(self.last_reward) or np.isinf(self.last_reward):
+                self.last_reward = 0.0
             if self.debug_logging:
                 reward_components[self._get_reward_fn_name(self.reward_list[0])] = self.last_reward
         else:
             rewards_array = []
             for i, reward_fn in enumerate(self.reward_list):
                 reward_val = reward_fn(self)
+                # Replace NaN/Inf with 0
+                if np.isnan(reward_val) or np.isinf(reward_val):
+                    reward_val = 0.0
                 rewards_array.append(reward_val)
                 if self.debug_logging:
                     reward_components[self._get_reward_fn_name(reward_fn)] = reward_val
@@ -683,6 +689,9 @@ class TrafficSignal:
             self.last_reward = np.array(rewards_array, dtype=np.float32)
             if self.reward_weights is not None:
                 self.last_reward = np.dot(self.last_reward, self.reward_weights)  # Linear combination of rewards
+                # Ensure final reward is valid
+                if np.isnan(self.last_reward) or np.isinf(self.last_reward):
+                    self.last_reward = 0.0
                 if self.debug_logging:
                     reward_components["weighted_sum"] = self.last_reward
 
@@ -1227,6 +1236,25 @@ class TrafficSignal:
     # Aggregated Getter Functions - return mean values over the cycle (60s)
     # =========================================================================
     
+    def _safe_mean(self, values: list, fallback: float = 0.0) -> float:
+        """Compute mean safely, handling empty lists and NaN values.
+        
+        Args:
+            values: List of numeric values
+            fallback: Value to return if mean cannot be computed
+            
+        Returns:
+            float: Mean of valid values, or fallback if empty/all-NaN
+        """
+        if not values:
+            return fallback
+        arr = np.array(values, dtype=np.float64)
+        # Filter out NaN and Inf values
+        valid = arr[np.isfinite(arr)]
+        if len(valid) == 0:
+            return fallback
+        return float(np.mean(valid))
+    
     def get_aggregated_halting_vehicles(self) -> float:
         """Returns mean halting vehicle count over the cycle.
         
@@ -1235,7 +1263,9 @@ class TrafficSignal:
         """
         history = self.reward_metrics_history.get("halting_vehicles", [])
         if history:
-            return float(np.mean(history))
+            result = self._safe_mean(history)
+            if result != 0.0 or len(history) > 0:
+                return result
         return float(self.get_total_halting_veh_by_detectors())
     
     def get_aggregated_queued(self) -> float:
@@ -1246,7 +1276,9 @@ class TrafficSignal:
         """
         history = self.reward_metrics_history.get("total_queued", [])
         if history:
-            return float(np.mean(history))
+            result = self._safe_mean(history)
+            if result != 0.0 or len(history) > 0:
+                return result
         return float(self.get_total_queued())
     
     def get_aggregated_occupancy(self) -> float:
@@ -1264,7 +1296,8 @@ class TrafficSignal:
         for det_id in self.detectors_e2:
             occ_history = self.detector_history.get("occupancy", {}).get(det_id, [])
             if occ_history:
-                total_occupancy += np.mean(occ_history)
+                mean_val = self._safe_mean(occ_history, fallback=0.0)
+                total_occupancy += mean_val
                 count += 1
         
         if count > 0:
@@ -1281,7 +1314,9 @@ class TrafficSignal:
         """
         history = self.reward_metrics_history.get("average_speed", [])
         if history:
-            return float(np.mean(history))
+            result = self._safe_mean(history, fallback=-1.0)
+            if result >= 0:  # Valid result
+                return result
         return self._get_average_speed_instant()
     
     def get_aggregated_waiting_time(self) -> float:
@@ -1292,7 +1327,9 @@ class TrafficSignal:
         """
         history = self.reward_metrics_history.get("waiting_time", [])
         if history:
-            return float(np.mean(history))
+            result = self._safe_mean(history, fallback=-1.0)
+            if result >= 0:  # Valid result
+                return result
         return float(sum(self.get_accumulated_waiting_time_per_lane()))
 
     def get_current_vehicle_count(self) -> int:
@@ -1405,8 +1442,8 @@ class TrafficSignal:
         for det_id in self.detectors_e2:
             history = self.detector_history["density"].get(det_id, [])
             if history:
-                # Clip to [0, 1] and ensure float32
-                val = float(np.clip(np.mean(history), 0.0, 1.0))
+                # Use safe_mean and clip to [0, 1]
+                val = float(np.clip(self._safe_mean(history, fallback=0.0), 0.0, 1.0))
                 avg_densities.append(val)
             else:
                 avg_densities.append(0.0)
@@ -1422,8 +1459,8 @@ class TrafficSignal:
         for det_id in self.detectors_e2:
             history = self.detector_history["queue"].get(det_id, [])
             if history:
-                # Clip to [0, 1] and ensure float32
-                val = float(np.clip(np.mean(history), 0.0, 1.0))
+                # Use safe_mean and clip to [0, 1]
+                val = float(np.clip(self._safe_mean(history, fallback=0.0), 0.0, 1.0))
                 avg_queues.append(val)
             else:
                 avg_queues.append(0.0)
@@ -1439,8 +1476,8 @@ class TrafficSignal:
         for det_id in self.detectors_e2:
             history = self.detector_history["occupancy"].get(det_id, [])
             if history:
-                # Clip to [0, 1] and ensure float32
-                val = float(np.clip(np.mean(history), 0.0, 1.0))
+                # Use safe_mean and clip to [0, 1]
+                val = float(np.clip(self._safe_mean(history, fallback=0.0), 0.0, 1.0))
                 avg_occupancies.append(val)
             else:
                 avg_occupancies.append(0.0)
@@ -1456,8 +1493,8 @@ class TrafficSignal:
         for det_id in self.detectors_e2:
             history = self.detector_history["average_speed"].get(det_id, [])
             if history:
-                # Clip to [0, 1] and ensure float32
-                val = float(np.clip(np.mean(history), 0.0, 1.0))
+                # Use safe_mean and clip to [0, 1]
+                val = float(np.clip(self._safe_mean(history, fallback=1.0), 0.0, 1.0))
                 avg_speeds.append(val)
             else:
                 avg_speeds.append(1.0)

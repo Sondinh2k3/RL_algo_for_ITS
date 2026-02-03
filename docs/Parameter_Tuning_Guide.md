@@ -287,36 +287,40 @@ File cấu hình chính: `src/config/model_config.yml`
 
 ## 5. Tham Số Preprocessing
 
-### 5.1. Tham Số GPI (Lane Aggregation)
+### 5.1. Tham Số GPI (Direction Mapping)
 
-Được cấu hình trong `simulation.yml`:
+GPI module ánh xạ các edge đến từ 4 hướng chuẩn (N/E/S/W).
 
 ```yaml
 preprocessing:
   gpi:
-    lane_aggregation:
-      standard_lanes_per_direction: 2
-      missing_lane_strategy: "zero"
-      merge_strategy: "mean"
+    enabled: true
 ```
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `standard_lanes_per_direction` | 2 | Số làn chuẩn hóa mỗi hướng |
-| `missing_lane_strategy` | "zero" | Xử lý làn thiếu |
-| `merge_strategy` | "mean" | Cách gộp làn thừa |
+> **NOTE:** Hệ thống sử dụng cố định **12 làn** (3 làn/hướng × 4 hướng) cho GAT.
+> Mỗi làn tương ứng với 1 detector E2 và có 4 features.
+> Không cần cấu hình lane aggregation vì GAT yêu cầu 12 nodes cố định.
 
 ### 5.2. Tham Số FRAP (Phase Standardization)
+
+FRAP module ánh xạ các pha tín hiệu thực tế sang 8 pha chuẩn.
 
 ```yaml
 preprocessing:
   frap:
-    standard_pattern: "4phase"
+    enabled: true
 ```
 
-| Tham số | Mặc định | Ý nghĩa |
-|---------|----------|---------|
-| `standard_pattern` | "4phase" | Pattern pha chuẩn |
+| Pha chuẩn | Mô tả |
+|-----------|-------|
+| 0 (A) | NS Through - N-S đi thẳng |
+| 1 (B) | EW Through - E-W đi thẳng |
+| 2 (C) | NS Left - N-S rẽ trái |
+| 3 (D) | EW Left - E-W rẽ trái |
+| 4 (E) | North Green - Xanh hướng Bắc |
+| 5 (F) | South Green - Xanh hướng Nam |
+| 6 (G) | East Green - Xanh hướng Đông |
+| 7 (H) | West Green - Xanh hướng Tây |
 
 ---
 

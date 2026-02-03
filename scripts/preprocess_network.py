@@ -211,92 +211,9 @@ class NetworkDataProvider:
         return result
 
 
-class LaneAggregator:
-    """Handles lane aggregation for standardized observation space.
-    
-    This module ensures all intersections have the same observation dimension
-    by merging extra lanes and masking missing lanes.
-    """
-    
-    def __init__(
-        self,
-        standard_lanes_per_direction: int = 2,
-        missing_lane_strategy: str = "zero",
-        merge_strategy: str = "mean"
-    ):
-        """Initialize lane aggregator.
-        
-        Args:
-            standard_lanes_per_direction: Target number of lanes per direction
-            missing_lane_strategy: How to handle missing lanes ("zero" or "mask")
-            merge_strategy: How to merge extra lanes ("sum", "mean", "max")
-        """
-        self.standard_lanes = standard_lanes_per_direction
-        self.missing_strategy = missing_lane_strategy
-        self.merge_strategy = merge_strategy
-    
-    def compute_aggregation(
-        self,
-        lanes_by_direction: Dict[str, List[str]]
-    ) -> Dict[str, Any]:
-        """Compute lane aggregation configuration.
-        
-        Args:
-            lanes_by_direction: Dict mapping direction (N/E/S/W) to lane IDs
-            
-        Returns:
-            Dict with aggregation configuration for each direction
-        """
-        result = {}
-        
-        for direction in ['N', 'E', 'S', 'W']:
-            lanes = lanes_by_direction.get(direction, [])
-            num_lanes = len(lanes)
-            
-            direction_config = {
-                "original_lanes": lanes,
-                "num_original_lanes": num_lanes,
-                "num_standard_lanes": self.standard_lanes,
-            }
-            
-            if num_lanes == 0:
-                # Missing direction entirely
-                direction_config["status"] = "missing"
-                direction_config["mask"] = [0] * self.standard_lanes
-                direction_config["aggregation_indices"] = []
-                
-            elif num_lanes == self.standard_lanes:
-                # Perfect match
-                direction_config["status"] = "exact"
-                direction_config["mask"] = [1] * self.standard_lanes
-                direction_config["aggregation_indices"] = [[i] for i in range(num_lanes)]
-                
-            elif num_lanes < self.standard_lanes:
-                # Fewer lanes than standard - pad with zeros/mask
-                direction_config["status"] = "padded"
-                direction_config["mask"] = [1] * num_lanes + [0] * (self.standard_lanes - num_lanes)
-                direction_config["aggregation_indices"] = [[i] for i in range(num_lanes)]
-                # Pad with empty indices
-                direction_config["aggregation_indices"] += [[] for _ in range(self.standard_lanes - num_lanes)]
-                
-            else:
-                # More lanes than standard - need to merge
-                direction_config["status"] = "merged"
-                direction_config["mask"] = [1] * self.standard_lanes
-                direction_config["merge_strategy"] = self.merge_strategy
-                
-                # Distribute lanes across standard slots
-                lanes_per_slot = num_lanes / self.standard_lanes
-                indices = []
-                for i in range(self.standard_lanes):
-                    start = int(i * lanes_per_slot)
-                    end = int((i + 1) * lanes_per_slot)
-                    indices.append(list(range(start, end)))
-                direction_config["aggregation_indices"] = indices
-            
-            result[direction] = direction_config
-        
-        return result
+# NOTE: LaneAggregator class removed
+# The GAT model expects exactly 12 lanes (3 per direction) and handles them directly.
+# Lane aggregation config was defined but never used in training/inference.
 
 
 def preprocess_network(
@@ -345,16 +262,6 @@ def preprocess_network(
         tls_ids = all_tls_ids
         print(f"\nProcessing all {len(tls_ids)} traffic lights: {tls_ids}")
     
-    # Initialize lane aggregator
-    gpi_config = config.get("gpi", {})
-    lane_config = gpi_config.get("lane_aggregation", {})
-    
-    aggregator = LaneAggregator(
-        standard_lanes_per_direction=lane_config.get("standard_lanes_per_direction", 2),
-        missing_lane_strategy=lane_config.get("missing_lane_strategy", "zero"),
-        merge_strategy=lane_config.get("merge_strategy", "mean")
-    )
-    
     # Parse detector file if provided
     detector_info = {'lane_to_e1': {}, 'lane_to_e2': {}, 'e2_lengths': {}}
     if detector_file:
@@ -396,13 +303,11 @@ def preprocess_network(
             else:
                 lanes_by_direction[direction] = []
         
-        # Compute lane aggregation
-        aggregation = aggregator.compute_aggregation(lanes_by_direction)
-        
-        for direction, agg_info in aggregation.items():
-            status = agg_info["status"]
-            num_orig = agg_info["num_original_lanes"]
-            print(f"   {direction}: {num_orig} lanes → {status}")
+        # Count lanes per direction
+        total_lanes = sum(len(lanes) for lanes in lanes_by_direction.values())
+        print(f"   Lanes: {total_lanes} total (N={len(lanes_by_direction.get('N', []))}, "
+              f"E={len(lanes_by_direction.get('E', []))}, S={len(lanes_by_direction.get('S', []))}, "
+              f"W={len(lanes_by_direction.get('W', []))})")
         
         # Map detectors to directions
         # IMPORTANT: GAT layer expects lanes ordered as [Left, Through, Right] per direction.
@@ -460,7 +365,6 @@ def preprocess_network(
             "detectors_e1": all_e1_detectors,
             "detectors_e2": all_e2_detectors,
             "e2_detector_lengths": e2_detector_lengths,
-            "lane_aggregation": aggregation,
             "observation_mask": gpi.get_observation_mask().tolist(),
             "phase_config": {
                 "num_phases": frap.num_phases,

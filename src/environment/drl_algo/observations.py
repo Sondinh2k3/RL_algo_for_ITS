@@ -7,6 +7,9 @@ from gymnasium import spaces
 
 from .traffic_signal import TrafficSignal
 
+# Number of standard phases for FRAP action masking
+NUM_STANDARD_PHASES = 8
+
 
 class ObservationFunction:
     """Abstract base class for observation functions."""
@@ -27,14 +30,19 @@ class ObservationFunction:
 
 
 class DefaultObservationFunction(ObservationFunction):
-    """Default observation function for traffic signals."""
+    """Default observation function for traffic signals.
+    
+    Returns a Dict observation with:
+    - features: Lane features [48] = 12 lanes * 4 features
+    - action_mask: Binary mask [8] for valid phases (FRAP)
+    """
 
     def __init__(self, ts: TrafficSignal):
         """Initialize default observation function."""
         super().__init__(ts)
 
-    def __call__(self) -> np.ndarray:
-        """Return the default observation."""
+    def __call__(self) -> dict:
+        """Return the observation dict with features and action_mask."""
         density = self.ts.get_lanes_density_by_detectors()
         queue = self.ts.get_lanes_queue_by_detectors()
         occupancy = self.ts.get_lanes_occupancy_by_detectors()
@@ -46,21 +54,41 @@ class DefaultObservationFunction(ObservationFunction):
         for i in range(num_lanes):
             obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
             
-        observation = np.array(obs_data, dtype=np.float32)
+        features = np.array(obs_data, dtype=np.float32)
         # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
-        observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
-        return observation
+        features = np.clip(features, 0.0, 1.0).astype(np.float32)
+        
+        # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
+        action_mask = self.ts.get_action_mask()
+        action_mask = np.array(action_mask, dtype=np.float32)
+        
+        return {
+            "features": features,
+            "action_mask": action_mask,
+        }
 
-    def observation_space(self) -> spaces.Box:
-        """Return the observation space."""
-        return spaces.Box(
-            low=np.zeros(4 * len(self.ts.detectors_e2), dtype=np.float32),
-            high=np.ones(4 * len(self.ts.detectors_e2), dtype=np.float32),
-        )
+    def observation_space(self) -> spaces.Dict:
+        """Return the observation space as Dict."""
+        feature_dim = 4 * len(self.ts.detectors_e2)
+        return spaces.Dict({
+            "features": spaces.Box(
+                low=np.zeros(feature_dim, dtype=np.float32),
+                high=np.ones(feature_dim, dtype=np.float32),
+            ),
+            "action_mask": spaces.Box(
+                low=np.zeros(NUM_STANDARD_PHASES, dtype=np.float32),
+                high=np.ones(NUM_STANDARD_PHASES, dtype=np.float32),
+            ),
+        })
 
 
 class SpatioTemporalObservationFunction(ObservationFunction):
-    """Observation function that returns a history of observations."""
+    """Observation function that returns a history of observations.
+    
+    Returns a Dict observation with:
+    - features: Flattened history [window_size * feature_dim]
+    - action_mask: Binary mask [8] for valid phases (FRAP)
+    """
 
     def __init__(self, ts: TrafficSignal, window_size: int = 5):
         """Initialize spatio-temporal observation function."""
@@ -88,8 +116,8 @@ class SpatioTemporalObservationFunction(ObservationFunction):
         observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
         return observation
 
-    def __call__(self) -> np.ndarray:
-        """Return the stacked observation history."""
+    def __call__(self) -> dict:
+        """Return the stacked observation history with action_mask."""
         # Get history from TrafficSignal
         history = self.ts.get_observation_history(self.window_size)
         
@@ -100,18 +128,32 @@ class SpatioTemporalObservationFunction(ObservationFunction):
         # The model will reshape it back to [window_size, features]
         stacked_obs = np.array(history, dtype=np.float32).flatten()
         # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
-        stacked_obs = np.clip(stacked_obs, 0.0, 1.0).astype(np.float32)
-        return stacked_obs
+        features = np.clip(stacked_obs, 0.0, 1.0).astype(np.float32)
+        
+        # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
+        action_mask = self.ts.get_action_mask()
+        action_mask = np.array(action_mask, dtype=np.float32)
+        
+        return {
+            "features": features,
+            "action_mask": action_mask,
+        }
 
-    def observation_space(self) -> spaces.Box:
-        """Return the observation space."""
+    def observation_space(self) -> spaces.Dict:
+        """Return the observation space as Dict."""
         # Base feature size
         feature_size = 4 * len(self.ts.detectors_e2)
         
-        return spaces.Box(
-            low=np.zeros(self.window_size * feature_size, dtype=np.float32),
-            high=np.ones(self.window_size * feature_size, dtype=np.float32),
-        )
+        return spaces.Dict({
+            "features": spaces.Box(
+                low=np.zeros(self.window_size * feature_size, dtype=np.float32),
+                high=np.ones(self.window_size * feature_size, dtype=np.float32),
+            ),
+            "action_mask": spaces.Box(
+                low=np.zeros(NUM_STANDARD_PHASES, dtype=np.float32),
+                high=np.ones(NUM_STANDARD_PHASES, dtype=np.float32),
+            ),
+        })
 
 
 class NeighborTemporalObservationFunction(ObservationFunction):
@@ -213,10 +255,15 @@ class NeighborTemporalObservationFunction(ObservationFunction):
         # Get neighbor features
         neighbor_features, neighbor_mask = self._get_neighbor_features(feature_dim)
         
+        # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
+        action_mask = self.ts.get_action_mask()
+        action_mask = np.array(action_mask, dtype=np.float32)
+        
         return {
             "self_features": self_features,
             "neighbor_features": neighbor_features,
             "neighbor_mask": neighbor_mask,
+            "action_mask": action_mask,
         }
         
     def _get_neighbor_features(self, feature_dim: int):
@@ -345,6 +392,7 @@ class NeighborTemporalObservationFunction(ObservationFunction):
                 - self_features: Box [T, feature_dim]
                 - neighbor_features: Box [K, T, feature_dim]
                 - neighbor_mask: Box [K]
+                - action_mask: Box [8] for valid phases (FRAP)
         """
         feature_dim = 4 * len(self.ts.detectors_e2)
         T = self.window_size
@@ -364,6 +412,11 @@ class NeighborTemporalObservationFunction(ObservationFunction):
             "neighbor_mask": spaces.Box(
                 low=0.0, high=1.0,
                 shape=(K,),
+                dtype=np.float32
+            ),
+            "action_mask": spaces.Box(
+                low=0.0, high=1.0,
+                shape=(NUM_STANDARD_PHASES,),
                 dtype=np.float32
             ),
         })

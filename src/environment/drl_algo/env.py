@@ -32,7 +32,8 @@ if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
 from sim.simulator_api import SimulatorAPI
-from sim.Sumo_sim import SumoSimulator 
+from sim.Sumo_sim import SumoSimulator
+from preprocessing.observation_normalizer import RunningMeanStd 
 
 
 
@@ -125,6 +126,8 @@ class SumoEnvironment(gym.Env):
         use_phase_standardizer: bool = False,  # Enable phase standardization for action translation
         use_neighbor_obs: bool = False,  # Enable neighbor observation for Local GNN
         max_neighbors: int = 4,  # Maximum neighbors (K) for neighbor observation
+        normalize_reward: bool = False,  # Enable reward normalization
+        clip_rewards: float = None,  # Clip rewards to [-clip_rewards, clip_rewards]
     ) -> None:
         """Initialize the environment."""
         assert render_mode is None or render_mode in self.metadata["render_modes"], "Invalid render mode."
@@ -237,7 +240,13 @@ class SumoEnvironment(gym.Env):
         self.out_csv_name = out_csv_name
         self.observations = {ts: None for ts in self.ts_ids}
         self.rewards = {ts: None for ts in self.ts_ids}
-
+        
+        # Reward normalization
+        self.normalize_reward = normalize_reward
+        self.clip_rewards = clip_rewards
+        if self.normalize_reward:
+            self.reward_normalizer = RunningMeanStd(shape=())
+            print(f"[SumoEnv] Reward normalization enabled (clip={clip_rewards})")
 
         # Debug logging is disabled by default for performance
         # Uncomment to enable: self.enable_debug_logging(True, level=2)
@@ -304,6 +313,51 @@ class SumoEnvironment(gym.Env):
 
         # Step simulator and get results
         observations, rewards, dones, info = self.simulator.step(actions)
+        
+        # First, check and fix NaN rewards from simulator
+        has_nan = False
+        for ts_id, reward in rewards.items():
+            if np.isnan(reward) or np.isinf(reward):
+                has_nan = True
+                rewards[ts_id] = 0.0  # Replace NaN/Inf with 0
+        
+        # Normalize rewards if enabled
+        if self.normalize_reward:
+            # Collect all rewards for batch update
+            reward_values = np.array(list(rewards.values()), dtype=np.float64)
+            
+            # Only update statistics if we have valid (non-zero variance) data
+            # and enough samples to compute meaningful statistics
+            if len(reward_values) > 0 and not np.all(reward_values == reward_values[0]):
+                self.reward_normalizer.update(reward_values)
+            
+            # Normalize each reward (only if we have enough samples)
+            normalized_rewards = {}
+            min_samples_for_norm = 10  # Require at least 10 samples before normalizing
+            
+            for ts_id, reward in rewards.items():
+                if self.reward_normalizer.count > min_samples_for_norm:
+                    # Safe normalization with proper variance check
+                    std = np.sqrt(float(self.reward_normalizer.var) + 1e-8)
+                    if std > 1e-6:  # Only normalize if std is meaningful
+                        normalized = (reward - float(self.reward_normalizer.mean)) / std
+                    else:
+                        normalized = reward  # Don't normalize if variance too small
+                else:
+                    # Not enough samples yet, use raw reward
+                    normalized = reward
+                
+                # Clip if specified
+                if self.clip_rewards is not None:
+                    normalized = np.clip(normalized, -self.clip_rewards, self.clip_rewards)
+                
+                # Final NaN check
+                if np.isnan(normalized) or np.isinf(normalized):
+                    normalized = 0.0
+                
+                normalized_rewards[ts_id] = float(normalized)
+            
+            rewards = normalized_rewards
         
         # Update internal state
         self.observations = observations

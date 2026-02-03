@@ -13,23 +13,14 @@ preprocessing:
   output_file: intersection_config.json
   
   # GPI (General Plug-In) configuration
+  # Maps incoming edges to standard directions (N/E/S/W)
   gpi:
     enabled: true
-    # Lane aggregation settings
-    lane_aggregation:
-      enabled: true
-      # How to handle missing lanes: "zero" or "mask"
-      missing_lane_strategy: zero
-      # How to merge extra lanes: "sum", "mean", or "max"
-      merge_strategy: mean
-      # Standard number of lanes per direction
-      standard_lanes_per_direction: 2
       
   # FRAP (Feature Relation Attention Processing) configuration  
+  # Maps actual signal phases to 8 standard phases
   frap:
     enabled: true
-    # Standard phase patterns: "4phase" or "2phase"
-    standard_pattern: 4phase
     
 # SUMO simulation parameters
 simulation:

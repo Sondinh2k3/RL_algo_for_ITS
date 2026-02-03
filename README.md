@@ -344,15 +344,12 @@ network:
 
 # Cấu hình tiền xử lý
 preprocessing:
+  # GPI: Map incoming edges to standard directions (N/E/S/W)
   gpi:
     enabled: true
-    lane_aggregation:
-      standard_lanes_per_direction: 2
-      missing_lane_strategy: zero    # "zero" hoặc "mask"
-      merge_strategy: mean           # "sum", "mean", hoặc "max"
+  # FRAP: Map actual phases to 8 standard phases  
   frap:
     enabled: true
-    standard_pattern: 4phase         # "4phase" hoặc "2phase"
 
 # Cấu hình mô phỏng SUMO
 environment:
@@ -368,6 +365,10 @@ networks:
   grid4x4:
     ts_ids: [A0, A1, A2, A3, B0, B1, B2, B3, C0, C1, C2, C3, D0, D1, D2, D3]
 ```
+
+> **NOTE:** Hệ thống sử dụng cố định 12 làn/giao lộ (3 làn × 4 hướng) làm đầu vào cho GAT.
+> Mỗi làn có 4 features: density, queue, occupancy, average_speed.
+> Tổng observation dimension: 12 × 4 = 48 features.
 
 ---
 
