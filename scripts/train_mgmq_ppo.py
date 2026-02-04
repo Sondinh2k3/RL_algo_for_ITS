@@ -124,6 +124,49 @@ class MGMQStopper(Stopper):
         return False
 
 
+class NormalizerStateCallback:
+    """Callback to save/restore reward normalizer state with checkpoints.
+    
+    This ensures that when training is resumed, the reward normalization
+    statistics (mean, variance, count) are restored to maintain consistency.
+    
+    The normalizer state is saved to a JSON file alongside the mgmq_training_config.json.
+    """
+    
+    def __init__(self, output_dir: Path, experiment_name: str):
+        """
+        Args:
+            output_dir: Base output directory for training results
+            experiment_name: Name of the experiment
+        """
+        self.state_file = output_dir / experiment_name / "normalizer_state.json"
+    
+    def save_state(self, env):
+        """Save normalizer state from environment to file."""
+        try:
+            state = env.get_normalizer_state()
+            if state:
+                self.state_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(self.state_file, 'w') as f:
+                    json.dump(state, f, indent=2)
+                print(f"✓ Saved normalizer state to: {self.state_file}")
+        except Exception as e:
+            print(f"⚠ Warning: Failed to save normalizer state: {e}")
+    
+    def restore_state(self, env):
+        """Restore normalizer state from file to environment."""
+        try:
+            if self.state_file.exists():
+                with open(self.state_file, 'r') as f:
+                    state = json.load(f)
+                env.set_normalizer_state(state)
+                return True
+            return False
+        except Exception as e:
+            print(f"⚠ Warning: Failed to restore normalizer state: {e}")
+            return False
+
+
 def create_mgmq_ppo_config(
     env_config: dict,
     mgmq_config: dict,
@@ -418,6 +461,9 @@ def train_mgmq_ppo(
             # Them phan chuan hoa reward o file env
             "normalize_reward": True,   # Bật normalization
             "clip_rewards": 10.0, # Clip về [-10, 10]
+            # Path to normalizer state file (for resume training)
+            # Environment will load state from this file if it exists
+            "normalizer_state_file": str(output_dir / experiment_name / "normalizer_state.json"),
         }
         
         # MGMQ model configuration
@@ -510,6 +556,28 @@ def train_mgmq_ppo(
                 ),
             )
         
+        # ========================================
+        # SAVE CONFIG EARLY (before training starts)
+        # This ensures config is saved even if training is interrupted
+        # ========================================
+        config_file = output_dir / experiment_name / "mgmq_training_config.json"
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        initial_config = {
+            "experiment_name": experiment_name,
+            "network_name": network_name,
+            "num_iterations": num_iterations,
+            "num_workers": num_workers,
+            "use_gpu": use_gpu,
+            "seed": seed,
+            "mgmq_config": mgmq_config,
+            "env_config": {k: str(v) if isinstance(v, Path) else v for k, v in env_config.items()},
+            "training_status": "in_progress",
+            "started_at": datetime.now().isoformat(),
+        }
+        with open(config_file, "w") as f:
+            json.dump(initial_config, f, indent=2)
+        print(f"✓ Training config saved to: {config_file}")
+        
         # Run training
         mode_str = "RESUMING" if resume_path else "Starting"
         print(f"{mode_str} MGMQ-PPO training...\n")
@@ -537,24 +605,20 @@ def train_mgmq_ppo(
         print(f"Best Episode Reward Mean: {best_reward:.2f}")
         print("="*80 + "\n")
         
-        # Save configuration
+        # Update configuration with training results
         config_file = output_dir / experiment_name / "mgmq_training_config.json"
-        config_file.parent.mkdir(parents=True, exist_ok=True)
+        # Load existing config and update with results
+        existing_config = initial_config.copy()
+        existing_config.update({
+            "training_status": "completed",
+            "completed_at": datetime.now().isoformat(),
+            "best_checkpoint": str(best_checkpoint),
+            "best_reward": float(best_reward),
+        })
         with open(config_file, "w") as f:
-            json.dump({
-                "experiment_name": experiment_name,
-                "network_name": network_name,
-                "num_iterations": num_iterations,
-                "num_workers": num_workers,
-                "use_gpu": use_gpu,
-                "seed": seed,
-                "mgmq_config": mgmq_config,
-                "env_config": {k: str(v) if isinstance(v, Path) else v for k, v in env_config.items()},
-                "best_checkpoint": str(best_checkpoint),
-                "best_reward": float(best_reward),
-            }, f, indent=2)
+            json.dump(existing_config, f, indent=2)
         
-        print(f"✓ Configuration saved to: {config_file}")
+        print(f"✓ Configuration updated with results: {config_file}")
         print(f"✓ Results saved to: {output_dir / experiment_name}")
         
         return best_checkpoint, best_result

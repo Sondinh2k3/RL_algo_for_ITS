@@ -128,6 +128,7 @@ class SumoEnvironment(gym.Env):
         max_neighbors: int = 4,  # Maximum neighbors (K) for neighbor observation
         normalize_reward: bool = False,  # Enable reward normalization
         clip_rewards: float = None,  # Clip rewards to [-clip_rewards, clip_rewards]
+        normalizer_state_file: Optional[str] = None,  # Path to load normalizer state from (for resume)
     ) -> None:
         """Initialize the environment."""
         assert render_mode is None or render_mode in self.metadata["render_modes"], "Invalid render mode."
@@ -244,8 +245,26 @@ class SumoEnvironment(gym.Env):
         # Reward normalization
         self.normalize_reward = normalize_reward
         self.clip_rewards = clip_rewards
+        self._normalizer_state_file = normalizer_state_file  # Store path for periodic saving
         if self.normalize_reward:
             self.reward_normalizer = RunningMeanStd(shape=())
+            # Try to restore normalizer state from file (for resume training)
+            if normalizer_state_file:
+                try:
+                    import json
+                    from pathlib import Path
+                    state_path = Path(normalizer_state_file)
+                    if state_path.exists():
+                        with open(state_path, 'r') as f:
+                            state = json.load(f)
+                        self.reward_normalizer.set_state(state)
+                        print(f"[SumoEnv] Restored normalizer from {state_path}: "
+                              f"mean={state['mean']:.4f}, var={state['var']:.4f}, "
+                              f"count={state['count']:.0f}")
+                    else:
+                        print(f"[SumoEnv] Normalizer state file not found, starting fresh")
+                except Exception as e:
+                    print(f"[SumoEnv] Warning: Failed to restore normalizer state: {e}")
             print(f"[SumoEnv] Reward normalization enabled (clip={clip_rewards})")
 
         # Debug logging is disabled by default for performance
@@ -268,6 +287,8 @@ class SumoEnvironment(gym.Env):
         if self.episode != 0:
             self.close()
             self.save_csv(self.out_csv_name, self.episode)
+            # Save normalizer state at end of each episode (for resume training)
+            self._save_normalizer_state()
         self.episode += 1
         self.metrics = []
 
@@ -468,6 +489,52 @@ class SumoEnvironment(gym.Env):
             env.enable_debug_logging(True, level=1, ts_ids=['tl_1'])  # Enable for specific signal
         """
         self.simulator.enable_debug_logging(enable, level, ts_ids)
+
+    def get_normalizer_state(self) -> dict:
+        """Get current reward normalizer state for checkpoint saving.
+        
+        Returns:
+            Dictionary containing normalizer state, or None if normalization disabled
+        """
+        if self.normalize_reward and hasattr(self, 'reward_normalizer'):
+            return self.reward_normalizer.get_state()
+        return None
+    
+    def set_normalizer_state(self, state: dict) -> None:
+        """Restore reward normalizer state from checkpoint.
+        
+        Args:
+            state: Dictionary from get_normalizer_state()
+        """
+        if self.normalize_reward and hasattr(self, 'reward_normalizer') and state:
+            self.reward_normalizer.set_state(state)
+            print(f"[SumoEnv] Restored reward normalizer: mean={state['mean']:.4f}, "
+                  f"var={state['var']:.4f}, count={state['count']:.0f}")
+    
+    def _save_normalizer_state(self) -> None:
+        """Save normalizer state to file (called at end of each episode).
+        
+        This ensures normalizer state is preserved even if training is interrupted.
+        """
+        if not self.normalize_reward or not hasattr(self, 'reward_normalizer'):
+            return
+        if not hasattr(self, '_normalizer_state_file') or not self._normalizer_state_file:
+            return
+        
+        try:
+            import json
+            from pathlib import Path
+            state_path = Path(self._normalizer_state_file)
+            state_path.parent.mkdir(parents=True, exist_ok=True)
+            state = self.reward_normalizer.get_state()
+            with open(state_path, 'w') as f:
+                json.dump(state, f, indent=2)
+            # Only log occasionally to avoid spam
+            if self.episode % 10 == 0:
+                print(f"[SumoEnv] Saved normalizer state (ep={self.episode}): "
+                      f"mean={state['mean']:.4f}, var={state['var']:.4f}")
+        except Exception as e:
+            print(f"[SumoEnv] Warning: Failed to save normalizer state: {e}")
 
     # Below functions are for discrete state space
     # TODO: Update API to support these functions if needed

@@ -136,15 +136,32 @@ class RunningMeanStd:
         self.count = self._epsilon
     
     def get_state(self) -> dict:
-        """Get current state for serialization.
+        """Get current state for JSON serialization.
         
         Returns:
-            Dictionary containing mean, var, and count
+            Dictionary containing mean, var, and count as JSON-serializable types
         """
+        # Convert to JSON-serializable types
+        if isinstance(self.mean, np.ndarray):
+            if self.mean.shape == ():
+                mean_val = float(self.mean)
+            else:
+                mean_val = self.mean.tolist()
+        else:
+            mean_val = float(self.mean)
+        
+        if isinstance(self.var, np.ndarray):
+            if self.var.shape == ():
+                var_val = float(self.var)
+            else:
+                var_val = self.var.tolist()
+        else:
+            var_val = float(self.var)
+        
         return {
-            "mean": self.mean.copy(),
-            "var": self.var.copy(),
-            "count": self.count
+            "mean": mean_val,
+            "var": var_val,
+            "count": float(self.count)
         }
     
     def set_state(self, state: dict) -> None:
@@ -153,9 +170,9 @@ class RunningMeanStd:
         Args:
             state: Dictionary from get_state()
         """
-        self.mean = state["mean"].copy()
-        self.var = state["var"].copy()
-        self.count = state["count"]
+        self.mean = np.array(state["mean"], dtype=np.float64)
+        self.var = np.array(state["var"], dtype=np.float64)
+        self.count = float(state["count"])
 
 
 class RewardNormalizer:
