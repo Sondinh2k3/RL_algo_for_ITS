@@ -175,7 +175,6 @@ def create_mgmq_ppo_config(
     learning_rate: float = 5e-5,
     gamma: float = 0.99,
     lambda_: float = 0.95,
-    entropy_coeff: float = 0.02,
     clip_param: float = 0.2,
     use_gpu: bool = False,
     custom_model_name: str = "mgmq_model",
@@ -191,12 +190,14 @@ def create_mgmq_ppo_config(
         learning_rate: Learning rate
         gamma: Discount factor
         lambda_: GAE lambda
-        entropy_coeff: Entropy coefficient
         clip_param: PPO clip parameter
         use_gpu: Whether to use GPU
         
     Returns:
         Configured PPOConfig
+    
+    Note:
+        entropy_coeff uses a schedule (0.01 -> 0.001) for exploration-exploitation trade-off.
     """
     config = (
         PPOConfig()
@@ -223,7 +224,10 @@ def create_mgmq_ppo_config(
             lr=learning_rate,
             gamma=gamma,
             lambda_=lambda_,
-            entropy_coeff=entropy_coeff,
+            # ENTROPY SCHEDULING: Start low for more decisive actions from the beginning
+            # Lower entropy = policy makes more confident (less random) decisions
+            # Combined with SOFTMAX_TEMPERATURE=0.3, this helps policy output differentiated actions
+            entropy_coeff=0.005,  # Reduced from 0.02 for less random exploration
             clip_param=clip_param,
             # CRITICAL FIX: vf_clip_param must be large enough for reward scale
             # Episode reward ~ -400 to -500, so vf predictions can be large

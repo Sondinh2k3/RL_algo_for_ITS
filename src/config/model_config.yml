@@ -7,23 +7,23 @@
 network:
   # Name of the traffic network (used as folder name under network/)
   name: grid4x4
-  
+
   # Base path for network files (relative to project root)
   # If not specified, defaults to: network/{network_name}/
   base_path: null
-  
+
   # Network files (relative to base_path if base_path is set, or absolute paths)
   net_file: grid4x4.net.xml
-  
+
   # Route files - can be a single file or comma-separated list
   # Order matters: type definitions should come before trip definitions
   route_files:
-    - grid4x4.rou.xml         # Vehicle type definitions
-    - grid4x4-demo.rou.xml    # Demo traffic routes (optional)
-  
+    - grid4x4.rou.xml # Vehicle type definitions
+    - grid4x4-demo.rou.xml # Demo traffic routes (optional)
+
   # Detector configuration file (for E2 detector-based rewards)
   detector_file: detector.add.xml
-  
+
   # Intersection preprocessing config (for phase standardization)
   intersection_config: intersection_config.json
 
@@ -33,64 +33,64 @@ network:
 mgmq:
   # GAT (Graph Attention Network) parameters
   gat:
-    hidden_dim: 32       # GAT hidden dimension
-    output_dim: 32       # GAT output dimension per head
-    num_heads: 4          # Number of GAT attention heads
-    
+    hidden_dim: 32 # GAT hidden dimension
+    output_dim: 32 # GAT output dimension per head
+    num_heads: 4 # Number of GAT attention heads
+
   # GraphSAGE parameters
   graphsage:
-    hidden_dim: 64       # GraphSAGE hidden dimension
-    
+    hidden_dim: 64 # GraphSAGE hidden dimension
+
   # Bi-GRU parameters
   gru:
-    hidden_dim: 64       # Bi-GRU hidden dimension
-    
+    hidden_dim: 64 # Bi-GRU hidden dimension
+
   # Policy and Value network parameters
   policy:
-    hidden_dims: [128, 64]   # Policy network hidden dimensions
-    
+    hidden_dims: [128, 64] # Policy network hidden dimensions
+
   value:
-    hidden_dims: [128, 128, 64]   # Value network hidden dimensions
-    
+    hidden_dims: [128, 128, 64] # Value network hidden dimensions
+
   # Regularization
   dropout: 0.3
-  
+
   # Temporal observation
-  history_length: 1       # Observation history length (window size)
-  
+  history_length: 1 # Observation history length (window size)
+
   # Local GNN settings
   local_gnn:
-    enabled: false        # Use LocalMGMQTorchModel
-    max_neighbors: 4      # Maximum neighbors (K) for local GNN
-    obs_dim: 48           # 4 features * 12 detectors
+    enabled: false # Use LocalMGMQTorchModel
+    max_neighbors: 4 # Maximum neighbors (K) for local GNN
+    obs_dim: 48 # 4 features * 12 detectors
 
 # ============================================
 # PPO Training Parameters
 # ============================================
 ppo:
-  learning_rate: 0.0005  # 1e-3
-  gamma: 0.99             # Discount factor
-  lambda_: 0.95           # GAE lambda
-  entropy_coeff: 0.01     # Entropy coefficient
-  clip_param: 0.2         # PPO clip parameter
-  vf_clip_param: 5.0     # Value function clip parameter
-  train_batch_size: 512  # Training batch size
-  minibatch_size: 64     # Mini batch size
-  num_sgd_iter: 10        # Number of SGD iterations
-  grad_clip: 0.5          # Gradient clipping
+  learning_rate: 0.0005 # 1e-3
+  gamma: 0.99 # Discount factor
+  lambda_: 0.95 # GAE lambda
+  entropy_coeff: 0.01 # NOTE: Schedule used in code (0.01 -> 0.001)
+  clip_param: 0.2 # PPO clip parameter
+  vf_clip_param: 5.0 # Value function clip parameter
+  train_batch_size: 512 # Training batch size
+  minibatch_size: 64 # Mini batch size
+  num_sgd_iter: 10 # Number of SGD iterations
+  grad_clip: 0.5 # Gradient clipping
 
 # ============================================
 # Training Settings
 # ============================================
 training:
-  num_iterations: 200     # Number of training iterations
-  num_workers: 2          # Number of parallel workers
-  num_envs_per_worker: 1  # Environments per worker
+  num_iterations: 200 # Number of training iterations
+  num_workers: 2 # Number of parallel workers
+  num_envs_per_worker: 1 # Environments per worker
   checkpoint_interval: 5 # Checkpoint frequency
-  patience: 500            # Early stopping patience (iterations without improvement)
-  seed: 42                # Random seed
-  use_gpu: false          # Use GPU for training
-  output_dir: "./results_mgmq"  # Output directory
+  patience: 500 # Early stopping patience (iterations without improvement)
+  seed: 42 # Random seed
+  use_gpu: false # Use GPU for training
+  output_dir: "./results_mgmq" # Output directory
 
 # ============================================
 # Reward Configuration
@@ -110,16 +110,16 @@ reward:
     - occupancy
     # - average-speed
     # - teleport-penalty   # Uncomment to penalize teleportation (requires time_to_teleport > 0)
-  weights: null           # Auto-compute equal weights if null
+  weights: null # Auto-compute equal weights if null
 
 # ============================================
 # Environment Configuration
 # ============================================
 environment:
-  num_seconds: 6000       # Simulation duration (synced with grid4x4.sumocfg end=8000)
-  max_green: 90           # Maximum green time
-  min_green: 5           # Minimum green time
-  cycle_time: 90          # Traffic light cycle time
-  yellow_time: 3          # Yellow time
-  time_to_teleport: 500    # Teleport stuck vehicles (-1 to disable)
-  use_phase_standardizer: true  # Map 4-value action to signal phases
+  num_seconds: 6000 # Simulation duration (synced with grid4x4.sumocfg end=8000)
+  max_green: 90 # Maximum green time
+  min_green: 5 # Minimum green time
+  cycle_time: 90 # Traffic light cycle time
+  yellow_time: 3 # Yellow time
+  time_to_teleport: 500 # Teleport stuck vehicles (-1 to disable)
+  use_phase_standardizer: true # Map 4-value action to signal phases

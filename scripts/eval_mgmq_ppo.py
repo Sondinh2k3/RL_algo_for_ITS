@@ -379,13 +379,6 @@ def evaluate_mgmq(
                         policy_id="default_policy"
                     )
                     actions[agent_id] = action
-                    
-                # DEBUG: Check if actions are uniform (indicating unlearned policy)
-                if ep == 0 and step_count == 0:
-                    sample_action = list(actions.values())[0]
-                    print(f"\n[DEBUG Eval] Sample Action from Policy: {sample_action}")
-                    if np.allclose(sample_action, sample_action[0], atol=1e-2):
-                        print("[DEBUG Eval] ⚠ WARNING: Action is uniform! Policy might be random or unlearned.")
 
                 # Step environment
                 obs, rewards, terminateds, truncateds, info = env.step(actions)

@@ -64,6 +64,11 @@ MASK_VALUE = -1e9
 # Number of standard phases
 NUM_STANDARD_PHASES = 8
 
+# Softmax temperature: lower = sharper output (more differentiated actions)
+# Default 1.0 = standard softmax, 0.3 = much sharper differentiation
+# This fixes the uniform action problem by amplifying differences in logits
+SOFTMAX_TEMPERATURE = 0.3
+
 
 class TorchMaskedSoftmax(TorchDistributionWrapper):
     """
@@ -157,9 +162,10 @@ class TorchMaskedSoftmax(TorchDistributionWrapper):
         # Masked phases get very large negative value -> softmax outputs ~0
         logits_masked = logits_noisy + (1.0 - self.action_mask) * MASK_VALUE
         
-        # Step 3: Softmax normalization
+        # Step 3: Softmax normalization with temperature scaling
+        # Temperature < 1.0 makes output sharper (more differentiated)
         # Result: valid phases sum to 1, masked phases = 0
-        probs = F.softmax(logits_masked, dim=-1)
+        probs = F.softmax(logits_masked / SOFTMAX_TEMPERATURE, dim=-1)
         
         return probs
     

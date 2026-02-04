@@ -517,6 +517,7 @@ class TrafficSignal:
         # Step 3: Convert 8 standard phases → actual phases via FRAP
         if self.use_phase_standardizer and self.phase_standardizer is not None:
             actual_ratios = self.phase_standardizer.standardize_action(standard_ratios)
+            
             if self.debug_logging:
                 print(f"[FRAP] {self.id}: standard_ratios={standard_ratios} -> actual_ratios={actual_ratios}")
         else:
