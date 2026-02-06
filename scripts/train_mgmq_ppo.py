@@ -176,6 +176,10 @@ def create_mgmq_ppo_config(
     gamma: float = 0.99,
     lambda_: float = 0.95,
     clip_param: float = 0.2,
+    entropy_coeff: float = 0.01,  # From config file
+    entropy_coeff_schedule: list = None,  # Schedule for entropy decay: [[0, 0.01], [100, 0.001]]
+    train_batch_size: int = 2048,  # From config file
+    minibatch_size: int = 256,  # From config file
     use_gpu: bool = False,
     custom_model_name: str = "mgmq_model",
 ) -> PPOConfig:
@@ -191,13 +195,11 @@ def create_mgmq_ppo_config(
         gamma: Discount factor
         lambda_: GAE lambda
         clip_param: PPO clip parameter
+        entropy_coeff: Entropy coefficient for exploration (from config file)
         use_gpu: Whether to use GPU
         
     Returns:
         Configured PPOConfig
-    
-    Note:
-        entropy_coeff uses a schedule (0.01 -> 0.001) for exploration-exploitation trade-off.
     """
     config = (
         PPOConfig()
@@ -224,10 +226,12 @@ def create_mgmq_ppo_config(
             lr=learning_rate,
             gamma=gamma,
             lambda_=lambda_,
-            # ENTROPY SCHEDULING: Start low for more decisive actions from the beginning
+            # Entropy coefficient from config file
             # Lower entropy = policy makes more confident (less random) decisions
             # Combined with SOFTMAX_TEMPERATURE=0.3, this helps policy output differentiated actions
-            entropy_coeff=0.005,  # Reduced from 0.02 for less random exploration
+            entropy_coeff=entropy_coeff,
+            # Entropy decay schedule: start high for exploration, decrease for exploitation
+            entropy_coeff_schedule=entropy_coeff_schedule,
             clip_param=clip_param,
             # CRITICAL FIX: vf_clip_param must be large enough for reward scale
             # Episode reward ~ -400 to -500, so vf predictions can be large
@@ -240,11 +244,9 @@ def create_mgmq_ppo_config(
             # CRITICAL FIX 2: Normalize advantages for stable learning
             # Without this, advantage estimates have high variance
             use_gae=True,  # Ensure GAE is enabled (default is True)
-            # Episode-based training: 1 episode = ~89 env steps × 16 agents = ~1424 samples
-            # CRITICAL FIX 3: Increase batch size for multi-agent PPO
-            # With 16 agents, need more samples for stable gradient estimates
-            train_batch_size=1067,  # Increased from 1424 for better gradient estimates
-            minibatch_size=64,     # Increased from 64 for better batch normalization
+            # IMPORTANT: Larger batch sizes for stable gradient estimates
+            train_batch_size=train_batch_size,  # From config (default 2048)
+            minibatch_size=minibatch_size,      # From config (default 256)
             num_epochs=5,          # Increased from 4 for more thorough updates
             grad_clip=0.5,
             # Use custom MGMQ model
@@ -300,6 +302,7 @@ def train_mgmq_ppo(
     value_hidden_dims: list = None,
     dropout: float = 0.3,
     learning_rate: float = 3e-4,
+    entropy_coeff: float = 0.01,  # Entropy coefficient for exploration
     patience: int = 50,
     history_length: int = 1,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
@@ -501,6 +504,7 @@ def train_mgmq_ppo(
             mgmq_config=mgmq_config,
             num_workers=num_workers,
             learning_rate=learning_rate,
+            entropy_coeff=entropy_coeff,
             use_gpu=use_gpu,
             custom_model_name=custom_model_name,
         )
@@ -755,6 +759,7 @@ if __name__ == "__main__":
         gru_hidden_dim=args.gru_hidden_dim if args.gru_hidden_dim is not None else mgmq_cfg["gru_hidden_dim"],
         dropout=args.dropout if args.dropout is not None else mgmq_cfg["dropout"],
         learning_rate=args.learning_rate if args.learning_rate is not None else ppo_cfg["learning_rate"],
+        entropy_coeff=ppo_cfg.get("entropy_coeff", 0.01),  # From config file
         patience=args.patience if args.patience is not None else training_cfg["patience"],
         history_length=args.history_length if args.history_length is not None else mgmq_cfg["window_size"],
         reward_fn=args.reward_fn or reward_cfg["reward_fn"],

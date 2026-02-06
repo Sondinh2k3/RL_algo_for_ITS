@@ -256,20 +256,20 @@ class PhaseStandardizer:
         # Map direction + turn type to movement
         movement_map = {
             ('N', 2): MovementType.NORTH_THROUGH,  # N -> S (through)
-            ('N', 1): MovementType.NORTH_RIGHT,    # N -> E (right)
-            ('N', 3): MovementType.NORTH_LEFT,     # N -> W (left)
+            ('N', 1): MovementType.NORTH_LEFT,     # N -> E (left)
+            ('N', 3): MovementType.NORTH_RIGHT,    # N -> W (right)
             
             ('S', 2): MovementType.SOUTH_THROUGH,  # S -> N
-            ('S', 1): MovementType.SOUTH_RIGHT,    # S -> W
-            ('S', 3): MovementType.SOUTH_LEFT,     # S -> E
+            ('S', 1): MovementType.SOUTH_LEFT,     # S -> W (left)
+            ('S', 3): MovementType.SOUTH_RIGHT,    # S -> E (right)
             
             ('E', 2): MovementType.EAST_THROUGH,   # E -> W
-            ('E', 1): MovementType.EAST_RIGHT,     # E -> S
-            ('E', 3): MovementType.EAST_LEFT,      # E -> N
+            ('E', 1): MovementType.EAST_LEFT,      # E -> N (left)
+            ('E', 3): MovementType.EAST_RIGHT,     # E -> S (right)
             
             ('W', 2): MovementType.WEST_THROUGH,   # W -> E
-            ('W', 1): MovementType.WEST_RIGHT,     # W -> N
-            ('W', 3): MovementType.WEST_LEFT,      # W -> S
+            ('W', 1): MovementType.WEST_LEFT,      # W -> S (left)
+            ('W', 3): MovementType.WEST_RIGHT,     # W -> N (right)
         }
         
         return movement_map.get((from_direction, diff))

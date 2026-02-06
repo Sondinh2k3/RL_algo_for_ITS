@@ -68,14 +68,15 @@ mgmq:
 # PPO Training Parameters
 # ============================================
 ppo:
-  learning_rate: 0.0005 # 1e-3
+  learning_rate: 0.0001 # Reduced from 0.0005 for stable learning
   gamma: 0.99 # Discount factor
   lambda_: 0.95 # GAE lambda
-  entropy_coeff: 0.01 # NOTE: Schedule used in code (0.01 -> 0.001)
+  entropy_coeff: 0.01 # Start high, will decay via entropy_coeff_schedule
+  entropy_coeff_schedule: [[0, 0.01], [100, 0.005], [300, 0.001]] # Decay for exploitation
   clip_param: 0.2 # PPO clip parameter
   vf_clip_param: 5.0 # Value function clip parameter
-  train_batch_size: 512 # Training batch size
-  minibatch_size: 64 # Mini batch size
+  train_batch_size: 2048 # Increased from 512 for stable gradients
+  minibatch_size: 256 # Increased from 64 for less variance
   num_sgd_iter: 10 # Number of SGD iterations
   grad_clip: 0.5 # Gradient clipping
 
@@ -83,7 +84,7 @@ ppo:
 # Training Settings
 # ============================================
 training:
-  num_iterations: 200 # Number of training iterations
+  num_iterations: 500 # Increased from 200 for proper convergence
   num_workers: 2 # Number of parallel workers
   num_envs_per_worker: 1 # Environments per worker
   checkpoint_interval: 5 # Checkpoint frequency
