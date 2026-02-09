@@ -50,10 +50,10 @@ mgmq:
     hidden_dims: [128, 64] # Policy network hidden dimensions
 
   value:
-    hidden_dims: [128, 128, 64] # Value network hidden dimensions
+    hidden_dims: [256, 128, 64] # Value network hidden dimensions (wider to handle 1600-dim input)
 
   # Regularization
-  dropout: 0.3
+  dropout: 0.1 # Reduced from 0.3 - excessive dropout hurts RL training
 
   # Temporal observation
   history_length: 1 # Observation history length (window size)
@@ -74,11 +74,12 @@ ppo:
   entropy_coeff: 0.01 # Start high, will decay via entropy_coeff_schedule
   entropy_coeff_schedule: [[0, 0.01], [100, 0.005], [300, 0.001]] # Decay for exploitation
   clip_param: 0.2 # PPO clip parameter
-  vf_clip_param: 5.0 # Value function clip parameter
+  vf_clip_param: 100.0 # Value function clip - must be large for reward range ~-600 to -700
+  vf_loss_coeff: 0.5 # Value function loss coefficient (default 0.5 in PPO)
   train_batch_size: 2048 # Increased from 512 for stable gradients
   minibatch_size: 256 # Increased from 64 for less variance
   num_sgd_iter: 10 # Number of SGD iterations
-  grad_clip: 0.5 # Gradient clipping
+  grad_clip: 5.0 # Increased from 0.5 - GNN models have naturally larger gradients
 
 # ============================================
 # Training Settings

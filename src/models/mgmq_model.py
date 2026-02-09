@@ -587,7 +587,7 @@ class MGMQModel(nn.Module):
         
         joint_emb_dim = self.encoder.output_dim
         
-        # Policy network (actor)
+        # Policy network (actor) - NO Dropout in RL!
         policy_layers = []
         prev_dim = joint_emb_dim
         for hidden_dim in policy_hidden_dims:
@@ -595,7 +595,6 @@ class MGMQModel(nn.Module):
                 nn.Linear(prev_dim, hidden_dim),
                 nn.LayerNorm(hidden_dim),
                 nn.ReLU(),
-                nn.Dropout(dropout)
             ])
             prev_dim = hidden_dim
         self.policy_net = nn.Sequential(*policy_layers)
@@ -605,7 +604,7 @@ class MGMQModel(nn.Module):
         # Log std as learnable parameter
         self.policy_log_std = nn.Parameter(torch.zeros(action_dim))
         
-        # Value network (critic)
+        # Value network (critic) - NO Dropout in RL!
         value_layers = []
         prev_dim = joint_emb_dim
         for hidden_dim in value_hidden_dims:
@@ -613,7 +612,6 @@ class MGMQModel(nn.Module):
                 nn.Linear(prev_dim, hidden_dim),
                 nn.LayerNorm(hidden_dim),
                 nn.ReLU(),
-                nn.Dropout(dropout)
             ])
             prev_dim = hidden_dim
         self.value_net = nn.Sequential(*value_layers)
@@ -842,6 +840,7 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         joint_emb_dim = self.mgmq_encoder.output_dim
         
         # Policy network
+        # NOTE: No Dropout in RL policy/value networks!
         policy_layers = []
         prev_dim = joint_emb_dim
         for hidden_dim in policy_hidden_dims:
@@ -864,7 +863,9 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         else:
             self.policy_out = nn.Linear(prev_dim, num_outputs)
         
-        # Value network
+        # Value network - NO Dropout!
+        # Dropout in VF causes inconsistent value predictions,
+        # leading to near-zero vf_explained_var and very high vf_loss.
         value_layers = []
         prev_dim = joint_emb_dim
         for hidden_dim in value_hidden_dims:
@@ -1110,6 +1111,9 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         joint_emb_dim = self.mgmq_encoder.output_dim
         
         # Policy network
+        # NOTE: No Dropout in RL policy/value networks!
+        # Dropout causes different outputs for same input across forward passes,
+        # which breaks PPO's value function consistency and advantage estimation.
         policy_layers = []
         prev_dim = joint_emb_dim
         for hidden_dim in policy_hidden_dims:
@@ -1117,7 +1121,6 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
                 nn.Linear(prev_dim, hidden_dim),
                 nn.LayerNorm(hidden_dim),
                 nn.ReLU(),
-                nn.Dropout(dropout)
             ])
             prev_dim = hidden_dim
         self.policy_net = nn.Sequential(*policy_layers)
@@ -1133,7 +1136,9 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         else:
             self.policy_out = nn.Linear(prev_dim, num_outputs)
         
-        # Value network
+        # Value network - NO Dropout!
+        # Dropout in VF causes inconsistent value predictions for the same state,
+        # leading to near-zero or negative vf_explained_var and very high vf_loss.
         value_layers = []
         prev_dim = joint_emb_dim
         for hidden_dim in value_hidden_dims:
@@ -1141,7 +1146,6 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
                 nn.Linear(prev_dim, hidden_dim),
                 nn.LayerNorm(hidden_dim),
                 nn.ReLU(),
-                nn.Dropout(dropout)
             ])
             prev_dim = hidden_dim
         self.value_net = nn.Sequential(*value_layers)

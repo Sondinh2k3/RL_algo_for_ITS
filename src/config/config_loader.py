@@ -107,12 +107,14 @@ def get_ppo_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "gamma": ppo.get("gamma", 0.99),
         "lambda_": ppo.get("lambda_", 0.95),
         "entropy_coeff": ppo.get("entropy_coeff", 0.01),
+        "entropy_coeff_schedule": ppo.get("entropy_coeff_schedule", None),
         "clip_param": ppo.get("clip_param", 0.2),
-        "vf_clip_param": ppo.get("vf_clip_param", 10.0),
+        "vf_clip_param": ppo.get("vf_clip_param", 100.0),
+        "vf_loss_coeff": ppo.get("vf_loss_coeff", 0.5),
         "train_batch_size": ppo.get("train_batch_size", 2048),
         "minibatch_size": ppo.get("minibatch_size", 256),
         "num_sgd_iter": ppo.get("num_sgd_iter", 10),
-        "grad_clip": ppo.get("grad_clip", 0.5),
+        "grad_clip": ppo.get("grad_clip", 5.0),
     }
 
 
