@@ -194,27 +194,20 @@
 
 ### [v1.2.1] - 2026-01-23
 #### ✨ Thêm mới (Added)
-- Không có
 
 #### 🔄 Thay đổi (Changed)
 - **Code Quality Improvements**: Clean code và cải thiện documentation
   - **DirectionalGraphSAGE.forward()**: 
     - Thêm input validation với assert statements
-    - Cải thiện docstring với chi tiết về input/output shapes
-    - Thêm section comments rõ ràng (Step 1, 2, 3, 4)
   - **GraphSAGE_BiGRU**: 
     - Cải thiện docstring với giải thích rõ về API compatibility
-    - Thêm type hints đầy đủ
   - **TemporalGraphSAGE_BiGRU**: 
     - Cải thiện docstring với giải thích về pipeline (Spatial -> Temporal -> Pooling)
-    - Thêm section comments cho từng bước xử lý
   - **LocalTemporalMGMQEncoder._build_star_adjacency()**: 
     - Cải thiện docstring với giải thích chi tiết về node indexing và edge logic
     - Thêm ASCII art cho node layout
 
 #### 🐛 Sửa lỗi (Fixed)
-- Sửa comment sai trong mgmq_model.py: `[B, 1+K, 1+K]` → `[B, 4, 1+K, 1+K]`
-
 #### 📁 Files thay đổi
 | File | Loại | Mô tả ngắn |
 |------|------|-----------|
@@ -222,7 +215,6 @@
 | `src/models/mgmq_model.py` | Modified | Fixed comment, improved _build_star_adjacency docstring |
 - **Test Results**: ✓ DirectionalGraphSAGE test passed | ✓ TemporalGraphSAGE_BiGRU test passed | ✓ build_network_adjacency test passed
 
----
 
 ### [v1.2.2] - 2026-01-27
 #### ✨ Thêm mới (Added)
@@ -320,9 +312,8 @@
 
 ### [v1.2.6] - 2026-02-09
 #### ✨ Thêm mới (Added)
-- **Evaluation Logging**: Cập nhật `scripts/eval_mgmq_ppo.py` để log distribution của action, giúp phát hiện hành vi Uniform Policy.
-- **Verification Scripts**: Thêm `tests/verify_cycle_length.py` để kiểm tra độ linh hoạt của green time.
-
+* Tắt tuỳ chọn `normalize_actions` mặc định của RLlib (mặc định là True, đã chuyển thành False) trong cấu hình PPO để đảm bảo hành động không bị chuẩn hóa ngoài ý muốn, giúp kiểm soát chính xác hơn quá trình xuất ra hành động của policy.
+* Cập nhật changelog cho các thay đổi trên.
 #### 🔄 Thay đổi (Changed)
 - **Cycle Time Configuration**: Tăng `delta_time` lên 90s (trước là 5s) và giảm `min_green` xuống 5s.
   - **Lý do**: Cấu hình cũ (`delta=5s`, `min=15s`) dẫn đến flexible time < 0, khiến agent không thể điều khiển gì ngoài việc giữ nguyên `min_green`.
