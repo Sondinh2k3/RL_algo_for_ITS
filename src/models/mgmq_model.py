@@ -946,9 +946,11 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         # RLlib flattens to: [features..., action_mask...]
         # The last NUM_STANDARD_PHASES (8) elements are the action_mask
         if self.use_masked_softmax:
-            # Extract features (all except last 8) and action_mask (last 8)
-            obs = obs_flat[..., :-NUM_STANDARD_PHASES]
-            action_mask = obs_flat[..., -NUM_STANDARD_PHASES:]
+            # Extract features (all except first 8) and action_mask (first 8)
+            # CRITICAL FIX: RLlib/Gym flattens Dict keys alphabetically. 
+            # "action_mask" comes BEFORE "features".
+            action_mask = obs_flat[..., :NUM_STANDARD_PHASES]
+            obs = obs_flat[..., NUM_STANDARD_PHASES:]
             # Store for MaskedSoftmax distribution to access
             self._last_action_mask = action_mask
         else:

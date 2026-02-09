@@ -221,3 +221,19 @@ marimo/_lsp/
 __marimo__/
 
 COMMIT_MESSAGE.txt
+all_sources_new.txt
+all_sources.txt
+distributed_graph_content.txt
+gcqn_content.txt
+gcqn_full.txt
+gcqn_method.txt
+gcqn_paper_full.txt
+gesa_content.txt
+kdd_content.txt
+mgmq_candidate.txt
+mgmq_real_source.txt
+mgmq_suspect.txt
+representational_content.txt
+source91_content.txt
+stmarl_content.txt
+stmarl_paper_full.txt

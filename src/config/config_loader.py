@@ -180,7 +180,7 @@ def get_env_config(config: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "num_seconds": env.get("num_seconds", 8000),
         "max_green": env.get("max_green", 90),
-        "min_green": env.get("min_green", 15),
+        "min_green": env.get("min_green", 5),
         "cycle_time": env.get("cycle_time", 90),
         "yellow_time": env.get("yellow_time", 3),
         "time_to_teleport": env.get("time_to_teleport", -1),

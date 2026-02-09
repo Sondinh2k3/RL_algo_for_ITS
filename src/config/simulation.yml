@@ -26,9 +26,9 @@ preprocessing:
 simulation:
   begin_time: 0
   num_seconds: 8000
-  delta_time: 5  # seconds between actions
+  delta_time: 90  # seconds between actions (Total Cycle Length)
   yellow_time: 3
-  min_green: 15
+  min_green: 5
   max_green: 90
   use_gui: false
   sumo_seed: random

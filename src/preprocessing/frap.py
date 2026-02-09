@@ -676,37 +676,40 @@ class PhaseStandardizer:
     def get_phase_mask(self) -> np.ndarray:
         """Get mask indicating which standard phases are available/valid.
         
-        A phase is VALID (mask=1) if and only if ALL its required movements exist.
-        This implements the Action Masking described in the GESA specification.
+        A phase is VALID (mask=1) if and only if:
+        1. It is mapped to an ACTUAL phase (target of actual_to_standard)
+        2. AND all its required movements exist (implicit in mapping usually)
         
-        Example for T-junction missing West:
-        - Phase B (EW Through): MASKED (needs WT which doesn't exist)
-        - Phase D (EW Left): MASKED (needs WL which doesn't exist)
-        - Phase H (West Green): MASKED (needs WT, WL)
-        - Result: [1, 0, 1, 0, 1, 1, 1, 0]
+        This prevents "ghost actions" where the agent selects a standard phase
+        (e.g., Phase E) that is valid movement-wise but not mapped to any
+        actual signal phase, resulting in no effect on the traffic light.
         
         Returns:
             Binary array for 8 standard phases [A, B, C, D, E, F, G, H]
         """
         mask = np.zeros(self.NUM_STANDARD_PHASES)  # 8 phases
         
-        # Collect all movements that exist at this intersection
-        all_movements = set()
-        for phase in self.phases:
-            all_movements.update(phase.movements)
+        # Calculate sets of used standard phases (targets of mapping)
+        used_std_phases = set(self.actual_to_standard.values())
         
-        # Also check lane_to_movement for additional coverage
-        all_movements.update(self.lane_to_movement.values())
-        
-        # Check each standard phase
-        for std_idx, required_movements in self.STANDARD_PHASES.items():
-            if std_idx < self.NUM_STANDARD_PHASES:
-                # Phase is valid only if ALL required movements exist
-                if required_movements.issubset(all_movements):
-                    mask[std_idx] = 1
-                # Special case: if we have the actual mapping, also mark as valid
-                elif std_idx in self.standard_to_actual:
-                    mask[std_idx] = 1
+        # If no mapping exists yet (not configured), fall back to movement-based check
+        if not used_std_phases:
+             # Collect all movements that exist at this intersection
+            all_movements = set()
+            for phase in self.phases:
+                all_movements.update(phase.movements)
+            all_movements.update(self.lane_to_movement.values())
+            
+            for std_idx, required_movements in self.STANDARD_PHASES.items():
+                if std_idx < self.NUM_STANDARD_PHASES:
+                    if required_movements.issubset(all_movements):
+                        mask[std_idx] = 1
+        else:
+            # Strict mode: Only enable phases that are actually used
+            for std_idx in self.STANDARD_PHASES.keys():
+                if std_idx < self.NUM_STANDARD_PHASES:
+                    if std_idx in used_std_phases:
+                        mask[std_idx] = 1
         
         # If no phases are valid (fallback), enable basic phases 0 and 1
         if mask.sum() == 0:

@@ -263,6 +263,15 @@ def create_mgmq_ppo_config(
         .resources(num_gpus=1 if use_gpu else 0)
         .debugging(log_level="WARN")  # Reduce log verbosity
     )
+    # CRITICAL FIX: Disable normalize_actions for MaskedSoftmax distribution
+    # RLlib's normalize_actions=True (default) applies unsquash_action() which maps
+    # model output from [-1,1] to [low, high]. But MaskedSoftmax already outputs
+    # valid simplex actions in [0,1] with sum=1 and masked phases=0.
+    # With unsquash, the action gets distorted: (action + 1) / 2
+    #   -> masked 0.0 becomes 0.5 (mask broken!)
+    #   -> simplex sum 1.0 becomes 1.5~2.5 (simplex broken!)
+    # Setting normalize_actions=False ensures raw MaskedSoftmax output is used directly.
+    config.normalize_actions = False
     
     return config
 
@@ -357,6 +366,13 @@ def train_mgmq_ppo(
     print("\n" + "="*80)
     print("Modify MGMQ-PPO TRAINING")
     print("="*80)
+    
+    # Auto-detect GPU: if user requested GPU but none available, fallback to CPU
+    if use_gpu and not torch.cuda.is_available():
+        print("⚠ --gpu requested but no GPU found (torch.cuda.is_available()=False)")
+        print("  → Falling back to CPU training")
+        use_gpu = False
+    
     print(f"Experiment: {experiment_name}")
     print(f"Network: {network_name}")
     print(f"Iterations: {num_iterations}")
@@ -466,8 +482,8 @@ def train_mgmq_ppo(
             "use_neighbor_obs": use_local_gnn,  # Enable pre-packaged neighbor observation
             "max_neighbors": max_neighbors,
             # Them phan chuan hoa reward o file env
-            "normalize_reward": True,   # Bật normalization
-            "clip_rewards": 10.0, # Clip về [-10, 10]
+            "normalize_reward": False,   # Bật normalization
+            # "clip_rewards": 10.0, # Clip về [-10, 10]
             # Path to normalizer state file (for resume training)
             # Environment will load state from this file if it exists
             "normalizer_state_file": str(output_dir / experiment_name / "normalizer_state.json"),

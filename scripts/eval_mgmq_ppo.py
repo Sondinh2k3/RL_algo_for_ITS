@@ -340,6 +340,13 @@ def evaluate_mgmq(
                 policy_mapping_fn=lambda agent_id, *args, **kwargs: "default_policy",
             )
             
+            # CRITICAL FIX: Disable normalize_actions for MaskedSoftmax distribution
+            # RLlib's normalize_actions=True (default) applies unsquash_action() which maps
+            # model output from [-1,1] to [low, high]. But MaskedSoftmax already outputs
+            # valid simplex actions in [0,1] with sum=1 and masked phases=0.
+            # With unsquash: 0.0 (masked) → 0.5, sum=1 → sum≈2.5 (both broken!)
+            algo_config.normalize_actions = False
+            
             # Build the algorithm
             algo = algo_config.build()
             
@@ -379,6 +386,26 @@ def evaluate_mgmq(
                         policy_id="default_policy"
                     )
                     actions[agent_id] = action
+                    
+                    # LOGGING: Monitor action dominance
+                    # Only log A0 every 10 steps to reduce clutter
+                    if agent_id == ts_ids[0] and step_count % 10 == 0:
+                        # Get action_mask from observation for proper analysis
+                        obs_dict = obs[agent_id]
+                        if isinstance(obs_dict, dict) and "action_mask" in obs_dict:
+                            mask = obs_dict["action_mask"]
+                            valid_phases = action[mask > 0.5]
+                            masked_phases = action[mask < 0.5]
+                            print(f"[{agent_id} Step {step_count}] Valid phases: {np.round(valid_phases, 3)} "
+                                  f"(sum={valid_phases.sum():.3f}), Masked: {np.round(masked_phases, 3)}")
+                        else:
+                            print(f"[{agent_id} Step {step_count}] Action: {np.round(action, 3)}")
+                        # Check differentiation among valid phases
+                        valid_action = action[action > 0.01] if len(action[action > 0.01]) > 0 else action
+                        if np.std(valid_action) < 0.03:
+                            print(f"    ⚠ Uniform Policy (Std={np.std(valid_action):.4f})")
+                        else:
+                            print(f"    ✓ Differentiated (Std={np.std(valid_action):.4f}, Max/Min={valid_action.max():.3f}/{valid_action.min():.3f})")
 
                 # Step environment
                 obs, rewards, terminateds, truncateds, info = env.step(actions)

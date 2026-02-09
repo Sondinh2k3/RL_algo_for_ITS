@@ -929,12 +929,37 @@ class SumoSimulator(SimulatorAPI):
                                 # GAT expects Left to Right (0 is leftmost)
                                 # So we reverse the list
                                 lanes = lanes_dict[direction]
+                                ordered = lanes[::-1]
+                                controlled_lanes.extend(ordered)
+                                # print(f"[SumoSim] {ts_id} {direction} Lanes: {ordered} (Expect L->T->R)")
+                
+                # Strategy 2: Use GPI to Auto-Sort Lanes (New Fallback)
+                # This ensures correct [N, E, S, W] and [Left, Through, Right] order
+                # even without a config file.
+                if not controlled_lanes and IntersectionStandardizer is not None:
+                    try:
+                        # Create GPI standardizer
+                        gpi = IntersectionStandardizer(ts_id, data_provider=self)
+                        # Get lanes grouped by direction {N: [l1, l2...], E: ...}
+                        lanes_map = gpi.get_lanes_by_direction()
+                        
+                        for direction in ['N', 'E', 'S', 'W']:
+                            if direction in lanes_map and lanes_map[direction]:
+                                # SUMO returns lanes Right->Left (0 is rightmost)
+                                # GAT expects Left->Right (0 is leftmost/median)
+                                # So we reverse the list for each direction
+                                lanes = lanes_map[direction]
                                 controlled_lanes.extend(lanes[::-1])
-                    else:
-                        # Fallback to SUMO if JSON structure is unexpected
-                        controlled_lanes = conn.trafficlight.getControlledLanes(ts_id)
-                else:
-                    # Strategy 2: Use SUMO API (Fallback)
+                        
+                        if controlled_lanes:
+                            print(f"[SumoSim] Auto-sorted {len(controlled_lanes)} lanes for {ts_id} using GPI (N->E->S->W)")
+                            pass
+                            
+                    except Exception as e:
+                        print(f"[SumoSim] Warning: GPI auto-sort failed for {ts_id}: {e}")
+                
+                # Strategy 3: Use SUMO API (Raw Fallback)
+                if not controlled_lanes:
                     controlled_lanes = conn.trafficlight.getControlledLanes(ts_id)
                 
                 # Store controlled lanes for this TS

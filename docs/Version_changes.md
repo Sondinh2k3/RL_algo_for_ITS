@@ -318,6 +318,31 @@
 
 ---
 
+### [v1.2.6] - 2026-02-09
+#### ✨ Thêm mới (Added)
+- **Evaluation Logging**: Cập nhật `scripts/eval_mgmq_ppo.py` để log distribution của action, giúp phát hiện hành vi Uniform Policy.
+- **Verification Scripts**: Thêm `tests/verify_cycle_length.py` để kiểm tra độ linh hoạt của green time.
+
+#### 🔄 Thay đổi (Changed)
+- **Cycle Time Configuration**: Tăng `delta_time` lên 90s (trước là 5s) và giảm `min_green` xuống 5s.
+  - **Lý do**: Cấu hình cũ (`delta=5s`, `min=15s`) dẫn đến flexible time < 0, khiến agent không thể điều khiển gì ngoài việc giữ nguyên `min_green`.
+  - **Kết quả**: Flexible time hiện tại là 58s, cho phép agent thay đổi thời gian xanh linh hoạt.
+
+#### 🐛 Sửa lỗi (Fixed)
+- **CRITICAL Action Masking Bug**: Sửa lỗi `MGMQTorchModel` đọc nhầm `action_mask` từ cuối vector observation.
+  - **Chi tiết**: RLlib flatten Dict observation theo thứ tự alphabet (`action_mask` -> `features`). Code cũ đọc `[-8:]` (tức là đọc features cuối làm mask).
+  - **Fix**: Đổi sang đọc `[:8]` (đầu vector).
+  - **Hậu quả trước đó**: Mask sai dẫn đến việc agent bị phạt ngẫu nhiên, dẫn đến Uniform Policy.
+
+#### 📁 Files thay đổi
+| File | Loại | Mô tả ngắn |
+|------|------|-----------|
+| `src/config/simulation.yml` | Modified | Update delta_time=90, min_green=5 |
+| `src/models/mgmq_model.py` | Modified | Fix action_mask slicing index `[:8]` |
+| `scripts/eval_mgmq_ppo.py` | Modified | Add Action Distribution Logging |
+
+
+
 <!-- TEMPLATE CHO CHANGELOG MỚI - Copy phần này khi thêm version mới -->
 <!--
 ### [vX.X.X] - YYYY-MM-DD
@@ -517,6 +542,34 @@
 - Hướng cải tiến tiếp theo:
   - Xem và sửa lại các hàm phần thưởng sao cho chuẩn.
 
+---
+
+### Experiment #005 - 2026-02-09
+**Mục tiêu:** Kiểm tra hiệu quả của Fix Action Masking và Cycle Time (v1.2.6).
+
+#### 🔧 Tham số (Parameters)
+| Tham số | Giá trị | Ghi chú |
+|---------|---------|---------|
+| `checkpoint` | `v0_2fe58` | Checkpoint mới sau khi fix mask? |
+| `delta_time` | 90s | Cycle time |
+| `min_green` | 5s | |
+| `num_episodes` | 1 | Đánh giá sanity check |
+
+#### 📈 Kết quả (Results)
+| Metric | Giá trị | So sánh với baseline |
+|--------|---------|---------------------|
+| Mean Reward | -723.23 | |
+| Episode Length | 67 | Crash do SUMO lỗi `free(): invalid pointer` (Known Issue) |
+| Action Dist | **Distinct** | Std ~ 0.09 (Good). Đã thoát khỏi Uniform Policy. |
+
+#### 💡 Nhận xét & Kết luận
+- **Điểm mạnh**:
+  - Agent đã đưa ra các hành động khác biệt (`[0.52, 0.75, ...]`) thay vì đều nhau (`0.5`).
+  - Std của action distribution (~0.1) cho thấy agent đang thực sự khám phá không gian hành động.
+- **Vấn đề**:
+  - SUMO Simulation bị crash (`free(): invalid pointer`) khi chạy eval. Có thể do `teleport` hoặc xung đột luồng khi log metrics quá nhiều.
+  - Cần retrain lâu hơn để agent học policy tối ưu (hiện tại hành động đã distinct nhưng reward vẫn âm).
+
 <!--
 ### Experiment #XXX - YYYY-MM-DD
 **Mục tiêu:** 
@@ -577,7 +630,9 @@
 | v1.2.1 | 2026-01-23 | Code cleanup & Docstrings | Quality | ✅ |
 | v1.2.2 | 2026-01-27 | **Fix Observation Structure (Lane-major)** | **Critical Fix** | ✅ |
 | v1.2.3 | 2026-01-29 | **Fix Detector Order (L-T-R)** | **Critical Fix** | ✅ |
-| v1.2.4 | 2026-01-30 | **Fix Scale Ambiguity (Softmax Output)** | **Model Logic** | ✅ **NEW** |
+| v1.2.4 | 2026-01-30 | **Fix Scale Ambiguity (Softmax Output)** | **Model Logic** | ✅ |
+| v1.2.5 | 2026-01-30 | **Fix Dirichlet & GAT Topology** | **Model Logic** | ✅ |
+| v1.2.6 | 2026-02-09 | **Fix Action Masking & Cycle Length** | **Critical Fix** | ✅ **NEW** |
 
 ---
 
