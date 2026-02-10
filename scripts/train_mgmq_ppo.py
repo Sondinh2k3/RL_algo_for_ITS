@@ -178,14 +178,15 @@ def create_mgmq_ppo_config(
     clip_param: float = 0.2,
     entropy_coeff: float = 0.01,
     entropy_coeff_schedule: list = None,
-    train_batch_size: int = 2048,
+    train_batch_size: int = 4096,
     minibatch_size: int = 256,
     num_sgd_iter: int = 10,
-    grad_clip: float = 5.0,
+    grad_clip: float = 10.0,
     vf_clip_param: float = 100.0,
     vf_loss_coeff: float = 0.5,
     use_gpu: bool = False,
     custom_model_name: str = "mgmq_model",
+    lr_schedule: list = None,
 ) -> PPOConfig:
     """
     Create PPO config with MGMQ custom model.
@@ -228,6 +229,7 @@ def create_mgmq_ppo_config(
         )
         .training(
             lr=learning_rate,
+            lr_schedule=lr_schedule,
             gamma=gamma,
             lambda_=lambda_,
             entropy_coeff=entropy_coeff,
@@ -313,12 +315,13 @@ def train_mgmq_ppo(
     clip_param: float = 0.2,
     entropy_coeff: float = 0.01,
     entropy_coeff_schedule: list = None,
-    train_batch_size: int = 2048,
+    train_batch_size: int = 4096,
     minibatch_size: int = 256,
     num_sgd_iter: int = 10,
-    grad_clip: float = 5.0,
+    grad_clip: float = 10.0,
     vf_clip_param: float = 100.0,
     vf_loss_coeff: float = 0.5,
+    lr_schedule: list = None,
     patience: int = 50,
     history_length: int = 1,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
@@ -356,7 +359,7 @@ def train_mgmq_ppo(
     if value_hidden_dims is None:
         value_hidden_dims = [256, 128]
     if reward_fn is None:
-        reward_fn = ["halt-veh-by-detectors", "diff-departed-veh"]
+        reward_fn = ["halt-veh-by-detectors", "diff-departed-veh", "diff-waiting-time"]
     
     # Set default reward weights if not provided (equal weights, normalized to sum=1)
     if reward_weights is None and isinstance(reward_fn, list) and len(reward_fn) > 1:
@@ -407,6 +410,7 @@ def train_mgmq_ppo(
     print(f"  num_sgd_iter: {num_sgd_iter}")
     print(f"  grad_clip: {grad_clip}")
     print(f"  vf_clip_param: {vf_clip_param}, vf_loss_coeff: {vf_loss_coeff}")
+    print(f"  lr_schedule: {lr_schedule}")
     if use_local_gnn:
         print(f"  Local GNN: ENABLED (neighbors={max_neighbors})")
     print("="*80 + "\n")
@@ -549,6 +553,7 @@ def train_mgmq_ppo(
             vf_loss_coeff=vf_loss_coeff,
             use_gpu=use_gpu,
             custom_model_name=custom_model_name,
+            lr_schedule=lr_schedule,
         )
         
         # Create stopper
@@ -812,6 +817,7 @@ if __name__ == "__main__":
         grad_clip=ppo_cfg["grad_clip"],
         vf_clip_param=ppo_cfg.get("vf_clip_param", 100.0),
         vf_loss_coeff=ppo_cfg.get("vf_loss_coeff", 0.5),
+        lr_schedule=ppo_cfg.get("lr_schedule", None),
         patience=args.patience if args.patience is not None else training_cfg["patience"],
         history_length=args.history_length if args.history_length is not None else mgmq_cfg["window_size"],
         reward_fn=args.reward_fn or reward_cfg["reward_fn"],

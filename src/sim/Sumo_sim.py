@@ -402,8 +402,11 @@ class SumoSimulator(SimulatorAPI):
                 if ts_id in self.traffic_signals:
                     ts = self.traffic_signals[ts_id]
                     if ts.time_to_act and ts_id not in actions:
-                        # Apply default action: equal distribution across all phases
-                        default_action = np.ones(ts.num_green_phases) / ts.num_green_phases
+                        # Apply default action: equal distribution across 8 standard phases
+                        # CRITICAL: set_next_phase() expects 8 standard phase ratios,
+                        # NOT num_green_phases (actual phases). The FRAP pipeline
+                        # handles mapping from standard → actual phases.
+                        default_action = np.ones(ts.NUM_STANDARD_PHASES) / ts.NUM_STANDARD_PHASES
                         ts.set_next_phase(default_action)
                         actions_applied += 1
         else:

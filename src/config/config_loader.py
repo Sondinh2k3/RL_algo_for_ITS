@@ -103,7 +103,7 @@ def get_ppo_config(config: Dict[str, Any]) -> Dict[str, Any]:
     ppo = config.get("ppo", {})
     
     return {
-        "learning_rate": ppo.get("learning_rate", 3e-5),
+        "learning_rate": ppo.get("learning_rate", 3e-4),
         "gamma": ppo.get("gamma", 0.99),
         "lambda_": ppo.get("lambda_", 0.95),
         "entropy_coeff": ppo.get("entropy_coeff", 0.01),
@@ -111,10 +111,11 @@ def get_ppo_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "clip_param": ppo.get("clip_param", 0.2),
         "vf_clip_param": ppo.get("vf_clip_param", 100.0),
         "vf_loss_coeff": ppo.get("vf_loss_coeff", 0.5),
-        "train_batch_size": ppo.get("train_batch_size", 2048),
+        "train_batch_size": ppo.get("train_batch_size", 4096),
         "minibatch_size": ppo.get("minibatch_size", 256),
         "num_sgd_iter": ppo.get("num_sgd_iter", 10),
-        "grad_clip": ppo.get("grad_clip", 5.0),
+        "grad_clip": ppo.get("grad_clip", 10.0),
+        "lr_schedule": ppo.get("lr_schedule", None),
     }
 
 

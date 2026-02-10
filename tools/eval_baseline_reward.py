@@ -188,6 +188,10 @@ def evaluate_baseline(
     
     for ep in range(num_episodes):
         obs, info = env.reset(seed=seed + ep)
+        # Enable debug logging for first agent
+        if len(ts_ids) > 0 and ts_ids[0] in env.agents:
+            env.agents[ts_ids[0]].enable_debug_logging(True, level=1)
+
         done = {"__all__": False}
         total_reward = 0
         agent_rewards = {ts_id: 0 for ts_id in ts_ids}

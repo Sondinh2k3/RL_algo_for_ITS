@@ -36,9 +36,11 @@ NUM_STANDARD_PHASES = 8
 # Softmax temperature for action output (lower = more deterministic)
 SOFTMAX_TEMPERATURE = 1.0
 
-# For Softmax-based output, we use smaller std bounds since actions are already normalized [0,1]
+# For Softmax-based output, std bounds for Gaussian exploration noise on logits
+# With softmax(z/T) where T=0.3, noise std on logits maps to exploration in action space
+# Wider range allows PPO entropy bonus to properly control exploration level
 SOFTMAX_LOG_STD_MIN = -5.0   # std = e^-5 ≈ 0.007 (very deterministic)
-SOFTMAX_LOG_STD_MAX = -1.0   # std = e^-1 ≈ 0.37 (moderate exploration for normalized output)
+SOFTMAX_LOG_STD_MAX = 0.5    # std = e^0.5 ≈ 1.65 (strong exploration when needed)
 
 
 def build_network_adjacency(
