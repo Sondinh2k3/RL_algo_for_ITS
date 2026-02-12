@@ -669,7 +669,8 @@ class TrafficSignal:
         """Computes the reward of the traffic signal. If it is a list of rewards, it returns a numpy array."""
         reward_components = {}  # Store individual rewards for logging
         
-        if self.reward_dim == 1:
+        # if self.reward_dim == 1:
+        if len(self.reward_list) == 1:
             self.last_reward = self.reward_list[0](self)
             # Ensure reward is valid
             if np.isnan(self.last_reward) or np.isinf(self.last_reward):
@@ -866,8 +867,8 @@ class TrafficSignal:
         Logic:
         - Tính tổng thời gian chờ TRUNG BÌNH trong chu kỳ từ các mẫu thu thập
         - Reward = waiting_time_cũ - waiting_time_mới (giảm waiting time → reward dương)
-        - Chuẩn hóa bằng cách chia cho (max_veh * delta_time) - là giá trị thay đổi
-          waiting time tối đa có thể xảy ra trong một chu kỳ
+        - Chuẩn hóa bằng max_waiting_change = max_veh * sampling_interval_s
+          (đây là giá trị tối đa mà một mẫu có thể có khi tất cả xe đều dừng)
         
         Returns:
             float: Normalized reward where:
@@ -875,7 +876,7 @@ class TrafficSignal:
                    0.0 = waiting time không đổi
                    -3.0 = waiting time tăng tối đa (tệ nhất)
         """
-        # Tổng thời gian chờ TRUNG BÌNH trong chu kỳ (aggregated over 6 samples)
+        # Tổng thời gian chờ TRUNG BÌNH trong chu kỳ (aggregated over 5 samples)
         ts_wait = self.get_aggregated_waiting_time()
         
         # Chênh lệch: dương nếu waiting time giảm (tốt), âm nếu tăng (xấu)
@@ -884,10 +885,12 @@ class TrafficSignal:
         # Lưu lại để so sánh ở bước tiếp theo
         self.last_ts_waiting_time = ts_wait
         
-        # Chuẩn hóa: max_waiting_change = max_veh * delta_time
-        # (mỗi xe có thể đợi tối đa delta_time giây trong một chu kỳ)
-        if self.max_veh > 0 and self.delta_time > 0:
-            max_waiting_change = self.max_veh * self.delta_time
+        # Chuẩn hóa: max_waiting_change = max_veh * sampling_interval_s
+        # Đây là giá trị tối đa mà một mẫu aggregated có thể có
+        # (mỗi mẫu = sum(vehicles_in_jam * sampling_interval) across detectors)
+        # Giá trị tối đa = max_veh * sampling_interval_s khi tất cả detector đầy xe
+        if self.max_veh > 0 and self.sampling_interval_s > 0:
+            max_waiting_change = self.max_veh * self.sampling_interval_s
             normalized_reward = (reward / max_waiting_change) * 3.0
         else:
             normalized_reward = 0.0

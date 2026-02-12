@@ -202,14 +202,19 @@ class GraphSAGE_BiGRU(nn.Module):
 
 class NeighborGraphSAGE_BiGRU(nn.Module):
     """
-    Neighbor-based GraphSAGE with Bi-GRU for Spatial Aggregation.
+    Directional Neighbor-based GraphSAGE with Bi-GRU for Spatial Aggregation.
     
-    Used when --use-local-gnn is enabled. BiGRU aggregates over K neighbors spatially.
+    Used when --use-local-gnn is enabled. BiGRU aggregates over K neighbors spatially,
+    with directional awareness via separate projection heads for each direction.
     
     Architecture:
     1. Project self features: h_self = Linear(self_features)
-    2. Project neighbor features: h_neighbors = Linear(neighbor_features)
-    3. BiGRU aggregation over neighbors (spatial sequence)
+    2. Project neighbor features with DIRECTIONAL projections:
+       - Each direction (N, E, S, W) has its own Linear projection
+       - This provides "inductive bias" so the network learns directional 
+         congestion propagation patterns faster (e.g., "congestion from North
+         will spill over to South")
+    3. BiGRU aggregation over neighbors (spatial sequence, ordered by direction)
     4. Combine: output = Linear([h_self || BiGRU_output])
     
     Args:
@@ -233,14 +238,27 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         self.hidden_features = hidden_features
         self.gru_hidden_size = gru_hidden_size
         
-        # Self and neighbor projections
+        # Self projection
         self.self_proj = nn.Sequential(
             nn.Linear(in_features, gru_hidden_size),
             nn.ReLU(),
             nn.Dropout(dropout)
         )
         
-        self.neighbor_proj = nn.Sequential(
+        # Directional neighbor projections (4 directions: N, E, S, W)
+        # Each direction has its own projection to provide "inductive bias"
+        # for learning directional congestion propagation patterns
+        self.dir_projections = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(in_features, gru_hidden_size),
+                nn.ReLU(),
+                nn.Dropout(dropout)
+            )
+            for _ in range(4)  # N=0, E=1, S=2, W=3
+        ])
+        
+        # Fallback projection for unknown direction (e.g., padding or no direction info)
+        self.fallback_proj = nn.Sequential(
             nn.Linear(in_features, gru_hidden_size),
             nn.ReLU(),
             nn.Dropout(dropout)
@@ -269,24 +287,58 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         self,
         self_features: torch.Tensor,
         neighbor_features: torch.Tensor,
-        neighbor_mask: torch.Tensor
+        neighbor_mask: torch.Tensor,
+        neighbor_directions: torch.Tensor = None
     ) -> torch.Tensor:
         """
-        Forward pass for neighbor-based spatial aggregation.
+        Forward pass for directional neighbor-based spatial aggregation.
         
         Args:
             self_features: [Batch, In_Features] - Self node features
             neighbor_features: [Batch, MaxNeighbors, In_Features] - Neighbor features
             neighbor_mask: [Batch, MaxNeighbors] - Binary mask (1=valid, 0=padding)
+            neighbor_directions: [Batch, MaxNeighbors] - Direction indices 
+                                (normalized: 0.0=N, 0.25=E, 0.5=S, 0.75=W, -1=padding)
+                                If None, falls back to generic projection (backward compatible)
             
         Returns:
             output: [Batch, Hidden_Features] - Aggregated embedding
         """
-        # Project features
-        h_self = self.self_proj(self_features)
-        h_neighbors = self.neighbor_proj(neighbor_features)
+        B = self_features.size(0)
+        K = neighbor_features.size(1)
         
-        # Apply mask (zero out padded neighbors)
+        # Project self features
+        h_self = self.self_proj(self_features)  # [B, gru_hidden_size]
+        
+        # Project neighbor features with directional awareness
+        if neighbor_directions is not None:
+            # Convert normalized directions back to integer indices
+            # 0.0->0(N), 0.25->1(E), 0.5->2(S), 0.75->3(W), -1->fallback
+            dir_indices = (neighbor_directions * 4.0).long()  # [B, K]
+            
+            # Apply directional projections
+            h_neighbors = torch.zeros(B, K, self.gru_hidden_size, 
+                                      device=self_features.device)
+            
+            for d in range(4):
+                # Create mask for this direction
+                dir_mask = (dir_indices == d)  # [B, K]
+                if dir_mask.any():
+                    # Get features for neighbors in this direction
+                    # Apply projection for all and mask later
+                    proj_d = self.dir_projections[d](neighbor_features)  # [B, K, gru_hidden_size]
+                    h_neighbors = h_neighbors + proj_d * dir_mask.unsqueeze(-1).float()
+            
+            # Handle fallback for padding/unknown directions
+            fallback_mask = (dir_indices < 0) | (dir_indices > 3)
+            if fallback_mask.any():
+                proj_fallback = self.fallback_proj(neighbor_features)
+                h_neighbors = h_neighbors + proj_fallback * fallback_mask.unsqueeze(-1).float()
+        else:
+            # Backward compatible: use fallback projection for all neighbors
+            h_neighbors = self.fallback_proj(neighbor_features)
+        
+        # Apply neighbor mask (zero out padded neighbors)
         mask_expanded = neighbor_mask.unsqueeze(-1).float()
         h_neighbors_masked = h_neighbors * mask_expanded
         

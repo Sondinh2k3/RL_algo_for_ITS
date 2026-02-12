@@ -1,80 +1,80 @@
 {
   "network": "grid4x4",
   "num_episodes": 1,
-  "mean_reward": -1.1731067506293158e-15,
+  "mean_reward": 731.165238549101,
   "std_reward": 0.0,
-  "min_reward": -1.1731067506293158e-15,
-  "max_reward": -1.1731067506293158e-15,
+  "min_reward": 731.165238549101,
+  "max_reward": 731.165238549101,
   "mean_length": 67.0,
   "episode_rewards": [
-    -1.1731067506293158e-15
+    731.165238549101
   ],
   "episode_lengths": [
     67
   ],
   "per_agent_stats": {
     "A0": {
-      "mean_reward": 2.5370330836160804e-17,
+      "mean_reward": 42.64277364918961,
       "std_reward": 0.0
     },
     "A1": {
-      "mean_reward": -5.204170427930421e-18,
+      "mean_reward": 47.30780482835448,
       "std_reward": 0.0
     },
     "A2": {
-      "mean_reward": -1.235990476633475e-17,
+      "mean_reward": 47.591252100382306,
       "std_reward": 0.0
     },
     "A3": {
-      "mean_reward": 4.85722573273506e-17,
+      "mean_reward": 42.27890388403709,
       "std_reward": 0.0
     },
     "B0": {
-      "mean_reward": -3.404394821604484e-17,
+      "mean_reward": 43.72525527100515,
       "std_reward": 0.0
     },
     "B1": {
-      "mean_reward": -1.9081958235744878e-17,
+      "mean_reward": 44.115571925028526,
       "std_reward": 0.0
     },
     "B2": {
-      "mean_reward": -3.426078865054194e-17,
+      "mean_reward": 44.53805583703797,
       "std_reward": 0.0
     },
     "B3": {
-      "mean_reward": 2.927345865710862e-17,
+      "mean_reward": 46.75601018744055,
       "std_reward": 0.0
     },
     "C0": {
-      "mean_reward": 2.0599841277224584e-17,
+      "mean_reward": 50.29589286349559,
       "std_reward": 0.0
     },
     "C1": {
-      "mean_reward": -3.122502256758253e-17,
+      "mean_reward": 46.87430551663662,
       "std_reward": 0.0
     },
     "C2": {
-      "mean_reward": -5.2258544713801314e-17,
+      "mean_reward": 46.92038004954036,
       "std_reward": 0.0
     },
     "C3": {
-      "mean_reward": 4.9873299934333204e-18,
+      "mean_reward": 48.977106708310494,
       "std_reward": 0.0
     },
     "D0": {
-      "mean_reward": 6.071532165918825e-18,
+      "mean_reward": 47.749691587222834,
       "std_reward": 0.0
     },
     "D1": {
-      "mean_reward": -4.2392304944183223e-17,
+      "mean_reward": 39.250870304337404,
       "std_reward": 0.0
     },
     "D2": {
-      "mean_reward": -9.540979117872439e-18,
+      "mean_reward": 48.88926587444439,
       "std_reward": 0.0
     },
     "D3": {
-      "mean_reward": -6.502502529481813e-17,
+      "mean_reward": 43.252097962637585,
       "std_reward": 0.0
     }
   }

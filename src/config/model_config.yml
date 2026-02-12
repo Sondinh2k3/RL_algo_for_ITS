@@ -119,10 +119,10 @@ reward:
   # - diff-departed-veh: Difference in departed vehicles
   # - teleport-penalty: Penalty for teleported vehicles (severe congestion indicator)
   functions:
-    # - halt-veh-by-detectors
-    # - diff-departed-veh
+    - halt-veh-by-detectors
+    - diff-departed-veh
     - diff-waiting-time
-    - occupancy
+    # - occupancy
     # - average-speed
     # - teleport-penalty   # Uncomment to penalize teleportation (requires time_to_teleport > 0)
   weights: null # Auto-compute equal weights if null

@@ -255,6 +255,9 @@ class NeighborTemporalObservationFunction(ObservationFunction):
         # Get neighbor features
         neighbor_features, neighbor_mask = self._get_neighbor_features(feature_dim)
         
+        # Get neighbor directions (0=N, 1=E, 2=S, 3=W, -1=padding)
+        neighbor_directions = self._get_neighbor_directions()
+        
         # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
         action_mask = self.ts.get_action_mask()
         action_mask = np.array(action_mask, dtype=np.float32)
@@ -263,9 +266,31 @@ class NeighborTemporalObservationFunction(ObservationFunction):
             "self_features": self_features,
             "neighbor_features": neighbor_features,
             "neighbor_mask": neighbor_mask,
+            "neighbor_directions": neighbor_directions,
             "action_mask": action_mask,
         }
         
+    def _get_neighbor_directions(self) -> np.ndarray:
+        """Get direction indices for neighbors.
+        
+        Returns:
+            np.ndarray of shape [K] with direction indices:
+            0=North, 1=East, 2=South, 3=West, -1=padding.
+            Encoded as float: N=0.0, E=0.25, S=0.5, W=0.75, padding=-1.0
+        """
+        K = self.max_neighbors
+        # Default: all padding (-1)
+        directions = np.full(K, -1.0, dtype=np.float32)
+        
+        if self.neighbor_provider is not None and hasattr(self.neighbor_provider, 'get_neighbor_directions'):
+            dir_indices = self.neighbor_provider.get_neighbor_directions(self.ts.id)
+            for i, d in enumerate(dir_indices[:K]):
+                if d >= 0:
+                    # Encode as normalized float: 0=0.0, 1=0.25, 2=0.5, 3=0.75
+                    directions[i] = d / 4.0
+        
+        return directions
+    
     def _get_neighbor_features(self, feature_dim: int):
         """Get T-step history for all neighbors with padding.
         
@@ -411,6 +436,11 @@ class NeighborTemporalObservationFunction(ObservationFunction):
             ),
             "neighbor_mask": spaces.Box(
                 low=0.0, high=1.0,
+                shape=(K,),
+                dtype=np.float32
+            ),
+            "neighbor_directions": spaces.Box(
+                low=-1.0, high=1.0,
                 shape=(K,),
                 dtype=np.float32
             ),

@@ -213,12 +213,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -228,9 +228,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -461,12 +461,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -476,9 +476,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -709,12 +709,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -724,9 +724,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -957,12 +957,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -972,9 +972,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -1205,12 +1205,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -1220,9 +1220,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -1453,12 +1453,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -1468,9 +1468,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -1701,12 +1701,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -1716,9 +1716,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -1949,12 +1949,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -1964,9 +1964,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -2197,12 +2197,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -2212,9 +2212,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -2445,12 +2445,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -2460,9 +2460,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -2693,12 +2693,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -2708,9 +2708,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -2941,12 +2941,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -2956,9 +2956,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -3189,12 +3189,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -3204,9 +3204,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -3437,12 +3437,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -3452,9 +3452,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -3685,12 +3685,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -3700,9 +3700,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",
@@ -3933,12 +3933,12 @@
         "movement_to_phase": {},
         "phase_to_movements": {
           "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
             "MovementType.SOUTH_LEFT",
             "MovementType.NORTH_RIGHT",
-            "MovementType.NORTH_THROUGH",
             "MovementType.NORTH_LEFT",
-            "MovementType.SOUTH_THROUGH",
-            "MovementType.SOUTH_RIGHT"
+            "MovementType.NORTH_THROUGH"
           ],
           "1": [
             "MovementType.NORTH_LEFT",
@@ -3948,9 +3948,9 @@
             "MovementType.WEST_THROUGH",
             "MovementType.EAST_RIGHT",
             "MovementType.WEST_RIGHT",
-            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT",
             "MovementType.WEST_LEFT",
-            "MovementType.EAST_LEFT"
+            "MovementType.EAST_THROUGH"
           ],
           "3": [
             "MovementType.WEST_LEFT",

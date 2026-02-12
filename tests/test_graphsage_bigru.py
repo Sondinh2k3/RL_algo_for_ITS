@@ -504,6 +504,62 @@ class TestNeighborGraphSAGE_BiGRU:
         expected_shape = (batch_size, hidden_features)
         assert output.shape == expected_shape, f"Expected {expected_shape}, got {output.shape}"
         print(f"\n✅ Output shape đúng: {output.shape}")
+
+    def test_directional_projections(self):
+        """Test that directional projections produce different outputs for different directions."""
+        print_separator("TEST: NeighborGraphSAGE_BiGRU Directional Projections")
+
+        in_features = 32
+        hidden_features = 64
+        gru_hidden_size = 16
+        max_neighbors = 4
+        batch_size = 2
+
+        layer = NeighborGraphSAGE_BiGRU(
+            in_features=in_features,
+            hidden_features=hidden_features,
+            gru_hidden_size=gru_hidden_size,
+            max_neighbors=max_neighbors,
+            dropout=0.0
+        )
+        layer.eval()
+
+        torch.manual_seed(42)
+        self_features = torch.randn(batch_size, in_features)
+        neighbor_features = torch.randn(batch_size, max_neighbors, in_features)
+        neighbor_mask = torch.ones(batch_size, max_neighbors)
+
+        # Test 1: With directional info (N=0, E=0.25, S=0.5, W=0.75)
+        directions = torch.tensor([
+            [0.0, 0.25, 0.5, 0.75],  # N, E, S, W
+            [0.0, 0.25, -1.0, -1.0],  # N, E, padding, padding
+        ])
+        neighbor_mask_2 = torch.tensor([
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 0.0, 0.0],
+        ])
+
+        with torch.no_grad():
+            out_with_dir = layer(self_features, neighbor_features, neighbor_mask_2, directions)
+            out_without_dir = layer(self_features, neighbor_features, neighbor_mask_2, None)
+
+        print_tensor_info("Output WITH directional projections", out_with_dir)
+        print_tensor_info("Output WITHOUT directional projections", out_without_dir)
+
+        assert out_with_dir.shape == (batch_size, hidden_features)
+        assert out_without_dir.shape == (batch_size, hidden_features)
+
+        # Outputs should be different (different projection weights)
+        assert not torch.allclose(out_with_dir, out_without_dir, atol=1e-4), \
+            "Directional and non-directional outputs should differ"
+        print("\n✅ Directional projections produce different outputs from fallback")
+
+        # Test 2: Verify 4 separate projection heads exist
+        assert len(layer.dir_projections) == 4, "Should have 4 directional projections"
+        for i, proj in enumerate(layer.dir_projections):
+            dir_names = ['North', 'East', 'South', 'West']
+            print(f"   Projection {dir_names[i]}: {proj[0].in_features} → {proj[0].out_features}")
+        print("✅ All 4 directional projections verified")
         
     def test_step_by_step_analysis(self):
         """Phân tích từng bước xử lý của NeighborGraphSAGE_BiGRU."""
@@ -545,7 +601,7 @@ class TestNeighborGraphSAGE_BiGRU:
             print("   h_neighbors = ReLU(Linear(neighbor_features))")
             
             h_self = layer.self_proj(self_features)
-            h_neighbors = layer.neighbor_proj(neighbor_features)
+            h_neighbors = layer.fallback_proj(neighbor_features)
             
             print_tensor_info("h_self (projected)", h_self)
             print_tensor_info("h_neighbors (projected)", h_neighbors)

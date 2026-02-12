@@ -82,16 +82,20 @@ class NeighborProvider:
     - Observation history access for neighbors
     """
     
-    def __init__(self, traffic_signals: dict, adjacency_map: dict, max_neighbors: int = 4):
+    def __init__(self, traffic_signals: dict, adjacency_map: dict, 
+                 direction_map: dict = None, max_neighbors: int = 4):
         """Initialize NeighborProvider.
         
         Args:
             traffic_signals: Dict mapping ts_id -> TrafficSignal object
             adjacency_map: Dict mapping ts_id -> list of neighbor ts_ids
+            direction_map: Dict mapping ts_id -> {neighbor_id: direction_index}
+                          where direction_index is 0=N, 1=E, 2=S, 3=W
             max_neighbors: Maximum number of neighbors (K)
         """
         self.traffic_signals = traffic_signals
         self.adjacency_map = adjacency_map
+        self.direction_map = direction_map or {}
         self.max_neighbors = max_neighbors
         
     def get_neighbor_ids(self, ts_id: str) -> List[str]:
@@ -105,6 +109,28 @@ class NeighborProvider:
         """
         neighbors = self.adjacency_map.get(ts_id, [])
         return neighbors[:self.max_neighbors]
+    
+    def get_neighbor_directions(self, ts_id: str) -> List[int]:
+        """Get direction indices for neighbors of a traffic signal.
+        
+        Direction indices follow: 0=North, 1=East, 2=South, 3=West.
+        Padded with -1 for missing neighbors.
+        
+        Args:
+            ts_id: Traffic signal ID
+            
+        Returns:
+            List of direction indices [K] (0-3 for valid, -1 for padding)
+        """
+        neighbors = self.get_neighbor_ids(ts_id)
+        ts_dirs = self.direction_map.get(ts_id, {})
+        directions = []
+        for neighbor_id in neighbors:
+            directions.append(ts_dirs.get(neighbor_id, 0))
+        # Pad with -1 for missing neighbors
+        while len(directions) < self.max_neighbors:
+            directions.append(-1)
+        return directions[:self.max_neighbors]
     
     def get_observation_history(self, ts_id: str, window_size: int) -> Optional[List]:
         """Get observation history for a traffic signal.
@@ -133,8 +159,10 @@ class NeighborProvider:
         self.traffic_signals = traffic_signals
 
 
-def build_adjacency_map_from_network(net_file: str, ts_ids: List[str]) -> Dict[str, List[str]]:
-    """Build adjacency map from SUMO network file.
+def build_adjacency_map_from_network(
+    net_file: str, ts_ids: List[str]
+) -> Tuple[Dict[str, List[str]], Dict[str, Dict[str, int]]]:
+    """Build adjacency map with directional info from SUMO network file.
     
     Two controlled intersections are considered neighbors if they are
     connected directly or via non-controlled junctions.
@@ -144,21 +172,34 @@ def build_adjacency_map_from_network(net_file: str, ts_ids: List[str]) -> Dict[s
         ts_ids: List of traffic signal IDs (controlled intersections)
         
     Returns:
-        Dict mapping ts_id -> list of neighbor ts_ids
+        Tuple of:
+        - adjacency_map: Dict mapping ts_id -> list of neighbor ts_ids
+        - direction_map: Dict mapping ts_id -> {neighbor_id: direction_index}
+          where direction_index is 0=North, 1=East, 2=South, 3=West
     """
+    import math
     from collections import defaultdict
     import xml.etree.ElementTree as ET
     
     adjacency_map = {ts_id: [] for ts_id in ts_ids}
+    direction_map = {ts_id: {} for ts_id in ts_ids}
     ts_set = set(ts_ids)
     
     if not net_file or not os.path.exists(net_file):
         print(f"[NeighborProvider] Warning: net_file not found, returning empty adjacency")
-        return adjacency_map
+        return adjacency_map, direction_map
         
     try:
         tree = ET.parse(net_file)
         root = tree.getroot()
+        
+        # Get junction coordinates for direction computation
+        junction_coords = {}
+        for junction in root.findall('junction'):
+            junc_id = junction.get('id')
+            x = float(junction.get('x', 0))
+            y = float(junction.get('y', 0))
+            junction_coords[junc_id] = (x, y)
         
         # Build graph of all junctions
         graph = defaultdict(set)
@@ -174,6 +215,25 @@ def build_adjacency_map_from_network(net_file: str, ts_ids: List[str]) -> Dict[s
             if from_junction and to_junction:
                 graph[from_junction].add(to_junction)
                 graph[to_junction].add(from_junction)  # Undirected
+        
+        def get_direction_index(from_id: str, to_id: str) -> int:
+            """Get direction index (0=N, 1=E, 2=S, 3=W) from source to target."""
+            if from_id not in junction_coords or to_id not in junction_coords:
+                return -1
+            x1, y1 = junction_coords[from_id]
+            x2, y2 = junction_coords[to_id]
+            dx, dy = x2 - x1, y2 - y1
+            if abs(dx) < 1e-6 and abs(dy) < 1e-6:
+                return -1
+            angle = math.degrees(math.atan2(dy, dx)) % 360
+            if 45 <= angle < 135:
+                return 0  # North
+            elif 135 <= angle < 225:
+                return 3  # West
+            elif 225 <= angle < 315:
+                return 2  # South
+            else:
+                return 1  # East
         
         # For each controlled intersection, find neighbors
         def find_controlled_neighbors(start_ts: str) -> List[str]:
@@ -199,14 +259,18 @@ def build_adjacency_map_from_network(net_file: str, ts_ids: List[str]) -> Dict[s
             
             return neighbors
         
-        # Build adjacency map
+        # Build adjacency map with direction info
         for ts_id in ts_ids:
-            adjacency_map[ts_id] = find_controlled_neighbors(ts_id)
+            neighbors = find_controlled_neighbors(ts_id)
+            adjacency_map[ts_id] = neighbors
+            for neighbor_id in neighbors:
+                dir_idx = get_direction_index(ts_id, neighbor_id)
+                direction_map[ts_id][neighbor_id] = dir_idx if dir_idx >= 0 else 0
         
     except Exception as e:
         print(f"[NeighborProvider] Error building adjacency: {e}")
         
-    return adjacency_map
+    return adjacency_map, direction_map
 
 
 class SumoSimulator(SimulatorAPI):
@@ -311,6 +375,7 @@ class SumoSimulator(SimulatorAPI):
         self.num_teleported_vehicles = 0
         self.neighbor_provider = None  # Will be created in initialize()
         self.adjacency_map = {}  # Map ts_id -> neighbor ts_ids
+        self.direction_map = {}  # Map ts_id -> {neighbor_id: direction_index}
 
     # =====================================================================
     # SimulatorAPI Implementation
@@ -334,13 +399,14 @@ class SumoSimulator(SimulatorAPI):
         
         # Build adjacency map for neighbor observation
         if self.use_neighbor_obs:
-            self.adjacency_map = build_adjacency_map_from_network(
+            self.adjacency_map, self.direction_map = build_adjacency_map_from_network(
                 self.net_file, self.ts_ids
             )
             # Create NeighborProvider (traffic_signals will be updated later)
             self.neighbor_provider = NeighborProvider(
                 traffic_signals={},
                 adjacency_map=self.adjacency_map,
+                direction_map=self.direction_map,
                 max_neighbors=self.max_neighbors
             )
         
@@ -1145,9 +1211,15 @@ class SumoSimulator(SimulatorAPI):
             return 0
 
     def get_detector_vehicle_ids(self, detector_id: str) -> List[str]:
-        """Get IDs of vehicles in detector."""
+        """Get IDs of vehicles currently present in detector.
+        
+        Uses getLastStepVehicleIDs (current step) instead of 
+        getLastIntervalVehicleIDs (last completed aggregation period).
+        The interval-based method returns empty when no period has completed,
+        causing diff-departed-veh reward to always be zero.
+        """
         try:
-            return self.sumo.lanearea.getLastIntervalVehicleIDs(detector_id)
+            return self.sumo.lanearea.getLastStepVehicleIDs(detector_id)
         except Exception:
             return []
 

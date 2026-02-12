@@ -467,6 +467,7 @@ class LocalMGMQEncoder(nn.Module):
                 - self_features: [B, 48]
                 - neighbor_features: [B, K, 48]
                 - neighbor_mask: [B, K]
+                - neighbor_directions: [B, K] (optional, 0.0=N, 0.25=E, 0.5=S, 0.75=W)
                 
         Returns:
             joint_emb: [B, joint_emb_dim]
@@ -474,6 +475,7 @@ class LocalMGMQEncoder(nn.Module):
         self_feat = obs_dict["self_features"]         # [B, 48]
         neighbor_feat = obs_dict["neighbor_features"] # [B, K, 48]
         mask = obs_dict["neighbor_mask"]              # [B, K]
+        neighbor_dirs = obs_dict.get("neighbor_directions", None)  # [B, K] or None
         
         B = self_feat.size(0)
         K = neighbor_feat.size(1)
@@ -486,11 +488,12 @@ class LocalMGMQEncoder(nn.Module):
         neighbor_emb_flat = self._run_gat(neighbor_feat_flat)
         neighbor_emb = neighbor_emb_flat.reshape(B, K, -1)
         
-        # 3. Spatial Neighbor Aggregation using BiGRU
+        # 3. Spatial Neighbor Aggregation using BiGRU with directional projections
         network_emb = self.neighbor_aggregator(
             self_features=self_emb,
             neighbor_features=neighbor_emb,
-            neighbor_mask=mask
+            neighbor_mask=mask,
+            neighbor_directions=neighbor_dirs
         )
         
         # 4. Joint Embedding
@@ -1213,6 +1216,9 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
                 "neighbor_features": obs["neighbor_features"].float(),
                 "neighbor_mask": obs["neighbor_mask"].float(),
             }
+            # Pass neighbor_directions for directional projection in BiGRU
+            if "neighbor_directions" in obs:
+                obs_dict["neighbor_directions"] = obs["neighbor_directions"].float()
             # Extract action_mask for MaskedSoftmax distribution
             if self.use_masked_softmax and "action_mask" in obs:
                 self._last_action_mask = obs["action_mask"].float()

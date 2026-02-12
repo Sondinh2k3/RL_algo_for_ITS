@@ -157,6 +157,9 @@ def get_reward_config(config: Dict[str, Any]) -> Dict[str, Any]:
     
     reward_fn = reward.get("functions", ["halt-veh-by-detectors", "diff-departed-veh"])
     reward_weights = reward.get("weights", None)
+
+    if reward_weights == "auto":
+        reward_weights = None  # Trigger auto-compute below
     
     # Auto-compute equal weights if not provided
     if reward_weights is None and isinstance(reward_fn, list) and len(reward_fn) > 1:
