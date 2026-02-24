@@ -109,6 +109,7 @@ def get_ppo_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "entropy_coeff": ppo.get("entropy_coeff", 0.01),
         "entropy_coeff_schedule": ppo.get("entropy_coeff_schedule", None),
         "clip_param": ppo.get("clip_param", 0.2),
+        "kl_target": ppo.get("kl_target", 0.01),
         "vf_clip_param": ppo.get("vf_clip_param", 100.0),
         "vf_loss_coeff": ppo.get("vf_loss_coeff", 0.5),
         "train_batch_size": ppo.get("train_batch_size", 4096),

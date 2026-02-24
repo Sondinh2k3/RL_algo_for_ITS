@@ -118,7 +118,9 @@ class TorchMaskedSoftmax(TorchDistributionWrapper):
         self.log_std = inputs[..., action_dim:]
         
         # Clamp log_std for stability
-        self.log_std = torch.clamp(self.log_std, min=-5.0, max=2.0)
+        # STEP 2 FIX: Consistent bounds with model output [-5.0, 0.5]
+        # Old max=2.0 allowed std=7.4 (too noisy). New max=0.5 → std≈1.65 (reasonable)
+        self.log_std = torch.clamp(self.log_std, min=-5.0, max=0.5)
         self.std = torch.exp(self.log_std)
         
         # Get action mask from model

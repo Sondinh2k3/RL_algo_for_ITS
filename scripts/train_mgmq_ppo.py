@@ -30,6 +30,7 @@ from ray import tune, air
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
 from ray.tune.stopper import Stopper
+from ray.tune import register_trainable
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -54,6 +55,8 @@ from src.config import (
     is_local_gnn_enabled,
     get_history_length,
 )
+from src.algorithm.mgmq_ppo import MGMQPPO, MGMQPPOConfig, MGMQPPOTorchPolicy
+from src.callbacks.diagnostic_callback import DiagnosticCallback
 
 
 # Register custom MGMQ models with RLlib
@@ -176,6 +179,7 @@ def create_mgmq_ppo_config(
     gamma: float = 0.99,
     lambda_: float = 0.95,
     clip_param: float = 0.2,
+    kl_target: float = 0.01,
     entropy_coeff: float = 0.01,
     entropy_coeff_schedule: list = None,
     train_batch_size: int = 4096,
@@ -207,7 +211,7 @@ def create_mgmq_ppo_config(
         Configured PPOConfig
     """
     config = (
-        PPOConfig()
+        MGMQPPOConfig()
         # Use the old API stack for custom model compatibility
         .api_stack(
             enable_rl_module_and_learner=False,
@@ -235,6 +239,7 @@ def create_mgmq_ppo_config(
             entropy_coeff=entropy_coeff,
             entropy_coeff_schedule=entropy_coeff_schedule,
             clip_param=clip_param,
+            kl_target=kl_target,
             # vf_clip_param must be large enough for reward scale
             # Episode reward ~ -600 to -700, so vf predictions can be large
             vf_clip_param=vf_clip_param,
@@ -271,6 +276,9 @@ def create_mgmq_ppo_config(
     #   -> simplex sum 1.0 becomes 1.5~2.5 (simplex broken!)
     # Setting normalize_actions=False ensures raw MaskedSoftmax output is used directly.
     config.normalize_actions = False
+    
+    # Add diagnostic callback for comprehensive training monitoring
+    config.callbacks(DiagnosticCallback)
     
     return config
 
@@ -313,6 +321,7 @@ def train_mgmq_ppo(
     gamma: float = 0.99,
     lambda_: float = 0.95,
     clip_param: float = 0.2,
+    kl_target: float = 0.01,
     entropy_coeff: float = 0.01,
     entropy_coeff_schedule: list = None,
     train_batch_size: int = 4096,
@@ -430,6 +439,9 @@ def train_mgmq_ppo(
     )
     
     try:
+        # Register custom MGMQ-PPO algorithm with Ray Tune
+        register_trainable("MGMQPPO", MGMQPPO)
+        
         # Set random seeds
         np.random.seed(seed)
         torch.manual_seed(seed)
@@ -543,6 +555,7 @@ def train_mgmq_ppo(
             gamma=gamma,
             lambda_=lambda_,
             clip_param=clip_param,
+            kl_target=kl_target,
             entropy_coeff=entropy_coeff,
             entropy_coeff_schedule=entropy_coeff_schedule,
             train_batch_size=train_batch_size,
@@ -583,7 +596,7 @@ def train_mgmq_ppo(
             # Use Tuner.restore() to resume from checkpoint
             tuner = tune.Tuner.restore(
                 path=str(resume_path),
-                trainable="PPO",
+                trainable="MGMQPPO",
                 resume_unfinished=True,  # Resume trials that haven't finished
                 resume_errored=True,  # Retry trials that errored
                 param_space=ppo_config.to_dict(),  # Allow parameter overrides
@@ -593,9 +606,10 @@ def train_mgmq_ppo(
             # Note: stopper is reinitialized, so the iteration count starts fresh
             # The model weights are restored from the last checkpoint
         else:
-            # Create new Tuner for fresh training
+            # Create new Tuner for fresh training using MGMQ-PPO
+            # (includes per-minibatch advantage normalization + clip_fraction tracking)
             tuner = tune.Tuner(
-                "PPO",
+                "MGMQPPO",
                 param_space=ppo_config.to_dict(),
                 run_config=tune.RunConfig(  # Use tune.RunConfig instead of air.RunConfig
                     name=experiment_name,
@@ -809,6 +823,7 @@ if __name__ == "__main__":
         gamma=ppo_cfg["gamma"],
         lambda_=ppo_cfg["lambda_"],
         clip_param=ppo_cfg["clip_param"],
+        kl_target=ppo_cfg.get("kl_target", 0.01),
         entropy_coeff=ppo_cfg.get("entropy_coeff", 0.01),
         entropy_coeff_schedule=ppo_cfg.get("entropy_coeff_schedule", None),
         train_batch_size=ppo_cfg["train_batch_size"],

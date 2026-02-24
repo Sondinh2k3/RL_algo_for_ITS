@@ -411,6 +411,18 @@ class DualStreamGATLayer(nn.Module):
             nn.ELU()  # ELU for fusion layer as per MGMQ specification
         )
         
+        # STEP 3 FIX: LayerNorm for output stabilization
+        # Normalizes the output embedding to prevent scale drift across GNN layers
+        self.output_norm = nn.LayerNorm(self.final_output_dim)
+        
+        # STEP 3 FIX: Residual (Skip) Connection
+        # Projects input to match output dim for residual addition
+        # This creates a clean gradient highway: grad flows directly from output to input
+        if in_features != self.final_output_dim:
+            self.residual_proj = nn.Linear(in_features, self.final_output_dim)
+        else:
+            self.residual_proj = nn.Identity()
+        
     def forward(
         self, 
         x: torch.Tensor, 
@@ -439,5 +451,11 @@ class DualStreamGATLayer(nn.Module):
         
         # Final projection
         h_out = self.final_proj(combined)
+        
+        # STEP 3 FIX: Residual connection + LayerNorm
+        # Residual: h_out = h_out + proj(x)  (skip connection from raw input)
+        # LayerNorm: stabilize the output scale
+        residual = self.residual_proj(x)
+        h_out = self.output_norm(h_out + residual)
         
         return h_out

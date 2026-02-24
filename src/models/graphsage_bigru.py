@@ -81,6 +81,16 @@ class DirectionalGraphSAGE(nn.Module):
         # LeakyReLU as per MGMQ specification
         self.activation = nn.LeakyReLU(negative_slope=0.2)
         
+        # STEP 3 FIX: LayerNorm for output stabilization
+        self.output_norm = nn.LayerNorm(out_features)
+        
+        # STEP 3 FIX: Residual (Skip) Connection
+        # Projects input features to match output dim for residual addition
+        if in_features != out_features:
+            self.residual_proj = nn.Linear(in_features, out_features)
+        else:
+            self.residual_proj = nn.Identity()
+        
     def forward(self, h: torch.Tensor, adj_directions: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of DirectionalGraphSAGE.
@@ -147,6 +157,11 @@ class DirectionalGraphSAGE(nn.Module):
         out = self.activation(out)
         out = self.dropout_layer(out)
         out = out.view(batch_size, num_nodes, -1)
+        
+        # STEP 3 FIX: Residual connection + LayerNorm
+        # Skip connection from input to output for clean gradient flow
+        residual = self.residual_proj(h)  # h is [batch, num_nodes, in_features]
+        out = self.output_norm(out + residual)
         
         if squeeze_output:
             out = out.squeeze(0)
@@ -283,6 +298,16 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         
         self.max_neighbors = max_neighbors
         
+        # STEP 3 FIX: LayerNorm for output stabilization
+        self.output_norm = nn.LayerNorm(hidden_features)
+        
+        # STEP 3 FIX: Residual (Skip) Connection
+        # Projects self_features input to match output dim
+        if in_features != hidden_features:
+            self.residual_proj = nn.Linear(in_features, hidden_features)
+        else:
+            self.residual_proj = nn.Identity()
+        
     def forward(
         self,
         self_features: torch.Tensor,
@@ -352,6 +377,10 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         # Combine: z_raw = Concat(h_self, G_k)
         z_raw = torch.cat([h_self, G_k], dim=-1)
         output = self.output_proj(z_raw)
+        
+        # STEP 3 FIX: Residual connection + LayerNorm
+        residual = self.residual_proj(self_features)
+        output = self.output_norm(output + residual)
         
         return output
     

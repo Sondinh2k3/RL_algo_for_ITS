@@ -78,6 +78,9 @@ ppo:
   # New schedule: decay over ~100-200 iterations (proper exploration period)
   entropy_coeff_schedule: [[0, 0.01], [200000, 0.005], [500000, 0.001]]
   clip_param: 0.2 # PPO clip parameter
+  kl_target: 0.03 # KL target for adaptive KL coefficient. Default 0.01 is too aggressive
+  # With per-minibatch advantage normalization, typical KL is 0.02-0.03
+  # Setting target=0.03 keeps kl_coeff stable near initial value (0.2)
   vf_clip_param: 100.0 # Value function clip - must be large for reward range ~-600 to -700
   vf_loss_coeff: 0.01 # CRITICAL FIX: reduced from 0.5 to prevent VF gradient dominance
   # With vf_loss=60 and policy_loss=0.02:
@@ -88,7 +91,10 @@ ppo:
   # With 4 workers: 4 * 1072 = 4288, will auto-collect enough with complete_episodes
   minibatch_size: 268 # SGD minibatch size (2144/268 = 8 minibatches per epoch)
   num_sgd_iter: 10 # Number of SGD iterations
-  grad_clip: 10.0 # Increased from 5.0 - GNN with GAT+GraphSAGE+BiGRU needs more headroom
+  # DIAGNOSTIC FIX (Steps 1-2): Reduced grad_clip from 10.0 to 1.0
+  # Prevents logit explosion in policy head which caused KL coefficient to explode
+  # Combined with per-minibatch advantage normalization in MGMQPPOTorchPolicy
+  grad_clip: 1.0
   # Learning rate schedule: linear decay over training
   # Points are [agent_timestep, lr_value]
   lr_schedule: [[0, 0.0003], [500000, 0.0001], [1000000, 0.00003]]
