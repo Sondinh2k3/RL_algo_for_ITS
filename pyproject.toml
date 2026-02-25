@@ -23,6 +23,7 @@ dependencies = [
     
     # SUMO Simulation
     "traci>=1.24.0,<2.0.0",
+    "libsumo",
     
     # Configuration & Data Processing
     "pyyaml>=6.0",

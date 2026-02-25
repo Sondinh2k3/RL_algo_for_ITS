@@ -250,9 +250,9 @@ class MGMQEncoder(nn.Module):
         
         # Layer 2: GraphSAGE + Bi-GRU for network embedding
         # GAT outputs [12, gat_output_dim * gat_num_heads] per intersection
-        # After Flatten: 12 * gat_output_dim * gat_num_heads
-        gat_per_lane_output = gat_output_dim * gat_num_heads  # e.g., 32*4 = 128
-        gat_total_output = self.num_lanes * gat_per_lane_output  # 12 * 128 = 1536
+        # After MEAN POOLING: gat_output_dim * gat_num_heads
+        gat_per_lane_output = gat_output_dim * gat_num_heads  # e.g., 16*2 = 32
+        gat_total_output = gat_per_lane_output  # NO FLATTEN, USE MEAN POOLING
         
         self.graphsage_bigru = GraphSAGE_BiGRU(
             in_features=gat_total_output,
@@ -345,14 +345,13 @@ class MGMQEncoder(nn.Module):
         # gat_out: [batch * num_agents, 12, gat_output_dim * heads]
         gat_out = self.dual_stream_gat(lane_features, lane_adj_coop_batch, lane_adj_conf_batch)
         
-        # FLATTEN over lanes to preserve spatial semantics (NOT Mean Pooling!)
-        # Mean Pooling loses positional information (which lane is congested)
-        # Flatten preserves: index 0-127 = Lane 0, index 128-255 = Lane 1, etc.
-        # [batch * num_agents, 12 * gat_output_dim * heads] = [batch * num_agents, 1536]
-        intersection_emb_flat = gat_out.flatten(start_dim=1)
+        # MEAN POOLING over lanes to manage dimensionality
+        # gat_out is [batch * num_agents, 12, gat_output_dim * heads]
+        # Mean pooling -> [batch * num_agents, gat_output_dim * heads]
+        intersection_emb_pooled = gat_out.mean(dim=1)
         
         # Reshape back to [batch, num_agents, emb_dim]
-        intersection_emb = intersection_emb_flat.view(batch_size, num_agents, -1)
+        intersection_emb = intersection_emb_pooled.view(batch_size, num_agents, -1)
         
         # --- Layer 2: Network-level GraphSAGE (Network Embedding) ---
         
@@ -434,11 +433,11 @@ class LocalMGMQEncoder(nn.Module):
         self.register_buffer('lane_adj_coop', get_lane_cooperation_matrix())
         self.register_buffer('lane_adj_conf', get_lane_conflict_matrix())
         
-        # GAT output dimension (after Flatten over 12 lanes)
+        # GAT output dimension (after Mean Pooling over 12 lanes)
         # Each lane outputs gat_output_dim * gat_num_heads features
-        # Flatten: 12 * gat_output_dim * gat_num_heads = 12 * 128 = 1536
-        self.gat_per_lane_output = gat_output_dim * gat_num_heads  # 128
-        self.gat_total_output = self.num_lanes * self.gat_per_lane_output  # 1536
+        # Mean Pooling: gat_output_dim * gat_num_heads
+        self.gat_per_lane_output = gat_output_dim * gat_num_heads  # 32
+        self.gat_total_output = self.gat_per_lane_output  # NO FLATTEN
         
         # NeighborGraphSAGE_BiGRU for SPATIAL aggregation
         self.neighbor_aggregator = NeighborGraphSAGE_BiGRU(
@@ -502,17 +501,13 @@ class LocalMGMQEncoder(nn.Module):
         return joint_emb
         
     def _run_gat(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply GAT to features and FLATTEN to preserve spatial semantics.
-        
-        IMPORTANT: We use Flatten instead of Mean Pooling to preserve
-        positional information. This allows the network to learn which
-        specific lanes (e.g., North-Left at index 0-127) are congested.
+        """Apply GAT to features and MEAN POOL.
         
         Args:
             x: [batch, 48] raw observation (12 lanes * 4 features)
             
         Returns:
-            [batch, 1536] flattened GAT embedding (12 lanes * 128 features)
+            [batch, gat_per_lane_output] mean pooled GAT embedding
         """
         batch_size = x.size(0)
         lane_feat = x.view(batch_size, self.num_lanes, self.lane_feature_dim)
@@ -523,11 +518,11 @@ class LocalMGMQEncoder(nn.Module):
         # gat_out: [batch, 12, gat_per_lane_output]
         gat_out = self.dual_stream_gat(lane_feat, adj_coop, adj_conf)
         
-        # FLATTEN instead of Mean Pooling to preserve spatial semantics
-        # [batch, 12 * gat_per_lane_output] = [batch, 1536]
-        gat_flattened = gat_out.flatten(start_dim=1)
+        # MEAN POOLING instead of Flatten
+        # [batch, gat_per_lane_output]
+        gat_pooled = gat_out.mean(dim=1)
         
-        return gat_flattened
+        return gat_pooled
 
 
 """
@@ -829,18 +824,31 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         else:
             network_adjacency = None
         
-        # Create MGMQ encoder
-        self.mgmq_encoder = MGMQEncoder(
-            obs_dim=obs_dim,
-            num_agents=num_agents,
-            gat_hidden_dim=gat_hidden_dim,
-            gat_output_dim=gat_output_dim,
-            gat_num_heads=gat_num_heads,
-            graphsage_hidden_dim=graphsage_hidden_dim,
-            gru_hidden_dim=gru_hidden_dim,
-            dropout=dropout,
-            network_adjacency=network_adjacency
-        )
+        # Create MGMQ encoder based on use_local_gnn
+        self.use_local_gnn = custom_config.get("use_local_gnn", False)
+        if self.use_local_gnn:
+            self.mgmq_encoder = LocalMGMQEncoder(
+                obs_dim=obs_dim,
+                max_neighbors=custom_config.get("max_neighbors", 4),
+                gat_hidden_dim=gat_hidden_dim,
+                gat_output_dim=gat_output_dim,
+                gat_num_heads=gat_num_heads,
+                graphsage_hidden_dim=graphsage_hidden_dim,
+                gru_hidden_dim=gru_hidden_dim,
+                dropout=dropout
+            )
+        else:
+            self.mgmq_encoder = MGMQEncoder(
+                obs_dim=obs_dim,
+                num_agents=num_agents,
+                gat_hidden_dim=gat_hidden_dim,
+                gat_output_dim=gat_output_dim,
+                gat_num_heads=gat_num_heads,
+                graphsage_hidden_dim=graphsage_hidden_dim,
+                gru_hidden_dim=gru_hidden_dim,
+                dropout=dropout,
+                network_adjacency=network_adjacency
+            )
         
         joint_emb_dim = self.mgmq_encoder.output_dim
         
@@ -964,7 +972,30 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
             self._last_action_mask = None
         
         # Get joint embedding from MGMQ encoder
-        joint_emb, _, _ = self.mgmq_encoder(obs)
+        if self.use_local_gnn:
+            B = obs.shape[0]
+            # Assumed obs dict layout: self_features(48), neighbor_features(K=4 * 48 = 192), 
+            # neighbor_mask(4), neighbor_directions(4).
+            # Total obs dim = 48 + 192 + 4 + 4 = 248.
+            if obs.shape[-1] == 248:
+                obs_dict = {
+                    "self_features": obs[:, :48],
+                    "neighbor_features": obs[:, 48:240].view(B, 4, 48),
+                    "neighbor_mask": obs[:, 240:244],
+                    "neighbor_directions": obs[:, 244:]
+                }
+                joint_emb = self.mgmq_encoder(obs_dict)
+            else:
+                # Fallback for testing with wrong environment dim: provide zeros
+                obs_dict = {
+                    "self_features": obs[:, :48] if obs.shape[-1] >= 48 else F.pad(obs, (0, 48-obs.shape[-1])),
+                    "neighbor_features": torch.zeros(B, 4, 48, device=obs.device),
+                    "neighbor_mask": torch.zeros(B, 4, device=obs.device),
+                    "neighbor_directions": torch.zeros(B, 4, device=obs.device)
+                }
+                joint_emb = self.mgmq_encoder(obs_dict)
+        else:
+            joint_emb, _, _ = self.mgmq_encoder(obs)
         
         # Store for value function
         self._features = joint_emb

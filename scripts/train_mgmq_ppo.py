@@ -181,7 +181,7 @@ def create_mgmq_ppo_config(
     clip_param: float = 0.2,
     kl_target: float = 0.01,
     entropy_coeff: float = 0.01,
-    entropy_coeff_schedule: list = None,
+    # entropy_coeff_schedule: list = None,
     train_batch_size: int = 4096,
     minibatch_size: int = 256,
     num_sgd_iter: int = 10,
@@ -233,11 +233,11 @@ def create_mgmq_ppo_config(
         )
         .training(
             lr=learning_rate,
-            lr_schedule=lr_schedule,
+            # lr_schedule=lr_schedule,
             gamma=gamma,
             lambda_=lambda_,
             entropy_coeff=entropy_coeff,
-            entropy_coeff_schedule=entropy_coeff_schedule,
+            # entropy_coeff_schedule=entropy_coeff_schedule,
             clip_param=clip_param,
             kl_target=kl_target,
             # vf_clip_param must be large enough for reward scale
@@ -323,14 +323,14 @@ def train_mgmq_ppo(
     clip_param: float = 0.2,
     kl_target: float = 0.01,
     entropy_coeff: float = 0.01,
-    entropy_coeff_schedule: list = None,
+    # entropy_coeff_schedule: list = None,
     train_batch_size: int = 4096,
     minibatch_size: int = 256,
     num_sgd_iter: int = 10,
     grad_clip: float = 10.0,
     vf_clip_param: float = 100.0,
     vf_loss_coeff: float = 0.5,
-    lr_schedule: list = None,
+    # lr_schedule: list = None,
     patience: int = 50,
     history_length: int = 1,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
@@ -414,12 +414,12 @@ def train_mgmq_ppo(
     print("PPO Hyperparameters:")
     print(f"  gamma: {gamma}, lambda: {lambda_}, clip_param: {clip_param}")
     print(f"  entropy_coeff: {entropy_coeff}")
-    print(f"  entropy_coeff_schedule: {entropy_coeff_schedule}")
+    # print(f"  entropy_coeff_schedule: {entropy_coeff_schedule}")
     print(f"  train_batch_size: {train_batch_size}, minibatch_size: {minibatch_size}")
     print(f"  num_sgd_iter: {num_sgd_iter}")
     print(f"  grad_clip: {grad_clip}")
     print(f"  vf_clip_param: {vf_clip_param}, vf_loss_coeff: {vf_loss_coeff}")
-    print(f"  lr_schedule: {lr_schedule}")
+    # print(f"  lr_schedule: {lr_schedule}")
     if use_local_gnn:
         print(f"  Local GNN: ENABLED (neighbors={max_neighbors})")
     print("="*80 + "\n")
@@ -557,7 +557,7 @@ def train_mgmq_ppo(
             clip_param=clip_param,
             kl_target=kl_target,
             entropy_coeff=entropy_coeff,
-            entropy_coeff_schedule=entropy_coeff_schedule,
+            # entropy_coeff_schedule=entropy_coeff_schedule,
             train_batch_size=train_batch_size,
             minibatch_size=minibatch_size,
             num_sgd_iter=num_sgd_iter,
@@ -566,7 +566,7 @@ def train_mgmq_ppo(
             vf_loss_coeff=vf_loss_coeff,
             use_gpu=use_gpu,
             custom_model_name=custom_model_name,
-            lr_schedule=lr_schedule,
+            # lr_schedule=lr_schedule,
         )
         
         # Create stopper
@@ -707,7 +707,7 @@ if __name__ == "__main__":
     
     # Basic arguments
     parser.add_argument("--network", type=str, default=None,
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test"],
                         help="Network name")
     parser.add_argument("--iterations", type=int, default=None,
                         help="Number of training iterations")
@@ -825,14 +825,14 @@ if __name__ == "__main__":
         clip_param=ppo_cfg["clip_param"],
         kl_target=ppo_cfg.get("kl_target", 0.01),
         entropy_coeff=ppo_cfg.get("entropy_coeff", 0.01),
-        entropy_coeff_schedule=ppo_cfg.get("entropy_coeff_schedule", None),
+        # entropy_coeff_schedule=ppo_cfg.get("entropy_coeff_schedule", None),
         train_batch_size=ppo_cfg["train_batch_size"],
         minibatch_size=ppo_cfg["minibatch_size"],
         num_sgd_iter=ppo_cfg["num_sgd_iter"],
         grad_clip=ppo_cfg["grad_clip"],
         vf_clip_param=ppo_cfg.get("vf_clip_param", 100.0),
         vf_loss_coeff=ppo_cfg.get("vf_loss_coeff", 0.5),
-        lr_schedule=ppo_cfg.get("lr_schedule", None),
+        # lr_schedule=ppo_cfg.get("lr_schedule", None),
         patience=args.patience if args.patience is not None else training_cfg["patience"],
         history_length=args.history_length if args.history_length is not None else mgmq_cfg["window_size"],
         reward_fn=args.reward_fn or reward_cfg["reward_fn"],

@@ -143,7 +143,9 @@ def evaluate_mgmq(
         network_cfg = get_network_config(yaml_config, project_root)
         
         # Override with CLI network name (or inferred name)
-        if network_name != "grid4x4":  # If specific network is needed
+        yaml_net_name = yaml_config.get("network", {}).get("name", "grid4x4")
+        if network_name != yaml_net_name:
+            print(f"⚠ Overriding network paths for {network_name}...")
             override_config = {"network": {"name": network_name}}
             network_cfg = get_network_config(override_config, project_root)
         
@@ -517,7 +519,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", type=str, required=True,
                         help="Path to checkpoint directory")
     parser.add_argument("--network", type=str, default="grid4x4",
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test"],
                         help="Network name")
     parser.add_argument("--episodes", type=int, default=10,
                         help="Number of evaluation episodes")

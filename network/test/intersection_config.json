@@ -1,0 +1,639 @@
+{
+  "network_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/network/test/test.net.xml",
+  "detector_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/network/test/detector.add.xml",
+  "num_intersections": 3,
+  "intersections": {
+    "B3": {
+      "direction_map": {
+        "N": "B4B3",
+        "E": "C3B3",
+        "S": "B2B3",
+        "W": "A3B3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "B4B3_0",
+          "B4B3_1",
+          "B4B3_2"
+        ],
+        "E": [
+          "C3B3_0",
+          "C3B3_1",
+          "C3B3_2"
+        ],
+        "S": [
+          "B2B3_0",
+          "B2B3_1",
+          "B2B3_2"
+        ],
+        "W": [
+          "A3B3_0",
+          "A3B3_1",
+          "A3B3_2"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_8",
+            "e1_7",
+            "e1_6"
+          ],
+          "e2": [
+            "e2_8",
+            "e2_7",
+            "e2_6"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_5",
+            "e1_4",
+            "e1_3"
+          ],
+          "e2": [
+            "e2_5",
+            "e2_4",
+            "e2_3"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_9",
+            "e1_10",
+            "e1_11"
+          ],
+          "e2": [
+            "e2_9",
+            "e2_10",
+            "e2_11"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_0",
+            "e1_1",
+            "e1_2"
+          ],
+          "e2": [
+            "e2_0",
+            "e2_1",
+            "e2_2"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_8",
+        "e1_7",
+        "e1_6",
+        "e1_5",
+        "e1_4",
+        "e1_3",
+        "e1_9",
+        "e1_10",
+        "e1_11",
+        "e1_0",
+        "e1_1",
+        "e1_2"
+      ],
+      "detectors_e2": [
+        "e2_8",
+        "e2_7",
+        "e2_6",
+        "e2_5",
+        "e2_4",
+        "e2_3",
+        "e2_9",
+        "e2_10",
+        "e2_11",
+        "e2_0",
+        "e2_1",
+        "e2_2"
+      ],
+      "e2_detector_lengths": {
+        "e2_8": 80.0,
+        "e2_7": 80.0,
+        "e2_6": 80.0,
+        "e2_5": 80.0,
+        "e2_4": 80.0,
+        "e2_3": 80.0,
+        "e2_9": 80.0,
+        "e2_10": 80.0,
+        "e2_11": 80.0,
+        "e2_0": 80.0,
+        "e2_1": 80.0,
+        "e2_2": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGGggrrrrrrGGGGggrrrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrGGGGggrrrrrrGGGGgg",
+            "duration": 42,
+            "green_indices": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_RIGHT"
+          ],
+          "1": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 0,
+          "1": 1
+        },
+        "standard_to_actual": {
+          "0": 0,
+          "1": 1
+        }
+      }
+    },
+    "C3": {
+      "direction_map": {
+        "N": "C4C3",
+        "E": "D3C3",
+        "S": "C2C3",
+        "W": "B3C3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "C4C3_0",
+          "C4C3_1",
+          "C4C3_2"
+        ],
+        "E": [
+          "D3C3_0",
+          "D3C3_1",
+          "D3C3_2"
+        ],
+        "S": [
+          "C2C3_0",
+          "C2C3_1",
+          "C2C3_2"
+        ],
+        "W": [
+          "B3C3_0",
+          "B3C3_1",
+          "B3C3_2"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_17",
+            "e1_16",
+            "e1_15"
+          ],
+          "e2": [
+            "e2_17",
+            "e2_16",
+            "e2_15"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_20",
+            "e1_19",
+            "e1_18"
+          ],
+          "e2": [
+            "e2_20",
+            "e2_19",
+            "e2_18"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_21",
+            "e1_22",
+            "e1_23"
+          ],
+          "e2": [
+            "e2_21",
+            "e2_22",
+            "e2_23"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_12",
+            "e1_13",
+            "e1_14"
+          ],
+          "e2": [
+            "e2_12",
+            "e2_13",
+            "e2_14"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_17",
+        "e1_16",
+        "e1_15",
+        "e1_20",
+        "e1_19",
+        "e1_18",
+        "e1_21",
+        "e1_22",
+        "e1_23",
+        "e1_12",
+        "e1_13",
+        "e1_14"
+      ],
+      "detectors_e2": [
+        "e2_17",
+        "e2_16",
+        "e2_15",
+        "e2_20",
+        "e2_19",
+        "e2_18",
+        "e2_21",
+        "e2_22",
+        "e2_23",
+        "e2_12",
+        "e2_13",
+        "e2_14"
+      ],
+      "e2_detector_lengths": {
+        "e2_17": 80.0,
+        "e2_16": 80.0,
+        "e2_15": 80.0,
+        "e2_20": 80.0,
+        "e2_19": 80.0,
+        "e2_18": 80.0,
+        "e2_21": 80.0,
+        "e2_22": 80.0,
+        "e2_23": 80.0,
+        "e2_12": 80.0,
+        "e2_13": 80.0,
+        "e2_14": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGGggrrrrrrGGGGggrrrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrGGGGggrrrrrrGGGGgg",
+            "duration": 42,
+            "green_indices": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_RIGHT"
+          ],
+          "1": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 0,
+          "1": 1
+        },
+        "standard_to_actual": {
+          "0": 0,
+          "1": 1
+        }
+      }
+    },
+    "D3": {
+      "direction_map": {
+        "N": "D4D3",
+        "E": "E3D3",
+        "S": "D2D3",
+        "W": "C3D3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "D4D3_0",
+          "D4D3_1",
+          "D4D3_2"
+        ],
+        "E": [
+          "E3D3_0",
+          "E3D3_1",
+          "E3D3_2"
+        ],
+        "S": [
+          "D2D3_0",
+          "D2D3_1",
+          "D2D3_2"
+        ],
+        "W": [
+          "C3D3_0",
+          "C3D3_1",
+          "C3D3_2"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_29",
+            "e1_28",
+            "e1_27"
+          ],
+          "e2": [
+            "e2_29",
+            "e2_28",
+            "e2_27"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_32",
+            "e1_31",
+            "e1_30"
+          ],
+          "e2": [
+            "e2_32",
+            "e2_31",
+            "e2_30"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_33",
+            "e1_34",
+            "e1_35"
+          ],
+          "e2": [
+            "e2_33",
+            "e2_34",
+            "e2_35"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_24",
+            "e1_25",
+            "e1_26"
+          ],
+          "e2": [
+            "e2_24",
+            "e2_25",
+            "e2_26"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_29",
+        "e1_28",
+        "e1_27",
+        "e1_32",
+        "e1_31",
+        "e1_30",
+        "e1_33",
+        "e1_34",
+        "e1_35",
+        "e1_24",
+        "e1_25",
+        "e1_26"
+      ],
+      "detectors_e2": [
+        "e2_29",
+        "e2_28",
+        "e2_27",
+        "e2_32",
+        "e2_31",
+        "e2_30",
+        "e2_33",
+        "e2_34",
+        "e2_35",
+        "e2_24",
+        "e2_25",
+        "e2_26"
+      ],
+      "e2_detector_lengths": {
+        "e2_29": 80.0,
+        "e2_28": 80.0,
+        "e2_27": 80.0,
+        "e2_32": 80.0,
+        "e2_31": 80.0,
+        "e2_30": 80.0,
+        "e2_33": 80.0,
+        "e2_34": 80.0,
+        "e2_35": 80.0,
+        "e2_24": 80.0,
+        "e2_25": 80.0,
+        "e2_26": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGGggrrrrrrGGGGggrrrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrGGGGggrrrrrrGGGGgg",
+            "duration": 42,
+            "green_indices": [
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_RIGHT"
+          ],
+          "1": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 0,
+          "1": 1
+        },
+        "standard_to_actual": {
+          "0": 0,
+          "1": 1
+        }
+      }
+    }
+  },
+  "adjacency": {
+    "B3": [
+      {
+        "neighbor_id": "C3",
+        "direction": "E",
+        "connecting_edge": "C3B3"
+      }
+    ],
+    "C3": [
+      {
+        "neighbor_id": "D3",
+        "direction": "E",
+        "connecting_edge": "D3C3"
+      },
+      {
+        "neighbor_id": "B3",
+        "direction": "W",
+        "connecting_edge": "B3C3"
+      }
+    ],
+    "D3": [
+      {
+        "neighbor_id": "C3",
+        "direction": "W",
+        "connecting_edge": "C3D3"
+      }
+    ]
+  },
+  "config": {
+    "output_dir": "network/grid4x4",
+    "output_file": "intersection_config.json",
+    "gpi": {
+      "enabled": true
+    },
+    "frap": {
+      "enabled": true
+    }
+  }
+}

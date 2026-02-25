@@ -1,0 +1,21 @@
+Failure # 1 (occurred at 2026-02-25_09-21-34)
+The actor died because of an error raised in its creation task, [36mray::MGMQPPO.__init__()[39m (pid=14337, ip=192.168.43.185, actor_id=4814ea8cb0eb2eb1eeab302a01000000, repr=MGMQPPO)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/.venv/lib/python3.12/site-packages/ray/rllib/algorithms/algorithm.py", line 583, in __init__
+    super().__init__(
+  File "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/.venv/lib/python3.12/site-packages/ray/tune/trainable/trainable.py", line 158, in __init__
+    self.setup(copy.deepcopy(self.config))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/.venv/lib/python3.12/site-packages/ray/rllib/algorithms/algorithm.py", line 849, in setup
+    self.env_runner_group = EnvRunnerGroup(
+                            ^^^^^^^^^^^^^^^
+  File "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/.venv/lib/python3.12/site-packages/ray/rllib/env/env_runner_group.py", line 197, in __init__
+    self._setup(
+  File "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/.venv/lib/python3.12/site-packages/ray/rllib/env/env_runner_group.py", line 285, in _setup
+    spaces = self.get_spaces()
+             ^^^^^^^^^^^^^^^^^
+  File "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/.venv/lib/python3.12/site-packages/ray/rllib/env/env_runner_group.py", line 313, in get_spaces
+    spaces = self.foreach_env_runner(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range

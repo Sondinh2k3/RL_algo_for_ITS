@@ -700,8 +700,19 @@ class TrafficSignal:
         # Debug logging for reward
         if self.debug_logging:
             self._log_reward_debug(reward_components)
+            
+        # Thử nghiệm chia scale phần thưởng theo lý thuyết thứ 9:
+        # Giảm magnitude của reward để Critic dễ hội tụ hơn
+        raw_reward = self.last_reward
+        scaled_reward = raw_reward / 50.0
+        
+        # Chỉ in log vài cycle một lần để đỡ spam
+        if self.debug_logging and getattr(self, '_cycle_count', 0) % 10 == 0:
+            print(f"[RewardScaleCheck] TS {self.id} | Cycle {getattr(self, '_cycle_count', 0)}")
+            print(f"  Raw Reward (Return proxy): {raw_reward:.2f}")
+            print(f"  Scaled Reward: {scaled_reward:.2f}")
 
-        return self.last_reward
+        return scaled_reward
     
     def _get_reward_fn_name(self, reward_fn) -> str:
         """Get the name of a reward function for logging."""

@@ -68,36 +68,36 @@ mgmq:
 # PPO Training Parameters
 # ============================================
 ppo:
-  learning_rate: 0.0003 # Slightly higher LR for faster initial learning, will decay via lr_schedule
+  learning_rate: 0.00005 # Reduced from 0.0001 (Actor RL rate halved to prevent noisy advantage degradation)
   gamma: 0.99 # Discount factor
   lambda_: 0.95 # GAE lambda
-  entropy_coeff: 0.01 # Start high, will decay via entropy_coeff_schedule
+  entropy_coeff: 0.003 # Start high, will decay via entropy_coeff_schedule
   # CRITICAL FIX: Schedule points must be in AGENT TIMESTEPS (not iterations)
   # With 16 agents × 67 steps × 2 workers = ~2144 agent_steps/iteration
   # Old schedule [[0,0.01],[100,0.005],[300,0.001]] decayed to min by iteration 1!
   # New schedule: decay over ~100-200 iterations (proper exploration period)
-  entropy_coeff_schedule: [[0, 0.01], [200000, 0.005], [500000, 0.001]]
-  clip_param: 0.2 # PPO clip parameter
+  # entropy_coeff_schedule: [[0, 0.01], [200000, 0.005], [500000, 0.001]]
+  clip_param: 0.1 # Reduced from 0.2 (Tighter clipping due to weak critic)
   kl_target: 0.03 # KL target for adaptive KL coefficient. Default 0.01 is too aggressive
   # With per-minibatch advantage normalization, typical KL is 0.02-0.03
   # Setting target=0.03 keeps kl_coeff stable near initial value (0.2)
   vf_clip_param: 100.0 # Value function clip - must be large for reward range ~-600 to -700
-  vf_loss_coeff: 0.01 # CRITICAL FIX: reduced from 0.5 to prevent VF gradient dominance
+  vf_loss_coeff: 0.05 # CRITICAL FIX: reduced from 0.5 to prevent VF gradient dominance
   # With vf_loss=60 and policy_loss=0.02:
   #   old (0.5):  VF gradient 1592x larger than policy -> policy can't learn
   #   new (0.01): VF gradient 32x larger -> policy gradient becomes visible
   # VF can still learn via dedicated value network (vf_share_layers=False)
-  train_batch_size: 2144 # Fixed: matches 2 workers * 1072 agent_steps/episode
+  train_batch_size: 4267 # Fixed: matches 2 workers * 1072 agent_steps/episode
   # With 4 workers: 4 * 1072 = 4288, will auto-collect enough with complete_episodes
-  minibatch_size: 268 # SGD minibatch size (2144/268 = 8 minibatches per epoch)
-  num_sgd_iter: 10 # Number of SGD iterations
+  minibatch_size: 512 # SGD minibatch size (2144/268 = 8 minibatches per epoch)
+  num_sgd_iter: 4 # Number of SGD iterations
   # DIAGNOSTIC FIX (Steps 1-2): Reduced grad_clip from 10.0 to 1.0
   # Prevents logit explosion in policy head which caused KL coefficient to explode
   # Combined with per-minibatch advantage normalization in MGMQPPOTorchPolicy
   grad_clip: 1.0
   # Learning rate schedule: linear decay over training
   # Points are [agent_timestep, lr_value]
-  lr_schedule: [[0, 0.0003], [500000, 0.0001], [1000000, 0.00003]]
+  # lr_schedule: [[0, 0.0003], [500000, 0.0001], [1000000, 0.00003]]
 
 # ============================================
 # Training Settings
