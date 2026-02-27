@@ -87,6 +87,9 @@ def get_mgmq_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "window_size": mgmq.get("history_length", 4),
         "obs_dim": mgmq.get("local_gnn", {}).get("obs_dim", 48),
         "max_neighbors": mgmq.get("local_gnn", {}).get("max_neighbors", 4),
+        # Gradient isolation coefficient for shared encoder
+        # 1.0 = full sharing (baseline), 0.0 = full isolation (value grad detached)
+        "vf_share_coeff": mgmq.get("vf_share_coeff", 1.0),
     }
 
 

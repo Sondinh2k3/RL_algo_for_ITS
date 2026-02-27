@@ -221,6 +221,7 @@ class DiagnosticCallback(DefaultCallbacks):
         adv_mean_raw = learner_stats.get("adv_mean_raw", None)
         logp_ratio_mean = learner_stats.get("logp_ratio_mean", None)
         logp_ratio_max = learner_stats.get("logp_ratio_max", None)
+        grad_cosine_pv = learner_stats.get("grad_cosine_policy_value", None)
         
         # === COMPUTE DERIVED METRICS ===
         metrics = {}
@@ -260,6 +261,10 @@ class DiagnosticCallback(DefaultCallbacks):
             metrics["diag/logp_ratio_mean"] = float(logp_ratio_mean)
         if logp_ratio_max is not None:
             metrics["diag/logp_ratio_max"] = float(logp_ratio_max)
+        
+        # Gradient cosine similarity between policy and value on shared encoder
+        if grad_cosine_pv is not None:
+            metrics["diag/grad_cosine_policy_value"] = float(grad_cosine_pv)
         
         # LR * std(A) already computed above from custom stats
         
@@ -482,9 +487,21 @@ class DiagnosticCallback(DefaultCallbacks):
         print(f"     global_norm={grad_norm}" if not isinstance(grad_norm, float) else f"     global_norm={grad_norm:.4f}")
         # Per-module gradient stats
         for key, val in sorted(metrics.items()):
-            if key.startswith("diag/grad_") and key != "diag/grad_norm":
+            if key.startswith("diag/grad_") and key not in ("diag/grad_norm", "diag/grad_cosine_policy_value"):
                 short_name = key.replace("diag/grad_", "")
                 print(f"     {short_name}={val:.6f}" if isinstance(val, float) else f"     {short_name}={val}")
+        # Gradient cosine similarity between policy and value on shared encoder
+        grad_cos = metrics.get("diag/grad_cosine_policy_value", None)
+        if grad_cos is not None:
+            if grad_cos < -0.3:
+                indicator = "🔴 CONFLICT"
+            elif grad_cos < 0.0:
+                indicator = "🟡 mild conflict"
+            elif grad_cos < 0.3:
+                indicator = "🟢 orthogonal"
+            else:
+                indicator = "🟢 cooperative"
+            print(f"     cosine(∇policy, ∇value) on encoder = {grad_cos:.4f}  {indicator}")
         
         # VF Explained Variance
         vf_ev = metrics.get("diag/vf_explained_var", "N/A")

@@ -42,6 +42,63 @@ from ray.rllib.utils.typing import TensorType
 
 torch, nn = try_import_torch()
 
+# ---------------------------------------------------------------------------
+# Gradient cosine-similarity diagnostic
+# ---------------------------------------------------------------------------
+
+def _compute_grad_cosine_sim(
+    policy_loss: "torch.Tensor",
+    vf_loss: "torch.Tensor",
+    encoder_params: "List[torch.nn.Parameter]",
+) -> float:
+    """Compute cosine similarity between policy and value gradients on shared encoder.
+
+    Uses ``torch.autograd.grad`` with ``retain_graph=True`` so the
+    graph remains available for the subsequent ``total_loss.backward()``.
+
+    Returns:
+        Cosine similarity in [-1, 1].
+        * +1  → gradients fully aligned (cooperative)
+        *  0  → orthogonal (no conflict, no help)
+        * -1  → directly opposing (maximum conflict)
+        Returns 0.0 on any error (e.g. no grad-requiring params).
+    """
+    try:
+        # Filter to params that actually require grad and are leaves
+        params = [p for p in encoder_params if p.requires_grad]
+        if not params:
+            return 0.0
+
+        # ∇_encoder(policy_loss)
+        policy_grads = torch.autograd.grad(
+            policy_loss, params, retain_graph=True, allow_unused=True
+        )
+        # ∇_encoder(vf_loss)
+        value_grads = torch.autograd.grad(
+            vf_loss, params, retain_graph=True, allow_unused=True
+        )
+
+        # Flatten into single vectors
+        pg_flat = torch.cat([
+            g.reshape(-1) if g is not None else torch.zeros_like(p).reshape(-1)
+            for g, p in zip(policy_grads, params)
+        ])
+        vg_flat = torch.cat([
+            g.reshape(-1) if g is not None else torch.zeros_like(p).reshape(-1)
+            for g, p in zip(value_grads, params)
+        ])
+
+        pg_norm = pg_flat.norm()
+        vg_norm = vg_flat.norm()
+
+        if pg_norm < 1e-12 or vg_norm < 1e-12:
+            return 0.0
+
+        cos_sim = float(torch.dot(pg_flat, vg_flat) / (pg_norm * vg_norm))
+        return cos_sim
+    except Exception:
+        return 0.0
+
 logger = logging.getLogger(__name__)
 
 
@@ -175,6 +232,25 @@ class MGMQPPOTorchPolicy(PPOTorchPolicy):
         if self.config["kl_coeff"] > 0.0:
             total_loss += self.kl_coeff * mean_kl_loss
 
+        # === GRADIENT COSINE SIMILARITY: policy vs value on shared encoder ===
+        # Measure whether policy and value gradients cooperate or conflict
+        # on the shared encoder parameters.  Computed every minibatch, but
+        # averaged per iteration via tower_stats → stats_fn.
+        with torch.no_grad():
+            _grad_cos_sim = torch.tensor(0.0)
+        try:
+            encoder_params = list(model.mgmq_encoder.parameters())
+            # policy_loss and vf_loss must both flow through encoder
+            _grad_cos_sim = torch.tensor(
+                _compute_grad_cosine_sim(
+                    policy_loss=reduce_mean_valid(-surrogate_loss),
+                    vf_loss=mean_vf_loss,
+                    encoder_params=encoder_params,
+                )
+            )
+        except Exception:
+            pass  # Model may not have mgmq_encoder (e.g. in tests)
+
         # Store stats in model tower
         model.tower_stats["total_loss"] = total_loss
         model.tower_stats["mean_policy_loss"] = reduce_mean_valid(-surrogate_loss)
@@ -192,6 +268,7 @@ class MGMQPPOTorchPolicy(PPOTorchPolicy):
         model.tower_stats["adv_mean_raw"] = torch.tensor(adv_mean_raw)
         model.tower_stats["logp_ratio_mean"] = reduce_mean_valid(logp_ratio)
         model.tower_stats["logp_ratio_max"] = torch.max(logp_ratio)
+        model.tower_stats["grad_cosine_policy_value"] = _grad_cos_sim
 
         return total_loss
 
@@ -245,6 +322,9 @@ class MGMQPPOTorchPolicy(PPOTorchPolicy):
             )
             base_stats["logp_ratio_max"] = torch.max(
                 torch.stack(self.get_tower_stats("logp_ratio_max"))
+            )
+            base_stats["grad_cosine_policy_value"] = torch.mean(
+                torch.stack(self.get_tower_stats("grad_cosine_policy_value"))
             )
         except Exception:
             pass  # Diagnostic stats may not be available in all cases

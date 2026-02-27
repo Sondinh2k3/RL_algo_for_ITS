@@ -337,6 +337,10 @@ def train_mgmq_ppo(
     reward_weights: list = None,  # Default: equal weights for all reward functions
     use_local_gnn: bool = False,  # Use LocalMGMQTorchModel with pre-packaged neighbor obs
     max_neighbors: int = 4,  # Max neighbors (K) for local GNN
+    # Ablation / experiment overrides
+    normalize_reward: bool = True,  # Enable running mean/std normalization
+    clip_rewards: float = 10.0,     # Clip normalized rewards to [-clip, +clip]
+    vf_share_coeff: float = 1.0,    # 1.0 = shared encoder (baseline), 0.0 = detach value
 ):
     """
     Main training function for MGMQ-PPO.
@@ -422,6 +426,8 @@ def train_mgmq_ppo(
     # print(f"  lr_schedule: {lr_schedule}")
     if use_local_gnn:
         print(f"  Local GNN: ENABLED (neighbors={max_neighbors})")
+    print(f"  normalize_reward: {normalize_reward}, clip_rewards: {clip_rewards}")
+    print(f"  vf_share_coeff: {vf_share_coeff}")
     print("="*80 + "\n")
     
     # Initialize Ray with memory-efficient settings
@@ -514,8 +520,8 @@ def train_mgmq_ppo(
             "use_neighbor_obs": use_local_gnn,  # Enable pre-packaged neighbor observation
             "max_neighbors": max_neighbors,
             # Them phan chuan hoa reward o file env
-            "normalize_reward": True,    # Enable running mean/std normalization
-            "clip_rewards": 10.0,        # Clip normalized rewards to [-10, 10]
+            "normalize_reward": normalize_reward,    # Enable running mean/std normalization
+            "clip_rewards": clip_rewards,             # Clip normalized rewards to [-clip, +clip]
             # Path to normalizer state file (for resume training)
             # Environment will load state from this file if it exists
             "normalizer_state_file": str(output_dir / experiment_name / "normalizer_state.json"),
@@ -538,6 +544,8 @@ def train_mgmq_ppo(
             # Local GNN specific params
             "obs_dim": 48,  # 4 features * 12 detectors
             "max_neighbors": max_neighbors,
+            # Gradient isolation for shared encoder (ablation parameter)
+            "vf_share_coeff": vf_share_coeff,
         }
         
         # Select custom model based on use_local_gnn flag
@@ -763,6 +771,14 @@ if __name__ == "__main__":
     parser.add_argument("--max-neighbors", type=int, default=None,
                         help="Maximum neighbors (K) for local GNN. Default: 4")
     
+    # Ablation / experiment arguments
+    parser.add_argument("--no-normalize-reward", action="store_true",
+                        help="Disable reward normalization (ablation test)")
+    parser.add_argument("--clip-rewards", type=float, default=None,
+                        help="Clip normalized rewards to [-clip, +clip]. Default: 10.0")
+    parser.add_argument("--vf-share-coeff", type=float, default=None,
+                        help="Value-function encoder sharing coefficient. 1.0=shared (baseline), 0.0=detached")
+    
     args = parser.parse_args()
     
     # Load configuration from YAML file
@@ -839,5 +855,9 @@ if __name__ == "__main__":
         reward_weights=args.reward_weights or reward_cfg["reward_weights"],
         use_local_gnn=args.use_local_gnn or is_local_gnn_enabled(config),
         max_neighbors=args.max_neighbors if args.max_neighbors is not None else mgmq_cfg["max_neighbors"],
+        # Ablation overrides
+        normalize_reward=not args.no_normalize_reward,
+        clip_rewards=args.clip_rewards if args.clip_rewards is not None else 10.0,
+        vf_share_coeff=args.vf_share_coeff if args.vf_share_coeff is not None else mgmq_cfg.get("vf_share_coeff", 1.0),
     )
 

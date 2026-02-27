@@ -827,6 +827,10 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
         self.action_dim = int(np.prod(action_space.shape))  # Store for forward()
         
+        # === GRADIENT ISOLATION: Prevent value loss from corrupting shared encoder ===
+        # See LocalMGMQTorchModel for detailed explanation.
+        self.vf_share_coeff = custom_config.get("vf_share_coeff", 1.0)
+        
         # Store action_mask for MaskedSoftmax distribution to read
         self._last_action_mask = None
         
@@ -1015,7 +1019,7 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
         # Store for value function
         self._features = joint_emb
         
-        # Policy output
+        # Policy output - uses joint_emb WITH gradient (encoder trained by policy)
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
         
@@ -1058,8 +1062,21 @@ class MGMQTorchModel(TorchModelV2, nn.Module):
             log_std = torch.clamp(policy_out[..., action_dim:], LOG_STD_MIN, LOG_STD_MAX)
             policy_out = torch.cat([mean, log_std], dim=-1)
         
+        # === GRADIENT ISOLATION for Value Path ===
+        # Control how much value gradient flows through the shared encoder.
+        # vf_share_coeff=0: value_input = joint_emb.detach() (full isolation)
+        # vf_share_coeff=1: value_input = joint_emb (legacy full sharing)
+        # Intermediate: blend of detached and live gradients
+        if self.vf_share_coeff == 0.0:
+            value_input = joint_emb.detach()
+        elif self.vf_share_coeff == 1.0:
+            value_input = joint_emb
+        else:
+            value_input = (self.vf_share_coeff * joint_emb 
+                          + (1.0 - self.vf_share_coeff) * joint_emb.detach())
+        
         # Compute and store value
-        value_features = self.value_net(joint_emb)
+        value_features = self.value_net(value_input)
         self._value = self.value_out(value_features).squeeze(-1)
         
         return policy_out, state
@@ -1143,6 +1160,23 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         self.use_softmax_output = custom_config.get("use_softmax_output", False)
         self.softmax_temperature = custom_config.get("softmax_temperature", SOFTMAX_TEMPERATURE)
         self.action_dim = int(np.prod(action_space.shape))
+        
+        # === GRADIENT ISOLATION: Prevent value loss from corrupting shared encoder ===
+        # vf_share_coeff controls how much value gradient flows through the encoder:
+        #   0.0 = full detach (RECOMMENDED): encoder trained only by policy gradient
+        #   1.0 = full sharing (LEGACY): value gradient competes with policy on encoder
+        # 
+        # WHY THIS IS CRITICAL:
+        # With shared encoder, grad_clip creates a zero-sum game between policy and
+        # value gradients. When vf_loss spikes, value gradient takes >60% of the
+        # gradient budget, pushing encoder features toward value-optimal representations.
+        # This degrades policy-relevant features → raw reward drops → vf_loss increases
+        # further → positive feedback loop → training collapse.
+        #
+        # With vf_share_coeff=0, the encoder is trained ONLY by policy gradient.
+        # The value network still USES encoder features (forward pass) but cannot
+        # modify them (backward pass). This completely prevents the cascade.
+        self.vf_share_coeff = custom_config.get("vf_share_coeff", 1.0)
         
         # Store action_mask for MaskedSoftmax distribution to read
         self._last_action_mask = None
@@ -1280,7 +1314,7 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
         # Store for value function
         self._features = joint_emb
         
-        # Policy output
+        # Policy output - uses joint_emb WITH gradient (encoder trained by policy)
         policy_features = self.policy_net(joint_emb)
         policy_out = self.policy_out(policy_features)
         
@@ -1312,8 +1346,21 @@ class LocalMGMQTorchModel(TorchModelV2, nn.Module):
             log_std = torch.clamp(policy_out[..., action_dim:], LOG_STD_MIN, LOG_STD_MAX)
             policy_out = torch.cat([mean, log_std], dim=-1)
         
+        # === GRADIENT ISOLATION for Value Path ===
+        # Control how much value gradient flows through the shared encoder.
+        # vf_share_coeff=0: value_input = joint_emb.detach() (full isolation)
+        # vf_share_coeff=1: value_input = joint_emb (legacy full sharing)
+        # Intermediate: blend of detached and live gradients
+        if self.vf_share_coeff == 0.0:
+            value_input = joint_emb.detach()
+        elif self.vf_share_coeff == 1.0:
+            value_input = joint_emb
+        else:
+            value_input = (self.vf_share_coeff * joint_emb 
+                          + (1.0 - self.vf_share_coeff) * joint_emb.detach())
+        
         # Compute and store value
-        value_features = self.value_net(joint_emb)
+        value_features = self.value_net(value_input)
         self._value = self.value_out(value_features).squeeze(-1)
         
         return policy_out, state
