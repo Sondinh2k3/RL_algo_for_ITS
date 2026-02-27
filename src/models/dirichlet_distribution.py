@@ -212,13 +212,15 @@ class TorchDirichlet(TorchDistributionWrapper):
         Compute entropy of the Dirichlet distribution.
         
         Note: Dirichlet entropy can be negative (mathematically correct).
-        We add ENTROPY_OFFSET to make it non-negative for better monitoring.
-        This doesn't affect learning since only relative entropy changes matter.
+        PPO entropy bonus works correctly with raw entropy because only
+        relative entropy changes matter, not absolute values.
         
         Higher entropy = more exploration (less peaked distribution).
         """
-        # Add offset to make entropy non-negative for better interpretability
-        return self.dist.entropy() + ENTROPY_OFFSET
+        # Return raw entropy without offset
+        # Previous offset (ENTROPY_OFFSET=17.0) was artificially inflating
+        # entropy bonus, preventing proper convergence
+        return self.dist.entropy()
     
     @override(ActionDistribution)
     def kl(self, other: "TorchDirichlet") -> TensorType:

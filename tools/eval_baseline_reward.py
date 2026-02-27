@@ -161,9 +161,10 @@ def evaluate_baseline(
         "use_phase_standardizer": yaml_env_cfg.get("use_phase_standardizer", True),
         "use_neighbor_obs": False,  # Not needed for baseline
         "max_neighbors": yaml_mgmq_cfg.get("max_neighbors", 4),
-        # CRITICAL: Do NOT normalize rewards for baseline - we need raw values
-        "normalize_reward": False,
-        "clip_rewards": None,
+        # EVALUATION: Enable normalization to see what training sees
+        # Raw rewards are still available via info["raw_reward"]
+        "normalize_reward": yaml_env_cfg.get("normalize_reward", False),
+        "clip_rewards": yaml_env_cfg.get("clip_rewards", None),
         # CRITICAL DIFFERENCE: fixed_ts=True means NO agent actions are applied
         # SUMO's default traffic light program (from .net.xml) controls the signals
         "fixed_ts": True,
@@ -179,12 +180,14 @@ def evaluate_baseline(
     env = SumoMultiAgentEnv(**env_config)
     
     # Evaluation metrics (SAME structure as eval_mgmq_ppo.py)
-    episode_rewards = []
+    episode_rewards = []  # normalized (what training sees)
+    episode_raw_rewards = []  # raw (actual traffic performance)
     episode_lengths = []
     episode_waiting_times = []
     episode_avg_speeds = []
     episode_total_halts = []
     per_agent_rewards = {ts_id: [] for ts_id in ts_ids}
+    per_agent_raw_rewards = {ts_id: [] for ts_id in ts_ids}
     
     for ep in range(num_episodes):
         obs, info = env.reset(seed=seed + ep)
@@ -194,7 +197,9 @@ def evaluate_baseline(
 
         done = {"__all__": False}
         total_reward = 0
+        total_raw_reward = 0
         agent_rewards = {ts_id: 0 for ts_id in ts_ids}
+        agent_raw_rewards = {ts_id: 0 for ts_id in ts_ids}
         step_count = 0
         
         while not done.get("__all__", False):
@@ -206,11 +211,22 @@ def evaluate_baseline(
             # Step environment (SAME as eval_mgmq_ppo.py)
             obs, rewards, terminateds, truncateds, info = env.step(actions)
             
-            # Accumulate rewards (SAME as eval_mgmq_ppo.py)
+            # Accumulate normalized rewards (what training sees)
             for agent_id, reward in rewards.items():
                 total_reward += reward
                 if agent_id in agent_rewards:
                     agent_rewards[agent_id] += reward
+            
+            # Accumulate raw rewards from info dict
+            for agent_id in rewards.keys():
+                agent_info = info.get(agent_id, {})
+                if isinstance(agent_info, dict) and "raw_reward" in agent_info:
+                    raw_r = agent_info["raw_reward"]
+                else:
+                    raw_r = rewards[agent_id]  # fallback if no raw_reward in info
+                total_raw_reward += raw_r
+                if agent_id in agent_raw_rewards:
+                    agent_raw_rewards[agent_id] += raw_r
             
             step_count += 1
             
@@ -218,12 +234,15 @@ def evaluate_baseline(
             done = truncateds
         
         episode_rewards.append(total_reward)
+        episode_raw_rewards.append(total_raw_reward)
         episode_lengths.append(step_count)
         
         # Store per-agent rewards (SAME as eval_mgmq_ppo.py)
         for ts_id in ts_ids:
             if ts_id in agent_rewards:
                 per_agent_rewards[ts_id].append(agent_rewards[ts_id])
+            if ts_id in agent_raw_rewards:
+                per_agent_raw_rewards[ts_id].append(agent_raw_rewards[ts_id])
         
         # Get system metrics if available (SAME as eval_mgmq_ppo.py)
         sample_info = info.get(ts_ids[0], {}) if ts_ids else {}
@@ -234,7 +253,7 @@ def evaluate_baseline(
         if "system_total_stopped" in sample_info:
             episode_total_halts.append(sample_info["system_total_stopped"])
         
-        print(f"Episode {ep+1}/{num_episodes}: Total Reward={total_reward:.2f}, Steps={step_count}")
+        print(f"Episode {ep+1}/{num_episodes}: Raw Reward={total_raw_reward:.2f}, Normalized={total_reward:.2f}, Steps={step_count}")
     
     env.close()
     
@@ -246,19 +265,28 @@ def evaluate_baseline(
         "std_reward": float(np.std(episode_rewards)),
         "min_reward": float(np.min(episode_rewards)),
         "max_reward": float(np.max(episode_rewards)),
+        "mean_raw_reward": float(np.mean(episode_raw_rewards)),
+        "std_raw_reward": float(np.std(episode_raw_rewards)),
+        "min_raw_reward": float(np.min(episode_raw_rewards)),
+        "max_raw_reward": float(np.max(episode_raw_rewards)),
         "mean_length": float(np.mean(episode_lengths)),
         "episode_rewards": [float(r) for r in episode_rewards],
+        "episode_raw_rewards": [float(r) for r in episode_raw_rewards],
         "episode_lengths": [int(l) for l in episode_lengths],
     }
     
     # Per-agent statistics (SAME as eval_mgmq_ppo.py)
     per_agent_stats = {}
     for ts_id in ts_ids:
+        stats = {}
         if per_agent_rewards[ts_id]:
-            per_agent_stats[ts_id] = {
-                "mean_reward": float(np.mean(per_agent_rewards[ts_id])),
-                "std_reward": float(np.std(per_agent_rewards[ts_id])),
-            }
+            stats["mean_reward"] = float(np.mean(per_agent_rewards[ts_id]))
+            stats["std_reward"] = float(np.std(per_agent_rewards[ts_id]))
+        if per_agent_raw_rewards[ts_id]:
+            stats["mean_raw_reward"] = float(np.mean(per_agent_raw_rewards[ts_id]))
+            stats["std_raw_reward"] = float(np.std(per_agent_raw_rewards[ts_id]))
+        if stats:
+            per_agent_stats[ts_id] = stats
     results["per_agent_stats"] = per_agent_stats
     
     if episode_waiting_times:
@@ -277,27 +305,33 @@ def evaluate_baseline(
     print("\n" + "="*80)
     print("BASELINE RESULTS")
     print("="*80)
-    print(f"Mean Total Reward: {results['mean_reward']:.2f} ± {results['std_reward']:.2f}")
-    print(f"Min/Max Reward: {results['min_reward']:.2f} / {results['max_reward']:.2f}")
-    print(f"Mean Episode Length: {results['mean_length']:.1f}")
+    print(f"\n  🎯 RAW Reward (actual traffic performance):")
+    print(f"     Mean: {results['mean_raw_reward']:.2f} ± {results['std_raw_reward']:.2f}")
+    print(f"     Min/Max: {results['min_raw_reward']:.2f} / {results['max_raw_reward']:.2f}")
+    print(f"\n  📊 Normalized Reward (what training sees):")
+    print(f"     Mean: {results['mean_reward']:.2f} ± {results['std_reward']:.2f}")
+    print(f"     Min/Max: {results['min_reward']:.2f} / {results['max_reward']:.2f}")
+    print(f"\n  📏 Episode Length: {results['mean_length']:.1f}")
     
     if "mean_waiting_time" in results:
-        print(f"Mean Waiting Time: {results['mean_waiting_time']:.2f} ± {results.get('std_waiting_time', 0):.2f}")
+        print(f"  ⏱ Mean Waiting Time: {results['mean_waiting_time']:.2f} ± {results.get('std_waiting_time', 0):.2f}")
     if "mean_avg_speed" in results:
-        print(f"Mean Average Speed: {results['mean_avg_speed']:.2f} ± {results.get('std_avg_speed', 0):.2f}")
+        print(f"  🚗 Mean Average Speed: {results['mean_avg_speed']:.2f} ± {results.get('std_avg_speed', 0):.2f}")
     if "mean_total_halts" in results:
-        print(f"Mean Total Halts: {results['mean_total_halts']:.2f} ± {results.get('std_total_halts', 0):.2f}")
+        print(f"  🛑 Mean Total Halts: {results['mean_total_halts']:.2f} ± {results.get('std_total_halts', 0):.2f}")
     
-    print("\nPer-Agent Mean Rewards:")
+    print("\n  Per-Agent Rewards (raw / normalized):")
     for ts_id, stats in per_agent_stats.items():
-        print(f"  {ts_id}: {stats['mean_reward']:.2f} ± {stats['std_reward']:.2f}")
+        raw_str = f"{stats.get('mean_raw_reward', 0):.2f}" if 'mean_raw_reward' in stats else "N/A"
+        norm_str = f"{stats.get('mean_reward', 0):.2f}" if 'mean_reward' in stats else "N/A"
+        print(f"    {ts_id}: raw={raw_str}, norm={norm_str}")
     
     print("\n" + "-"*40)
     print("COMPARISON GUIDELINE:")
     print("-"*40)
-    print(f"Baseline Mean Reward: {results['mean_reward']:.2f}")
-    print(f"If AI's mean_reward > {results['mean_reward']:.2f} → AI is BETTER")
-    print(f"If AI's mean_reward < {results['mean_reward']:.2f} → AI is WORSE")
+    print(f"Baseline RAW Mean Reward: {results['mean_raw_reward']:.2f}")
+    print(f"If AI's raw_reward > {results['mean_raw_reward']:.2f} → AI is BETTER")
+    print(f"If AI's raw_reward < {results['mean_raw_reward']:.2f} → AI is WORSE")
     print("="*80 + "\n")
     
     # Save results

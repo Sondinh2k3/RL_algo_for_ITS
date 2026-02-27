@@ -641,13 +641,10 @@ class PhaseStandardizer:
                 # Fallback: wrap around if std_idx exceeds action length
                 actual_action[actual_idx] = action[std_idx % len(action)]
         
-        # Normalize to ensure ratios sum to 1.0 (if they're meant to be ratios)
-        total = actual_action.sum()
-        if total > 0:
-            actual_action = actual_action / total
-        else:
-            # Equal distribution if all zeros
-            actual_action = np.ones(self.num_phases) / self.num_phases
+        # NOTE: Do NOT re-normalize here.
+        # The caller (_get_green_time_from_ratio) already normalizes input ratios.
+        # Re-normalizing caused ratio halving when multiple actual phases
+        # mapped to the same standard phase.
         
         return actual_action
 

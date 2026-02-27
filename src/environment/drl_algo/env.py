@@ -342,6 +342,9 @@ class SumoEnvironment(gym.Env):
                 has_nan = True
                 rewards[ts_id] = 0.0  # Replace NaN/Inf with 0
         
+        # Store raw rewards BEFORE normalization (for logging/monitoring)
+        raw_rewards = dict(rewards)  # shallow copy of raw values
+        
         # Normalize rewards if enabled
         if self.normalize_reward:
             # Collect all rewards for batch update
@@ -386,6 +389,21 @@ class SumoEnvironment(gym.Env):
         
         # Add metrics to info
         info.update(self._compute_info())
+        
+        # Add raw rewards to info for each agent (for diagnostic logging)
+        for ts_id in raw_rewards:
+            if ts_id in info:
+                if isinstance(info[ts_id], dict):
+                    info[ts_id]["raw_reward"] = float(raw_rewards[ts_id])
+                else:
+                    info[ts_id] = {"raw_reward": float(raw_rewards[ts_id])}
+            else:
+                info[ts_id] = {"raw_reward": float(raw_rewards[ts_id])}
+                
+        # Robust tracking of episode raw reward internally
+        if not hasattr(self, '_episode_raw_reward'):
+            self._episode_raw_reward = 0.0
+        self._episode_raw_reward += sum(raw_rewards.values())
         
         # Episode ends when sim_step >= max_steps
         terminated = False  # no terminal states in this environment - env just end when timeout or end of vehicles

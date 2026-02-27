@@ -67,6 +67,54 @@ class DiagnosticCallback(DefaultCallbacks):
         self._iteration = 0
         self._history = []
         self._last_entropy = None
+        self._last_raw_reward = None
+    
+    def on_episode_step(
+        self,
+        *,
+        worker=None,
+        base_env=None,
+        policies=None,
+        episode=None,
+        env_index=None,
+        **kwargs,
+    ) -> None:
+        """Not needed for raw reward tracking anymore."""
+        pass
+    
+    def on_episode_end(
+        self,
+        *,
+        worker=None,
+        base_env=None,
+        policies=None,
+        episode=None,
+        env_index=None,
+        **kwargs,
+    ) -> None:
+        """Store raw episode reward as custom metric by reading directly from env."""
+        if episode is None or base_env is None or env_index is None:
+            return
+            
+        try:
+            # Access the actual underlying environment running in the worker
+            env = base_env.get_sub_environments()[env_index]
+            if hasattr(env, 'unwrapped'):
+                env = env.unwrapped
+                
+            if hasattr(env, '_episode_raw_reward'):
+                raw_sum = float(env._episode_raw_reward)
+                episode.custom_metrics["raw_episode_reward"] = raw_sum
+                
+                # Per-agent calculation
+                n_agents = len(env.ts_ids) if hasattr(env, 'ts_ids') else 16
+                episode.custom_metrics["raw_reward_per_agent"] = raw_sum / max(n_agents, 1)
+                
+                # Reset env counter for next episode
+                env._episode_raw_reward = 0.0
+                
+        except Exception as e:
+            print(f"CALLBACK ERROR fetching raw reward: {e}")
         
     def on_learn_on_batch(
         self,
@@ -138,6 +186,14 @@ class DiagnosticCallback(DefaultCallbacks):
         """
         self._iteration += 1
         
+        # Get vf_loss_coeff from algorithm config for effective ratio computation
+        self._vf_loss_coeff = 1.0  # default
+        if algorithm is not None:
+            try:
+                self._vf_loss_coeff = algorithm.config.get("vf_loss_coeff", 1.0)
+            except Exception:
+                pass
+        
         # Extract metrics from RLlib result
         learner_stats = (
             result.get("info", {})
@@ -169,10 +225,14 @@ class DiagnosticCallback(DefaultCallbacks):
         # === COMPUTE DERIVED METRICS ===
         metrics = {}
         
-        # Value-to-policy loss ratio
+        # Value-to-policy loss ratio (both raw and effective)
         if vf_loss is not None and policy_loss is not None:
             pl_abs = abs(policy_loss) if abs(policy_loss) > 1e-8 else 1e-8
-            metrics["diag/vl_pl_ratio"] = vf_loss / pl_abs
+            raw_ratio = vf_loss / pl_abs
+            effective_ratio = (self._vf_loss_coeff * vf_loss) / pl_abs
+            metrics["diag/vl_pl_ratio"] = raw_ratio
+            metrics["diag/vl_pl_ratio_effective"] = effective_ratio
+            metrics["diag/vf_loss_coeff"] = self._vf_loss_coeff
             metrics["diag/vf_loss"] = vf_loss
             metrics["diag/policy_loss"] = policy_loss
         
@@ -231,6 +291,21 @@ class DiagnosticCallback(DefaultCallbacks):
         if reward_mean is not None:
             metrics["diag/reward_mean"] = reward_mean
             metrics["diag/reward_range"] = (reward_max or 0) - (reward_min or 0)
+        
+        # === RAW REWARD STATS (un-normalized, for monitoring policy quality) ===
+        custom_metrics = env_runners.get("custom_metrics", {})
+        raw_reward_mean = custom_metrics.get("raw_episode_reward_mean", None)
+        raw_reward_per_agent = custom_metrics.get("raw_reward_per_agent_mean", None)
+        if raw_reward_mean is not None:
+            metrics["diag/raw_reward_mean"] = raw_reward_mean
+        if raw_reward_per_agent is not None:
+            metrics["diag/raw_reward_per_agent"] = raw_reward_per_agent
+        
+        # Track raw reward trend
+        if raw_reward_mean is not None:
+            if self._last_raw_reward is not None:
+                metrics["diag/raw_reward_delta"] = raw_reward_mean - self._last_raw_reward
+            self._last_raw_reward = raw_reward_mean
         
         # Store metrics in result
         result.update(metrics)
@@ -318,11 +393,20 @@ class DiagnosticCallback(DefaultCallbacks):
         print(f"  GESA-MGMQ-PPO DIAGNOSTIC REPORT — Iteration {self._iteration}")
         print("=" * 90)
         
-        # Reward
+        # Reward (both normalized and raw)
         reward_mean = metrics.get("diag/reward_mean", "N/A")
         reward_range = metrics.get("diag/reward_range", "N/A")
+        raw_reward = metrics.get("diag/raw_reward_mean", "N/A")
+        raw_per_agent = metrics.get("diag/raw_reward_per_agent", "N/A")
+        raw_delta = metrics.get("diag/raw_reward_delta", "N/A")
         print(f"\n  📊 REWARD")
-        print(f"     mean={reward_mean:.2f}" if isinstance(reward_mean, float) else f"     mean={reward_mean}")
+        print(f"     normalized: mean={reward_mean:.2f}" if isinstance(reward_mean, float) else f"     normalized: mean={reward_mean}")
+        print(f"     🎯 RAW (un-normalized): episode={raw_reward:.2f}" if isinstance(raw_reward, float) else f"     🎯 RAW (un-normalized): episode={raw_reward}")
+        if isinstance(raw_per_agent, float):
+            print(f"     🎯 RAW per-agent: {raw_per_agent:.2f}")
+        if isinstance(raw_delta, float):
+            trend = "↑" if raw_delta > 0 else "↓" if raw_delta < 0 else "→"
+            print(f"     🎯 RAW trend: {trend} delta={raw_delta:+.2f}")
         print(f"     range={reward_range:.2f}" if isinstance(reward_range, float) else f"     range={reward_range}")
         
         # Advantage Statistics
@@ -367,13 +451,21 @@ class DiagnosticCallback(DefaultCallbacks):
         # Loss Magnitudes
         vf_loss = metrics.get("diag/vf_loss", "N/A")
         pl = metrics.get("diag/policy_loss", "N/A")
-        ratio = metrics.get("diag/vl_pl_ratio", "N/A")
+        raw_ratio = metrics.get("diag/vl_pl_ratio", "N/A")
+        eff_ratio = metrics.get("diag/vl_pl_ratio_effective", "N/A")
+        vf_coeff = metrics.get("diag/vf_loss_coeff", "N/A")
         print(f"\n  📉 LOSS MAGNITUDES")
         print(f"     policy_loss={pl}" if not isinstance(pl, float) else f"     policy_loss={pl:.6f}")
         print(f"     value_loss={vf_loss}" if not isinstance(vf_loss, float) else f"     value_loss={vf_loss:.4f}")
-        print(f"     vl/|pl| ratio={ratio}" if not isinstance(ratio, float) else f"     vl/|pl| ratio={ratio:.1f}")
-        if isinstance(ratio, float) and ratio > 100:
-            print(f"     ⚠️  Value loss dominates ({ratio:.0f}x policy loss) → Consider PopArt or lower vf_loss_coeff")
+        print(f"     vf_loss_coeff={vf_coeff}")
+        print(f"     raw vl/|pl| ratio={raw_ratio}" if not isinstance(raw_ratio, float) else f"     raw vl/|pl| ratio={raw_ratio:.1f}")
+        print(f"     effective vl/|pl| ratio={eff_ratio}" if not isinstance(eff_ratio, float) else f"     effective vl/|pl| ratio={eff_ratio:.1f} (= coeff × vf_loss / |pl|)")
+        if isinstance(eff_ratio, float) and eff_ratio > 100:
+            print(f"     ⚠️  Effective gradient ratio {eff_ratio:.0f}x → Policy updates suppressed, lower vf_loss_coeff")
+        elif isinstance(eff_ratio, float) and eff_ratio > 50:
+            print(f"     ⚠️  Effective gradient ratio {eff_ratio:.0f}x → Moderately critic-heavy")
+        elif isinstance(eff_ratio, float):
+            print(f"     ✅ Effective gradient ratio {eff_ratio:.0f}x → Healthy range")
         
         # MaskedSoftmax Stats
         log_std_mean = metrics.get("diag/log_std_bias_mean", None)
@@ -415,7 +507,8 @@ class DiagnosticCallback(DefaultCallbacks):
         
         # Step 1: Advantage & Scale
         lr_x_adv = metrics.get("diag/lr_x_adv_std", None)
-        vl_pl_ratio = metrics.get("diag/vl_pl_ratio", None)
+        # Use EFFECTIVE ratio (accounts for vf_loss_coeff) for trigger assessment
+        eff_ratio = metrics.get("diag/vl_pl_ratio_effective", None)
         kl_coeff = metrics.get("diag/kl_coeff", None)
         
         # Check if advantage scale is too large
@@ -424,9 +517,9 @@ class DiagnosticCallback(DefaultCallbacks):
         if isinstance(lr_x_adv, float) and lr_x_adv > 0.01:
             step1_triggered = True
             step1_reasons.append(f"lr×std(A)={lr_x_adv:.4f} >> 0.01")
-        if isinstance(vl_pl_ratio, float) and vl_pl_ratio > 100:
+        if isinstance(eff_ratio, float) and eff_ratio > 100:
             step1_triggered = True
-            step1_reasons.append(f"vl/|pl|={vl_pl_ratio:.0f} >> reasonable")
+            step1_reasons.append(f"effective vl/|pl|={eff_ratio:.0f} >> 100 (critic dominates gradient)")
         if isinstance(kl_coeff, float) and kl_coeff > 1.0:
             step1_triggered = True
             step1_reasons.append(f"kl_coeff={kl_coeff:.2f} > 1.0 (policy updates penalized)")

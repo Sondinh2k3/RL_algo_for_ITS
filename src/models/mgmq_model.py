@@ -232,11 +232,15 @@ class MGMQEncoder(nn.Module):
         
         # Assume features are organized by lane (12 lanes)
         self.num_lanes = 12
+        self._needs_projection = False
         if obs_dim % self.num_lanes == 0:
             self.lane_feature_dim = obs_dim // self.num_lanes
         else:
-            print(f"Warning: Feature dim {obs_dim} not divisible by 12 lanes. Using projection.")
+            print(f"Warning: Feature dim {obs_dim} not divisible by 12 lanes. Using learned projection.")
             self.lane_feature_dim = gat_hidden_dim
+            self._needs_projection = True
+            # Learned projection: obs_dim -> 12 * lane_feature_dim
+            self.input_proj = nn.Linear(obs_dim, 12 * self.lane_feature_dim)
             
         # Layer 1: Dual-Stream GAT for intersection embedding (Lane-level)
         self.dual_stream_gat = DualStreamGATLayer(
@@ -332,7 +336,10 @@ class MGMQEncoder(nn.Module):
         obs_flat = obs.reshape(-1, self.obs_dim)
         
         # Reshape to 12 lanes: [batch * num_agents, 12, lane_feature_dim]
-        if self.obs_dim % 12 == 0:
+        if self._needs_projection:
+            # Use learned projection when obs_dim not divisible by 12
+            lane_features = self.input_proj(obs_flat).view(-1, 12, self.lane_feature_dim)
+        elif self.obs_dim % 12 == 0:
             lane_features = obs_flat.view(-1, 12, self.obs_dim // 12)
         else:
             raise ValueError(f"obs_dim {self.obs_dim} must be divisible by 12 for GAT.")
@@ -529,10 +536,18 @@ class LocalMGMQEncoder(nn.Module):
 Kiến trúc ban đầu, sử dụng đồ thị toàn cục để tính toán.
 Chứa logic cốt lõi của GNN toàn cục. Nó lấy thông tin của tất cả các ngã tư cùng một lúc và 
 dùng một ma trận kề (Adjacency matrix) khổng lồ để lan truyền thôg tin.
+
+DEPRECATED: This class is legacy code, not used in the RLlib training pipeline.
+For RLlib integration, use MGMQTorchModel (which uses MGMQEncoder internally).
+Kept for standalone testing and reference only.
 """
 class MGMQModel(nn.Module):
     """
-    Complete MGMQ Model for PPO with Actor-Critic architecture.
+    [DEPRECATED] Complete MGMQ Model for PPO with Actor-Critic architecture.
+    
+    WARNING: This class is NOT used in the actual training pipeline.
+    Use MGMQTorchModel for RLlib integration instead.
+    Kept for backward compatibility and standalone testing.
     
     This model outputs both:
     - Policy (actor): Action distribution parameters

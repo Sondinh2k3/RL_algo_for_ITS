@@ -81,16 +81,15 @@ ppo:
   kl_target: 0.03 # KL target for adaptive KL coefficient. Default 0.01 is too aggressive
   # With per-minibatch advantage normalization, typical KL is 0.02-0.03
   # Setting target=0.03 keeps kl_coeff stable near initial value (0.2)
-  vf_clip_param: 100.0 # Value function clip - must be large for reward range ~-600 to -700
-  vf_loss_coeff: 0.05 # CRITICAL FIX: reduced from 0.5 to prevent VF gradient dominance
-  # With vf_loss=60 and policy_loss=0.02:
-  #   old (0.5):  VF gradient 1592x larger than policy -> policy can't learn
-  #   new (0.01): VF gradient 32x larger -> policy gradient becomes visible
-  # VF can still learn via dedicated value network (vf_share_layers=False)
+  vf_clip_param: 10000.0 # Must be >> (V-target)² to avoid killing value gradients
+  # With V≈0, target≈11: MSE=121. Old clamp(loss,0,100) zeroed gradient for these!
+  # Set to 10000 so clamp never activates during normal training
+  vf_loss_coeff: 0.02 # Balance: 0.02*30=0.6 vs policy_loss~0.01 → ratio ~60x
+  # Advantages are normalized in loss fn → surrogate_loss fixed at ~0.005-0.02
   train_batch_size: 4267 # Fixed: matches 2 workers * 1072 agent_steps/episode
   # With 4 workers: 4 * 1072 = 4288, will auto-collect enough with complete_episodes
   minibatch_size: 512 # SGD minibatch size (2144/268 = 8 minibatches per epoch)
-  num_sgd_iter: 4 # Number of SGD iterations
+  num_sgd_iter: 3 # Reduced from 4: with clip_param=0.1, 4 epochs → 42% clip fraction
   # DIAGNOSTIC FIX (Steps 1-2): Reduced grad_clip from 10.0 to 1.0
   # Prevents logit explosion in policy head which caused KL coefficient to explode
   # Combined with per-minibatch advantage normalization in MGMQPPOTorchPolicy

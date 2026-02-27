@@ -1,81 +1,120 @@
 {
   "network": "grid4x4",
   "num_episodes": 1,
-  "mean_reward": 16.294541857020704,
+  "mean_reward": 814.8011669112678,
   "std_reward": 0.0,
-  "min_reward": 16.294541857020704,
-  "max_reward": 16.294541857020704,
+  "min_reward": 814.8011669112678,
+  "max_reward": 814.8011669112678,
+  "mean_raw_reward": 814.8011669112678,
+  "std_raw_reward": 0.0,
+  "min_raw_reward": 814.8011669112678,
+  "max_raw_reward": 814.8011669112678,
   "mean_length": 67.0,
   "episode_rewards": [
-    16.294541857020704
+    814.8011669112678
+  ],
+  "episode_raw_rewards": [
+    814.8011669112678
   ],
   "episode_lengths": [
     67
   ],
   "per_agent_stats": {
     "A0": {
-      "mean_reward": 0.9669083483835376,
-      "std_reward": 0.0
+      "mean_reward": 48.41949148399968,
+      "std_reward": 0.0,
+      "mean_raw_reward": 48.41949148399968,
+      "std_raw_reward": 0.0
     },
     "A1": {
-      "mean_reward": 1.0355194451722005,
-      "std_reward": 0.0
+      "mean_reward": 51.775972251295286,
+      "std_reward": 0.0,
+      "mean_raw_reward": 51.775972251295286,
+      "std_raw_reward": 0.0
     },
     "A2": {
-      "mean_reward": 1.0164290628908204,
-      "std_reward": 0.0
+      "mean_reward": 50.821453139570316,
+      "std_reward": 0.0,
+      "mean_raw_reward": 50.821453139570316,
+      "std_raw_reward": 0.0
     },
     "A3": {
-      "mean_reward": 1.0549083334362752,
-      "std_reward": 0.0
+      "mean_reward": 52.74541666690493,
+      "std_reward": 0.0,
+      "mean_raw_reward": 52.74541666690493,
+      "std_raw_reward": 0.0
     },
     "B0": {
-      "mean_reward": 1.039469443078175,
-      "std_reward": 0.0
+      "mean_reward": 51.973472160694136,
+      "std_reward": 0.0,
+      "mean_raw_reward": 51.973472160694136,
+      "std_raw_reward": 0.0
     },
     "B1": {
-      "mean_reward": 0.9341361112295028,
-      "std_reward": 0.0
+      "mean_reward": 46.706805545618415,
+      "std_reward": 0.0,
+      "mean_raw_reward": 46.706805545618415,
+      "std_raw_reward": 0.0
     },
     "B2": {
-      "mean_reward": 0.9942637611863513,
-      "std_reward": 0.0
+      "mean_reward": 49.71318806483516,
+      "std_reward": 0.0,
+      "mean_raw_reward": 49.71318806483516,
+      "std_raw_reward": 0.0
     },
     "B3": {
-      "mean_reward": 1.0151323227887041,
-      "std_reward": 0.0
+      "mean_reward": 50.75661614095104,
+      "std_reward": 0.0,
+      "mean_raw_reward": 50.75661614095104,
+      "std_raw_reward": 0.0
     },
     "C0": {
-      "mean_reward": 1.050121031608433,
-      "std_reward": 0.0
+      "mean_reward": 52.506051586688656,
+      "std_reward": 0.0,
+      "mean_raw_reward": 52.506051586688656,
+      "std_raw_reward": 0.0
     },
     "C1": {
-      "mean_reward": 0.935285917321841,
-      "std_reward": 0.0
+      "mean_reward": 46.76429585829222,
+      "std_reward": 0.0,
+      "mean_raw_reward": 46.76429585829222,
+      "std_raw_reward": 0.0
     },
     "C2": {
-      "mean_reward": 1.0056666659299907,
-      "std_reward": 0.0
+      "mean_reward": 50.28333329958453,
+      "std_reward": 0.0,
+      "mean_raw_reward": 50.28333329958453,
+      "std_raw_reward": 0.0
     },
     "C3": {
-      "mean_reward": 1.088833333567697,
-      "std_reward": 0.0
+      "mean_reward": 54.441666684959266,
+      "std_reward": 0.0,
+      "mean_raw_reward": 54.441666684959266,
+      "std_raw_reward": 0.0
     },
     "D0": {
-      "mean_reward": 1.0457903851033679,
-      "std_reward": 0.0
+      "mean_reward": 52.28951925287068,
+      "std_reward": 0.0,
+      "mean_raw_reward": 52.28951925287068,
+      "std_raw_reward": 0.0
     },
     "D1": {
-      "mean_reward": 1.0562833328669268,
-      "std_reward": 0.0
+      "mean_reward": 52.81416663508086,
+      "std_reward": 0.0,
+      "mean_raw_reward": 52.81416663508086,
+      "std_raw_reward": 0.0
     },
     "D2": {
-      "mean_reward": 0.9717388066688248,
-      "std_reward": 0.0
+      "mean_reward": 48.58694035749917,
+      "std_reward": 0.0,
+      "mean_raw_reward": 48.58694035749917,
+      "std_raw_reward": 0.0
     },
     "D3": {
-      "mean_reward": 1.0840555557880243,
-      "std_reward": 0.0
+      "mean_reward": 54.202777782423546,
+      "std_reward": 0.0,
+      "mean_raw_reward": 54.202777782423546,
+      "std_raw_reward": 0.0
     }
   }
 }

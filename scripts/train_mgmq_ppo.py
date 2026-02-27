@@ -243,7 +243,7 @@ def create_mgmq_ppo_config(
             # vf_clip_param must be large enough for reward scale
             # Episode reward ~ -600 to -700, so vf predictions can be large
             vf_clip_param=vf_clip_param,
-            # Value function loss coefficient
+            # Value function loss coefficient (from YAML config)
             vf_loss_coeff=vf_loss_coeff,
             use_gae=True,
             train_batch_size=train_batch_size,
@@ -514,8 +514,8 @@ def train_mgmq_ppo(
             "use_neighbor_obs": use_local_gnn,  # Enable pre-packaged neighbor observation
             "max_neighbors": max_neighbors,
             # Them phan chuan hoa reward o file env
-            "normalize_reward": False,   # Bật normalization
-            # "clip_rewards": 10.0, # Clip về [-10, 10]
+            "normalize_reward": True,    # Enable running mean/std normalization
+            "clip_rewards": 10.0,        # Clip normalized rewards to [-10, 10]
             # Path to normalizer state file (for resume training)
             # Environment will load state from this file if it exists
             "normalizer_state_file": str(output_dir / experiment_name / "normalizer_state.json"),

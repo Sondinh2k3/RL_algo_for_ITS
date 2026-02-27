@@ -700,19 +700,8 @@ class TrafficSignal:
         # Debug logging for reward
         if self.debug_logging:
             self._log_reward_debug(reward_components)
-            
-        # Thử nghiệm chia scale phần thưởng theo lý thuyết thứ 9:
-        # Giảm magnitude của reward để Critic dễ hội tụ hơn
-        raw_reward = self.last_reward
-        scaled_reward = raw_reward / 50.0
-        
-        # Chỉ in log vài cycle một lần để đỡ spam
-        if self.debug_logging and getattr(self, '_cycle_count', 0) % 10 == 0:
-            print(f"[RewardScaleCheck] TS {self.id} | Cycle {getattr(self, '_cycle_count', 0)}")
-            print(f"  Raw Reward (Return proxy): {raw_reward:.2f}")
-            print(f"  Scaled Reward: {scaled_reward:.2f}")
 
-        return scaled_reward
+        return self.last_reward
     
     def _get_reward_fn_name(self, reward_fn) -> str:
         """Get the name of a reward function for logging."""
@@ -900,8 +889,10 @@ class TrafficSignal:
         # Đây là giá trị tối đa mà một mẫu aggregated có thể có
         # (mỗi mẫu = sum(vehicles_in_jam * sampling_interval) across detectors)
         # Giá trị tối đa = max_veh * sampling_interval_s khi tất cả detector đầy xe
-        if self.max_veh > 0 and self.sampling_interval_s > 0:
-            max_waiting_change = self.max_veh * self.sampling_interval_s
+        if self.max_veh > 0 and self.delta_time > 0:
+            # Use delta_time (full cycle length) since get_aggregated_waiting_time()
+            # returns mean waiting time across the entire cycle, not a single sample
+            max_waiting_change = self.max_veh * self.delta_time
             normalized_reward = (reward / max_waiting_change) * 3.0
         else:
             normalized_reward = 0.0
