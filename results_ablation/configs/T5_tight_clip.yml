@@ -1,0 +1,70 @@
+environment:
+  cycle_time: 90
+  max_green: 90
+  min_green: 5
+  num_seconds: 6000
+  time_to_teleport: 500
+  use_phase_standardizer: true
+  yellow_time: 3
+mgmq:
+  dropout: 0.1
+  gat:
+    hidden_dim: 32
+    num_heads: 4
+    output_dim: 32
+  graphsage:
+    hidden_dim: 64
+  gru:
+    hidden_dim: 64
+  history_length: 1
+  local_gnn:
+    enabled: false
+    max_neighbors: 4
+    obs_dim: 48
+  policy:
+    hidden_dims:
+    - 128
+    - 64
+  value:
+    hidden_dims:
+    - 256
+    - 128
+    - 64
+network:
+  base_path: null
+  detector_file: detector.add.xml
+  intersection_config: intersection_config.json
+  name: grid4x4
+  net_file: grid4x4.net.xml
+  route_files:
+  - grid4x4.rou.xml
+  - grid4x4-demo.rou.xml
+ppo:
+  clip_param: 0.1
+  entropy_coeff: 0.003
+  gamma: 0.99
+  grad_clip: 1.0
+  kl_coeff_floor: 0.01
+  kl_target: 0.03
+  lambda_: 0.95
+  learning_rate: 5.0e-05
+  minibatch_size: 512
+  num_sgd_iter: 3
+  train_batch_size: 4267
+  vf_clip_param: 10000.0
+  vf_loss_coeff: 0.01
+reward:
+  functions:
+  - halt-veh-by-detectors
+  - diff-departed-veh
+  - diff-waiting-time
+  weights: null
+training:
+  checkpoint_interval: 5
+  num_envs_per_worker: 1
+  num_iterations: 500
+  num_workers: 4
+  output_dir: ./results_mgmq
+  patience: 500
+  seed: 42
+  use_gpu: false

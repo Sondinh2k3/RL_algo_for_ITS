@@ -47,7 +47,7 @@ from typing import Any, Dict, List, Optional
 # All experiments inherit from this, then override ONE field.
 # ─────────────────────────────────────────────────────────
 BASELINE_CLI = {
-    "--iterations": "20",
+    "--iterations": "100",
     "--workers": "2",
     "--use-local-gnn": True,         # flag (bool = present/absent)
     "--seed": "42",
@@ -78,24 +78,40 @@ EXPERIMENTS: Dict[str, Dict[str, Any]] = {
             "__yaml_overrides__": {"ppo": {"vf_loss_coeff": 0.001}},
         },
     },
-    "T3_tight_clip": {
-        "desc": "Tighter trust region: clip_param 0.1 → 0.05, kl_target 0.03 → 0.01",
+    "T3_kl_floor": {
+        "desc": "Add KL coeff floor=0.01 to prevent trust-region collapse (kl_coeff → 0)",
         "overrides": {
             "__yaml_overrides__": {
                 "ppo": {
-                    "clip_param": 0.05,
-                    "kl_target": 0.01,
+                    "kl_coeff_floor": 0.01,
                 },
             },
         },
     },
-    "T4_freeze_critic": {
-        "desc": "Freeze critic: vf_loss_coeff = 0 (policy-only sanity check)",
+    "T4_vf_loss_001": {
+        "desc": "T3 + reduce vf_loss_coeff 0.02 → 0.01 (rebalance critic gradient weight)",
         "overrides": {
-            "__yaml_overrides__": {"ppo": {"vf_loss_coeff": 0.0}},
+            "__yaml_overrides__": {
+                "ppo": {
+                    "kl_coeff_floor": 0.01,
+                    "vf_loss_coeff": 0.01,
+                },
+            },
         },
     },
-    "T5_split_encoder": {
+    "T5_tight_clip": {
+        "desc": "T4 + tighten trust region: clip_param 0.2 → 0.1 (prevent policy overshoot)",
+        "overrides": {
+            "__yaml_overrides__": {
+                "ppo": {
+                    "kl_coeff_floor": 0.01,
+                    "vf_loss_coeff": 0.01,
+                    "clip_param": 0.1,
+                },
+            },
+        },
+    },
+    "T6_split_encoder": {
         "desc": "Detach encoder from value path: vf_share_coeff = 0.0",
         "overrides": {
             "--vf-share-coeff": "0.0",

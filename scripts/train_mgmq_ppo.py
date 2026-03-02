@@ -180,6 +180,7 @@ def create_mgmq_ppo_config(
     lambda_: float = 0.95,
     clip_param: float = 0.2,
     kl_target: float = 0.01,
+    kl_coeff_floor: float = 0.01,
     entropy_coeff: float = 0.01,
     # entropy_coeff_schedule: list = None,
     train_batch_size: int = 4096,
@@ -277,6 +278,11 @@ def create_mgmq_ppo_config(
     # Setting normalize_actions=False ensures raw MaskedSoftmax output is used directly.
     config.normalize_actions = False
     
+    # CRITICAL: Set KL coeff floor to prevent trust-region collapse
+    # Without this, kl_coeff can decay to 0 via adaptive KL halving,
+    # disabling the trust-region constraint entirely.
+    config["kl_coeff_floor"] = kl_coeff_floor
+    
     # Add diagnostic callback for comprehensive training monitoring
     config.callbacks(DiagnosticCallback)
     
@@ -322,6 +328,7 @@ def train_mgmq_ppo(
     lambda_: float = 0.95,
     clip_param: float = 0.2,
     kl_target: float = 0.01,
+    kl_coeff_floor: float = 0.01,
     entropy_coeff: float = 0.01,
     # entropy_coeff_schedule: list = None,
     train_batch_size: int = 4096,
@@ -423,6 +430,7 @@ def train_mgmq_ppo(
     print(f"  num_sgd_iter: {num_sgd_iter}")
     print(f"  grad_clip: {grad_clip}")
     print(f"  vf_clip_param: {vf_clip_param}, vf_loss_coeff: {vf_loss_coeff}")
+    print(f"  kl_target: {kl_target}, kl_coeff_floor: {kl_coeff_floor}")
     # print(f"  lr_schedule: {lr_schedule}")
     if use_local_gnn:
         print(f"  Local GNN: ENABLED (neighbors={max_neighbors})")
@@ -564,6 +572,7 @@ def train_mgmq_ppo(
             lambda_=lambda_,
             clip_param=clip_param,
             kl_target=kl_target,
+            kl_coeff_floor=kl_coeff_floor,
             entropy_coeff=entropy_coeff,
             # entropy_coeff_schedule=entropy_coeff_schedule,
             train_batch_size=train_batch_size,
@@ -840,6 +849,7 @@ if __name__ == "__main__":
         lambda_=ppo_cfg["lambda_"],
         clip_param=ppo_cfg["clip_param"],
         kl_target=ppo_cfg.get("kl_target", 0.01),
+        kl_coeff_floor=ppo_cfg.get("kl_coeff_floor", 0.01),
         entropy_coeff=ppo_cfg.get("entropy_coeff", 0.01),
         # entropy_coeff_schedule=ppo_cfg.get("entropy_coeff_schedule", None),
         train_batch_size=ppo_cfg["train_batch_size"],

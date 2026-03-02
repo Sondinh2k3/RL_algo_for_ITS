@@ -108,9 +108,39 @@ class MGMQPPOTorchPolicy(PPOTorchPolicy):
     1. Per-minibatch advantage normalization
     2. clip_fraction tracking
     3. Advantage statistics logging
+    4. KL coefficient floor to prevent trust-region collapse
     
     This fixes the KL coefficient explosion problem in MGMQ training.
     """
+
+    @override(PPOTorchPolicy)
+    def update_kl(self, sampled_kl):
+        """Adaptive KL update with floor to prevent kl_coeff from decaying to zero.
+        
+        RLlib's default update_kl halves kl_coeff when sampled_kl < 0.5 * kl_target,
+        with NO lower bound. This causes kl_coeff → 0, effectively disabling the 
+        trust-region constraint, leading to policy drift → value explosion → collapse.
+        
+        Fix: Enforce a minimum floor (default 0.01) so the KL penalty never vanishes.
+        """
+        # Read floor from config, default to 0.01
+        kl_coeff_floor = self.config.get("kl_coeff_floor", 0.01)
+        
+        # Standard RLlib adaptive KL logic
+        if sampled_kl > 2.0 * self.kl_target:
+            self.kl_coeff *= 1.5
+        elif sampled_kl < 0.5 * self.kl_target:
+            self.kl_coeff *= 0.5
+        
+        # CRITICAL: Enforce floor — never let kl_coeff decay to zero
+        if self.kl_coeff < kl_coeff_floor:
+            self.kl_coeff = kl_coeff_floor
+            logger.debug(
+                f"KL coeff hit floor ({kl_coeff_floor}), "
+                f"sampled_kl={sampled_kl:.4f}, kl_target={self.kl_target}"
+            )
+        
+        return self.kl_coeff
 
     @override(PPOTorchPolicy)
     def loss(
