@@ -12,9 +12,10 @@ output/
 logs/
 model/
 temp/
-benchmark/
+benchmark/ablation
 results_mgmq/
 reference/
+results_ablation
 
 # SUMO Detectors output
 **/e1_*.xml

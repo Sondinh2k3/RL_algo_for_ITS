@@ -249,14 +249,15 @@ class MGMQEncoder(nn.Module):
             out_features=gat_output_dim,
             n_heads=gat_num_heads,
             dropout=dropout,
-            alpha=0.2
+            alpha=0.05  # Paper spec: LeakyReLU negative slope = 0.05
         )
         
         # Layer 2: GraphSAGE + Bi-GRU for network embedding
-        # GAT outputs [12, gat_output_dim * gat_num_heads] per intersection
-        # After MEAN POOLING: gat_output_dim * gat_num_heads
-        gat_per_lane_output = gat_output_dim * gat_num_heads  # e.g., 16*2 = 32
-        gat_total_output = gat_per_lane_output  # NO FLATTEN, USE MEAN POOLING
+        # GAT outputs [12, F_out] per intersection where F_out = gat_output_dim
+        # Paper Eq.18: g_k = FLATTEN(h') → shape (12 * F_out,)
+        # NOT mean pooling — flatten preserves positional information of each lane
+        gat_per_lane_output = self.dual_stream_gat.final_output_dim  # F_out
+        gat_total_output = 12 * gat_per_lane_output  # FLATTEN: 12 lanes × F_out
         
         self.graphsage_bigru = GraphSAGE_BiGRU(
             in_features=gat_total_output,
@@ -349,16 +350,16 @@ class MGMQEncoder(nn.Module):
         lane_adj_conf_batch = self.lane_adj_conf.unsqueeze(0).expand(lane_features.size(0), -1, -1)
         
         # Run Dual-Stream GAT
-        # gat_out: [batch * num_agents, 12, gat_output_dim * heads]
+        # gat_out: [batch * num_agents, 12, F_out]
         gat_out = self.dual_stream_gat(lane_features, lane_adj_coop_batch, lane_adj_conf_batch)
         
-        # MEAN POOLING over lanes to manage dimensionality
-        # gat_out is [batch * num_agents, 12, gat_output_dim * heads]
-        # Mean pooling -> [batch * num_agents, gat_output_dim * heads]
-        intersection_emb_pooled = gat_out.mean(dim=1)
+        # Paper Eq.18: FLATTEN over lanes to create intersection embedding
+        # g_k = flatten(h'_1, h'_2, ..., h'_12) → shape (12 * F_out,)
+        # This preserves positional information: Lane i always maps to position [i*F_out : (i+1)*F_out]
+        intersection_emb_flat = gat_out.reshape(gat_out.size(0), -1)  # [batch*agents, 12*F_out]
         
         # Reshape back to [batch, num_agents, emb_dim]
-        intersection_emb = intersection_emb_pooled.view(batch_size, num_agents, -1)
+        intersection_emb = intersection_emb_flat.view(batch_size, num_agents, -1)
         
         # --- Layer 2: Network-level GraphSAGE (Network Embedding) ---
         
@@ -371,8 +372,13 @@ class MGMQEncoder(nn.Module):
         # GraphSAGE: Input [batch, N, features], adj [4, N, N]
         # Returns [batch, num_agents, hidden_features]
         network_emb_seq = self.graphsage_bigru(intersection_emb, net_adj)
-        # Mean pooling over agents for network embedding
-        network_emb = network_emb_seq.mean(dim=1)
+        
+        # Paper: z_k = cat(g_k, G_k) per agent — no mean pooling over agents
+        # Select network embedding for specific agent or use mean
+        if agent_idx is not None and num_agents > 1:
+            network_emb = network_emb_seq[:, agent_idx, :]
+        else:
+            network_emb = network_emb_seq.mean(dim=1)
         
         # Select intersection embedding for specific agent or use mean
         if agent_idx is not None and num_agents > 1:
@@ -433,18 +439,17 @@ class LocalMGMQEncoder(nn.Module):
             out_features=gat_output_dim,
             n_heads=gat_num_heads,
             dropout=dropout,
-            alpha=0.2
+            alpha=0.05  # Paper spec: LeakyReLU negative slope = 0.05
         )
         
         # Static lane adjacency matrices
         self.register_buffer('lane_adj_coop', get_lane_cooperation_matrix())
         self.register_buffer('lane_adj_conf', get_lane_conflict_matrix())
         
-        # GAT output dimension (after Mean Pooling over 12 lanes)
-        # Each lane outputs gat_output_dim * gat_num_heads features
-        # Mean Pooling: gat_output_dim * gat_num_heads
-        self.gat_per_lane_output = gat_output_dim * gat_num_heads  # 32
-        self.gat_total_output = self.gat_per_lane_output  # NO FLATTEN
+        # GAT output dimension (after FLATTEN over 12 lanes — paper Eq.18)
+        # Each lane outputs F_out features, flatten preserves positional info
+        self.gat_per_lane_output = self.dual_stream_gat.final_output_dim  # F_out
+        self.gat_total_output = 12 * self.gat_per_lane_output  # FLATTEN: 12 × F_out
         
         # NeighborGraphSAGE_BiGRU for SPATIAL aggregation
         self.neighbor_aggregator = NeighborGraphSAGE_BiGRU(
@@ -508,13 +513,13 @@ class LocalMGMQEncoder(nn.Module):
         return joint_emb
         
     def _run_gat(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply GAT to features and MEAN POOL.
+        """Apply GAT to features and FLATTEN (paper Eq.18).
         
         Args:
-            x: [batch, 48] raw observation (12 lanes * 4 features)
+            x: [batch, obs_dim] raw observation (12 lanes * features)
             
         Returns:
-            [batch, gat_per_lane_output] mean pooled GAT embedding
+            [batch, 12 * gat_per_lane_output] flattened GAT embedding
         """
         batch_size = x.size(0)
         lane_feat = x.view(batch_size, self.num_lanes, self.lane_feature_dim)
@@ -525,11 +530,11 @@ class LocalMGMQEncoder(nn.Module):
         # gat_out: [batch, 12, gat_per_lane_output]
         gat_out = self.dual_stream_gat(lane_feat, adj_coop, adj_conf)
         
-        # MEAN POOLING instead of Flatten
-        # [batch, gat_per_lane_output]
-        gat_pooled = gat_out.mean(dim=1)
+        # Paper Eq.18: FLATTEN — preserves positional info of each lane
+        # [batch, 12 * gat_per_lane_output]
+        gat_flat = gat_out.reshape(batch_size, -1)
         
-        return gat_pooled
+        return gat_flat
 
 
 """

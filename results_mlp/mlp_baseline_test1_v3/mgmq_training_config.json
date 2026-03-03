@@ -1,0 +1,71 @@
+{
+  "experiment_name": "mlp_baseline_test1_v3",
+  "network_name": "test1",
+  "num_iterations": 50,
+  "num_workers": 2,
+  "use_gpu": false,
+  "seed": 42,
+  "mgmq_config": {
+    "num_agents": 3,
+    "ts_ids": [
+      "B3",
+      "C3",
+      "D3"
+    ],
+    "net_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/test1/test1.net.xml",
+    "gat_hidden_dim": 32,
+    "gat_output_dim": 32,
+    "gat_num_heads": 4,
+    "graphsage_hidden_dim": 64,
+    "gru_hidden_dim": 64,
+    "policy_hidden_dims": [
+      256,
+      128
+    ],
+    "value_hidden_dims": [
+      256,
+      128
+    ],
+    "dropout": 0.1,
+    "window_size": 1,
+    "obs_dim": 48,
+    "max_neighbors": 4,
+    "vf_share_coeff": 1.0
+  },
+  "env_config": {
+    "net_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/test1/test1.net.xml",
+    "route_file": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/test1/test1.rou.xml,/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/test1/test1-demo.rou.xml",
+    "use_gui": false,
+    "render_mode": null,
+    "num_seconds": 6000,
+    "max_green": 90,
+    "min_green": 5,
+    "cycle_time": 90,
+    "yellow_time": 3,
+    "time_to_teleport": 50,
+    "single_agent": false,
+    "window_size": 1,
+    "preprocessing_config": "/home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/test1/intersection_config.json",
+    "additional_sumo_cmd": "-a /home/sondinh2k3/Documents/Working_ITS/Project/MGMQ_done/RL_algo_fix/RL_algo_for_ITS/network/test1/detector.add.xml --step-length 1 --lateral-resolution 0.5 --ignore-route-errors --tls.actuated.jam-threshold 30 --device.rerouting.adaptation-steps 18 --device.rerouting.adaptation-interval 10",
+    "reward_fn": [
+      "halt-veh-by-detectors",
+      "diff-departed-veh",
+      "diff-waiting-time",
+      "occupancy"
+    ],
+    "reward_weights": [
+      0.25,
+      0.25,
+      0.25,
+      0.25
+    ],
+    "use_phase_standardizer": true,
+    "use_neighbor_obs": false,
+    "max_neighbors": 4,
+    "normalize_reward": true,
+    "clip_rewards": 10.0,
+    "normalizer_state_file": "results_mlp/mlp_baseline_test1_v3/normalizer_state.json"
+  },
+  "training_status": "in_progress",
+  "started_at": "2026-03-03T17:33:29.581681"
+}

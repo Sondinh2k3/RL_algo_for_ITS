@@ -37,7 +37,7 @@ class GATLayer(nn.Module):
         in_features: int,
         out_features: int,
         dropout: float = 0.6,
-        alpha: float = 0.2,
+        alpha: float = 0.05,
         concat: bool = True
     ):
         super(GATLayer, self).__init__()
@@ -128,9 +128,9 @@ class GATLayer(nn.Module):
         # Shape: [batch, N, out_features]
         h_out = torch.bmm(attention, Wh)
         
-        # Apply activation
+        # Apply activation (LeakyReLU per paper spec, not ELU)
         if self.concat:
-            h_out = F.elu(h_out)
+            h_out = F.leaky_relu(h_out, 0.05)
             
         if squeeze_output:
             h_out = h_out.squeeze(0)
@@ -163,7 +163,7 @@ class MultiHeadGATLayer(nn.Module):
         out_features: int,
         n_heads: int = 4,
         dropout: float = 0.6,
-        alpha: float = 0.2,
+        alpha: float = 0.05,
         concat: bool = True
     ):
         super(MultiHeadGATLayer, self).__init__()
@@ -351,7 +351,7 @@ class DualStreamGATLayer(nn.Module):
         out_features: int,
         n_heads: int = 4,
         dropout: float = 0.3,
-        alpha: float = 0.2
+        alpha: float = 0.05
     ):
         super(DualStreamGATLayer, self).__init__()
         self.in_features = in_features
@@ -359,65 +359,53 @@ class DualStreamGATLayer(nn.Module):
         self.out_features = out_features
         self.n_heads = n_heads
         
-        # Step 1: Linear Transformation
-        # h_i = LeakyReLU(W_init * x_i + b_init)
+        # Step 1: Linear Transformation (Eq. 13)
+        # h_i = LeakyReLU(W_init * S_i + b)
         self.input_proj = nn.Sequential(
             nn.Linear(in_features, hidden_dim),
             nn.LeakyReLU(alpha)
         )
         
-        # Step 2 & 3: Dual-Stream Attention & Multi-head Integration
-        # We use MultiHeadGATLayer for each stream
+        # Step 2 & 3: Dual-Stream Attention (Eq. 14-16)
+        # Paper spec: W^k ∈ R^{F'×F'} (same dim), heads AVERAGED (1/K Σ_k)
         self.gat_same = MultiHeadGATLayer(
             in_features=hidden_dim,
-            out_features=out_features,
+            out_features=hidden_dim,   # W: F'×F' (paper spec)
             n_heads=n_heads,
             dropout=dropout,
             alpha=alpha,
-            concat=True
+            concat=False               # Average heads (paper Eq.16: 1/K Σ_k)
         )
         
         self.gat_diff = MultiHeadGATLayer(
             in_features=hidden_dim,
-            out_features=out_features,
+            out_features=hidden_dim,   # W: F'×F' (paper spec)
             n_heads=n_heads,
             dropout=dropout,
             alpha=alpha,
-            concat=True
+            concat=False               # Average heads (paper Eq.16: 1/K Σ_k)
         )
         
-        # Step 4: Node State Update
-        # h'_i = Activation(W_final * [h_i || h_same || h_diff])
-        # h_i dim: hidden_dim
-        # h_same dim: n_heads * out_features
-        # h_diff dim: n_heads * out_features
-        concat_dim = hidden_dim + 2 * (n_heads * out_features)
+        # Step 4: Node State Update (Eq. 17)
+        # h'_i = LeakyReLU(W_final * [h_i || h̄^1 || h̄^2])
+        # h_i dim: hidden_dim (F')
+        # h̄^1 dim: hidden_dim (F') — averaged over K heads
+        # h̄^2 dim: hidden_dim (F') — averaged over K heads
+        concat_dim = 3 * hidden_dim
         
-        # Output dimension is typically the same as the attention output or specified
-        # The user spec says output is h'_i in R^D. 
-        # Usually D refers to the final embedding size.
-        # Let's assume the final output dimension is n_heads * out_features (to match previous logic)
-        # OR we can add a parameter for final_output_dim.
-        # Looking at MGMQEncoder, it expects `gat_total_output = (gat_output_dim * gat_num_heads) * 2`
-        # But that was for simple concatenation.
-        # Here we do a projection. Let's make the output dimension configurable or default to something reasonable.
-        # Given the next layer is GraphSAGE, let's output `n_heads * out_features` which is a common choice,
-        # or we can keep it as `hidden_dim`.
-        # Let's set final output dim to `n_heads * out_features` to maintain capacity.
-        self.final_output_dim = n_heads * out_features
+        # Paper Eq. 18: g_k = flatten(h') → shape (12 * F_out,)
+        # F_out = out_features parameter
+        self.final_output_dim = out_features
         
         self.final_proj = nn.Sequential(
             nn.Linear(concat_dim, self.final_output_dim),
-            nn.ELU()  # ELU for fusion layer as per MGMQ specification
+            nn.LeakyReLU(alpha)  # Paper: LeakyReLU(0.05) for node state update
         )
         
-        # STEP 3 FIX: LayerNorm for output stabilization
-        # Normalizes the output embedding to prevent scale drift across GNN layers
+        # LayerNorm for output stabilization (training stability enhancement)
         self.output_norm = nn.LayerNorm(self.final_output_dim)
         
-        # STEP 3 FIX: Residual (Skip) Connection
-        # Projects input to match output dim for residual addition
-        # This creates a clean gradient highway: grad flows directly from output to input
+        # Residual (Skip) Connection for gradient flow
         if in_features != self.final_output_dim:
             self.residual_proj = nn.Linear(in_features, self.final_output_dim)
         else:

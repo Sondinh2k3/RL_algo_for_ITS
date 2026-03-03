@@ -55,7 +55,15 @@ class SumoMultiAgentEnv(SumoEnvironment, MultiAgentEnv):
             # Check if key belongs to a specific agent
             found_agent = False
             for agent_id in self.ts_ids:
-                if key.startswith(f"{agent_id}_"):
+                # Case 1: Exact agent_id match with dict value (e.g. info["A0"] = {"raw_reward": ...})
+                # The base env stores raw_reward as info[ts_id] = {"raw_reward": float(...)}
+                if key == agent_id and isinstance(value, dict):
+                    if agent_id in new_info:
+                        new_info[agent_id].update(value)
+                    found_agent = True
+                    break
+                # Case 2: Prefixed keys (e.g. "A0_stopped", "A0_accumulated_waiting_time")
+                elif key.startswith(f"{agent_id}_"):
                     if agent_id in new_info:
                         metric_name = key[len(agent_id)+1:]
                         new_info[agent_id][metric_name] = value

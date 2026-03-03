@@ -65,9 +65,10 @@ MASK_VALUE = -1e9
 NUM_STANDARD_PHASES = 8
 
 # Softmax temperature: lower = sharper output (more differentiated actions)
-# Default 1.0 = standard softmax, 0.3 = much sharper differentiation
-# This fixes the uniform action problem by amplifying differences in logits
-SOFTMAX_TEMPERATURE = 0.3
+# Default 1.0 = standard softmax
+# CRITICAL FIX: 0.3 caused entropy collapse (1.5→0.09 in 25 iters).
+# Set to 1.0 so entropy decays naturally through learning, not through temperature.
+SOFTMAX_TEMPERATURE = 1.0
 
 
 class TorchMaskedSoftmax(TorchDistributionWrapper):

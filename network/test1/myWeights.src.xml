@@ -1,0 +1,22 @@
+<edgedata>
+    <edge id="A3B3" value="10"/>
+    <edge id="B3C3" value="10"/>
+    <edge id="C3D3" value="10"/>
+    <edge id="D3E3" value="10"/>
+    <edge id="E3D3" value="10"/>
+    <edge id="D3C3" value="10"/>
+    <edge id="C3B3" value="10"/>
+    <edge id="B3A3" value="10"/>
+    <edge id="B3B4" value="1"/>
+    <edge id="B4B3" value="1"/>
+    <edge id="B3B2" value="1"/>
+    <edge id="B2B3" value="1"/>
+    <edge id="C3C4" value="1"/>
+    <edge id="C4C3" value="1"/>
+    <edge id="C3C2" value="1"/>
+    <edge id="C2C3" value="1"/>
+    <edge id="D3D4" value="1"/>
+    <edge id="D4D3" value="1"/>
+    <edge id="D3D2" value="1"/>
+    <edge id="D2D3" value="1"/>
+</edgedata>

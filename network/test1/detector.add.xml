@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-02-25T10:09:07.481245+07:00 by Eclipse SUMO netedit 1.26.0
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <!-- Detectors -->
+    <inductionLoop id="e1_0" lane="A3B3_2" pos="118.71" period="10.00" file="e1_0.xml"/>
+    <inductionLoop id="e1_1" lane="A3B3_1" pos="117.89" period="10.00" file="e1_1.xml"/>
+    <inductionLoop id="e1_10" lane="B2B3_1" pos="125.35" period="10.00" file="e1_10.xml"/>
+    <inductionLoop id="e1_11" lane="B2B3_0" pos="126.72" period="10.00" file="e1_11.xml"/>
+    <inductionLoop id="e1_12" lane="B3C3_2" pos="112.72" period="10.00" file="e1_12.xml"/>
+    <inductionLoop id="e1_13" lane="B3C3_1" pos="112.72" period="10.00" file="e1_13.xml"/>
+    <inductionLoop id="e1_14" lane="B3C3_0" pos="112.92" period="10.00" file="e1_14.xml"/>
+    <inductionLoop id="e1_15" lane="C4C3_0" pos="121.57" period="10.00" file="e1_15.xml"/>
+    <inductionLoop id="e1_16" lane="C4C3_1" pos="121.57" period="10.00" file="e1_16.xml"/>
+    <inductionLoop id="e1_17" lane="C4C3_2" pos="121.57" period="10.00" file="e1_17.xml"/>
+    <inductionLoop id="e1_18" lane="D3C3_0" pos="115.19" period="10.00" file="e1_18.xml"/>
+    <inductionLoop id="e1_19" lane="D3C3_1" pos="114.18" period="10.00" file="e1_19.xml"/>
+    <inductionLoop id="e1_2" lane="A3B3_0" pos="118.44" period="10.00" file="e1_2.xml"/>
+    <inductionLoop id="e1_20" lane="D3C3_2" pos="114.18" period="10.00" file="e1_20.xml"/>
+    <inductionLoop id="e1_21" lane="C2C3_2" pos="127.92" period="10.00" file="e1_21.xml"/>
+    <inductionLoop id="e1_22" lane="C2C3_1" pos="127.72" period="10.00" file="e1_22.xml"/>
+    <inductionLoop id="e1_23" lane="C2C3_0" pos="127.92" period="10.00" file="e1_23.xml"/>
+    <inductionLoop id="e1_24" lane="C3D3_2" pos="113.05" period="10.00" file="e1_24.xml"/>
+    <inductionLoop id="e1_25" lane="C3D3_1" pos="113.65" period="10.00" file="e1_25.xml"/>
+    <inductionLoop id="e1_26" lane="C3D3_0" pos="113.65" period="10.00" file="e1_26.xml"/>
+    <inductionLoop id="e1_27" lane="D4D3_0" pos="113.75" period="10.00" file="e1_27.xml"/>
+    <inductionLoop id="e1_28" lane="D4D3_1" pos="113.75" period="10.00" file="e1_28.xml"/>
+    <inductionLoop id="e1_29" lane="D4D3_2" pos="114.55" period="10.00" file="e1_29.xml"/>
+    <inductionLoop id="e1_3" lane="C3B3_0" pos="115.39" period="10.00" file="e1_3.xml"/>
+    <inductionLoop id="e1_30" lane="E3D3_0" pos="118.43" period="10.00" file="e1_30.xml"/>
+    <inductionLoop id="e1_31" lane="E3D3_1" pos="118.63" period="10.00" file="e1_31.xml"/>
+    <inductionLoop id="e1_32" lane="E3D3_2" pos="118.23" period="10.00" file="e1_32.xml"/>
+    <inductionLoop id="e1_33" lane="D2D3_2" pos="126.92" period="10.00" file="e1_33.xml"/>
+    <inductionLoop id="e1_34" lane="D2D3_1" pos="126.72" period="10.00" file="e1_34.xml"/>
+    <inductionLoop id="e1_35" lane="D2D3_0" pos="126.72" period="10.00" file="e1_35.xml"/>
+    <inductionLoop id="e1_4" lane="C3B3_1" pos="115.67" period="10.00" file="e1_4.xml"/>
+    <inductionLoop id="e1_5" lane="C3B3_2" pos="115.39" period="10.00" file="e1_5.xml"/>
+    <inductionLoop id="e1_6" lane="B4B3_0" pos="112.63" period="10.00" file="e1_6.xml"/>
+    <inductionLoop id="e1_7" lane="B4B3_1" pos="113.45" period="10.00" file="e1_7.xml"/>
+    <inductionLoop id="e1_8" lane="B4B3_2" pos="114.82" period="10.00" file="e1_8.xml"/>
+    <inductionLoop id="e1_9" lane="B2B3_2" pos="126.72" period="10.00" file="e1_9.xml"/>
+    <laneAreaDetector id="e2_0" lane="A3B3_2" pos="35.48" length="80.00" period="10.00" file="e2_0.xml"/>
+    <laneAreaDetector id="e2_1" lane="A3B3_1" pos="35.48" length="80.00" period="10.00" file="e2_1.xml"/>
+    <laneAreaDetector id="e2_10" lane="B2B3_1" pos="44.79" length="80.00" period="10.00" file="e2_10.xml"/>
+    <laneAreaDetector id="e2_11" lane="B2B3_0" pos="45.05" length="80.00" period="10.00" file="e2_11.xml"/>
+    <laneAreaDetector id="e2_12" lane="B3C3_2" pos="31.19" length="80.00" period="10.00" file="e2_12.xml"/>
+    <laneAreaDetector id="e2_13" lane="B3C3_1" pos="31.19" length="80.00" period="10.00" file="e2_13.xml"/>
+    <laneAreaDetector id="e2_14" lane="B3C3_0" pos="31.52" length="80.00" period="10.00" file="e2_14.xml"/>
+    <laneAreaDetector id="e2_15" lane="C4C3_0" pos="39.11" length="80.00" period="10.00" file="e2_15.xml"/>
+    <laneAreaDetector id="e2_16" lane="C4C3_1" pos="39.66" length="80.00" period="10.00" file="e2_16.xml"/>
+    <laneAreaDetector id="e2_17" lane="C4C3_2" pos="39.29" length="80.00" period="10.00" file="e2_17.xml"/>
+    <laneAreaDetector id="e2_18" lane="D3C3_0" pos="33.53" length="80.00" period="10.00" file="e2_18.xml"/>
+    <laneAreaDetector id="e2_19" lane="D3C3_1" pos="32.26" length="80.00" period="10.00" file="e2_19.xml"/>
+    <laneAreaDetector id="e2_2" lane="A3B3_0" pos="36.08" length="80.00" period="10.00" file="e2_2.xml"/>
+    <laneAreaDetector id="e2_20" lane="D3C3_2" pos="32.26" length="80.00" period="10.00" file="e2_20.xml"/>
+    <laneAreaDetector id="e2_21" lane="C2C3_2" pos="47.51" length="80.00" period="10.00" file="e2_21.xml"/>
+    <laneAreaDetector id="e2_22" lane="C2C3_1" pos="46.78" length="80.00" period="10.00" file="e2_22.xml"/>
+    <laneAreaDetector id="e2_23" lane="C2C3_0" pos="46.60" length="80.00" period="10.00" file="e2_23.xml"/>
+    <laneAreaDetector id="e2_24" lane="C3D3_2" pos="32.60" length="80.00" period="10.00" file="e2_24.xml"/>
+    <laneAreaDetector id="e2_25" lane="C3D3_1" pos="32.60" length="80.00" period="10.00" file="e2_25.xml"/>
+    <laneAreaDetector id="e2_26" lane="C3D3_0" pos="32.60" length="80.00" period="10.00" file="e2_26.xml"/>
+    <laneAreaDetector id="e2_27" lane="D4D3_0" pos="32.00" length="80.00" period="10.00" file="e2_27.xml"/>
+    <laneAreaDetector id="e2_28" lane="D4D3_1" pos="32.37" length="80.00" period="10.00" file="e2_28.xml"/>
+    <laneAreaDetector id="e2_29" lane="D4D3_2" pos="32.73" length="80.00" period="10.00" file="e2_29.xml"/>
+    <laneAreaDetector id="e2_3" lane="C3B3_0" pos="34.79" length="80.00" period="10.00" file="e2_3.xml"/>
+    <laneAreaDetector id="e2_30" lane="E3D3_0" pos="36.60" length="80.00" period="10.00" file="e2_30.xml"/>
+    <laneAreaDetector id="e2_31" lane="E3D3_1" pos="36.60" length="80.00" period="10.00" file="e2_31.xml"/>
+    <laneAreaDetector id="e2_32" lane="E3D3_2" pos="36.60" length="80.00" period="10.00" file="e2_32.xml"/>
+    <laneAreaDetector id="e2_33" lane="D2D3_2" pos="45.87" length="80.00" period="10.00" file="e2_33.xml"/>
+    <laneAreaDetector id="e2_34" lane="D2D3_1" pos="45.14" length="80.00" period="10.00" file="e2_34.xml"/>
+    <laneAreaDetector id="e2_35" lane="D2D3_0" pos="44.96" length="80.00" period="10.00" file="e2_35.xml"/>
+    <laneAreaDetector id="e2_4" lane="C3B3_1" pos="34.26" length="80.00" period="10.00" file="e2_4.xml"/>
+    <laneAreaDetector id="e2_5" lane="C3B3_2" pos="32.93" length="80.00" period="10.00" file="e2_5.xml"/>
+    <laneAreaDetector id="e2_6" lane="B4B3_0" pos="31.11" length="80.00" period="10.00" file="e2_6.xml"/>
+    <laneAreaDetector id="e2_7" lane="B4B3_1" pos="32.18" length="80.00" period="10.00" file="e2_7.xml"/>
+    <laneAreaDetector id="e2_8" lane="B4B3_2" pos="32.98" length="80.00" period="10.00" file="e2_8.xml"/>
+    <laneAreaDetector id="e2_9" lane="B2B3_2" pos="46.12" length="80.00" period="10.00" file="e2_9.xml"/>
+</additional>

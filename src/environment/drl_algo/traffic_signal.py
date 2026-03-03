@@ -838,17 +838,27 @@ class TrafficSignal:
 
     def _pressure_reward(self):
         """Computes pressure-based reward using E2 detectors. Range: [-3, 3]."""
+        # No vehicles → best possible state → maximum reward
+        if self.get_current_vehicle_count() == 0:
+            return 3.0
         pressure = self.get_pressure_from_detectors()
         # Pressure dương = ùn tắc → reward âm
         return self._clip_reward(-pressure * 3.0)
 
     def _average_speed_reward(self):
+        """Computes average speed reward. Range: [-3, 3]."""
+        # No vehicles → best possible state → maximum reward
+        if self.get_current_vehicle_count() == 0:
+            return 3.0
         avg_speed = self.get_aggregated_average_speed()
         # Map [0, 1] to [-3, 3]: 0 -> -3, 1 -> 3
         return self._clip_reward((avg_speed * 6.0) - 3.0)
 
     def _queue_reward(self):
         """Computes queue-based reward. Range: [-3, 3]."""
+        # No vehicles → best possible state → maximum reward
+        if self.get_current_vehicle_count() == 0:
+            return 3.0
         total_queued = self.get_aggregated_queued()
         if self.max_veh == 0:
             return 0.0
@@ -857,6 +867,9 @@ class TrafficSignal:
 
     def _occupancy_reward(self):
         """Computes occupancy-based reward. Range: [-3, 0]."""
+        # No vehicles → best possible state → maximum reward (0.0 for penalty function)
+        if self.get_current_vehicle_count() == 0:
+            return 0.0
         avg_occupancy = self.get_aggregated_occupancy()
         # Map [0, 1] to [0, -3]: 0 -> 0, 1 -> -3
         return self._clip_reward(-avg_occupancy * 3.0, low=-3.0, high=0.0)
@@ -876,6 +889,11 @@ class TrafficSignal:
                    0.0 = waiting time không đổi
                    -3.0 = waiting time tăng tối đa (tệ nhất)
         """
+        # No vehicles → best possible state → maximum reward
+        if self.get_current_vehicle_count() == 0:
+            self.last_ts_waiting_time = 0.0  # Reset to avoid spurious reward next step
+            return 3.0
+        
         # Tổng thời gian chờ TRUNG BÌNH trong chu kỳ (aggregated over 5 samples)
         ts_wait = self.get_aggregated_waiting_time()
         
@@ -908,6 +926,9 @@ class TrafficSignal:
         - 0.0 = No halting (Best).
         - -3.0 = Total gridlock (Worst).
         """
+        # No vehicles → best possible state → maximum reward (0.0 for penalty function)
+        if self.get_current_vehicle_count() == 0:
+            return 0.0
         if self.max_veh == 0:
             return 0.0
         
@@ -931,6 +952,10 @@ class TrafficSignal:
         
         BUGFIX: Handle edge cases properly to avoid misleading reward signals.
         """
+        # No vehicles → intersection fully cleared → maximum reward
+        if self.get_current_vehicle_count() == 0:
+            return 3.0
+        
         initial = float(self.initial_vehicles_this_cycle)
         departed = float(self.departed_vehicles_this_cycle)
         
@@ -979,6 +1004,9 @@ class TrafficSignal:
                    0.0 = No teleports (best)
                    -3.0 = Many teleports relative to capacity (worst)
         """
+        # No vehicles → best possible state → maximum reward (0.0 for penalty function)
+        if self.get_current_vehicle_count() == 0:
+            return 0.0
         if self.max_veh == 0:
             return 0.0
         

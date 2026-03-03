@@ -6,20 +6,20 @@
 # ============================================
 network:
   # Name of the traffic network (used as folder name under network/)
-  name: grid4x4
+  name: test1
 
   # Base path for network files (relative to project root)
   # If not specified, defaults to: network/{network_name}/
   base_path: null
 
   # Network files (relative to base_path if base_path is set, or absolute paths)
-  net_file: grid4x4.net.xml
+  net_file: test1.net.xml
 
   # Route files - can be a single file or comma-separated list
   # Order matters: type definitions should come before trip definitions
   route_files:
-    - grid4x4.rou.xml # Vehicle type definitions
-    - grid4x4-demo.rou.xml # Demo traffic routes (optional)
+    - test1.rou.xml # Vehicle type definitions
+    - test1-demo.rou.xml # Demo traffic routes (optional)
 
   # Detector configuration file (for E2 detector-based rewards)
   detector_file: detector.add.xml
@@ -27,7 +27,7 @@ network:
   # Intersection preprocessing config (for phase standardization)
   intersection_config: intersection_config.json
 
-# ============================================
+# =========================it, it already has the GESA settings. Let me check — was this already updated? Let me look at what happ===================
 # MGMQ Architecture Parameters
 # ============================================
 mgmq:
@@ -68,36 +68,36 @@ mgmq:
 # PPO Training Parameters
 # ============================================
 ppo:
-  learning_rate: 0.00005 # Reduced from 0.0001 (Actor RL rate halved to prevent noisy advantage degradation)
-  gamma: 0.99 # Discount factor
+  learning_rate: 0.0003 # Reduced from 0.0001 (Actor RL rate halved to prevent noisy advantage degradation)
+  gamma: 0.995 # Discount factor
   lambda_: 0.95 # GAE lambda
-  entropy_coeff: 0.003 # Start high, will decay via entropy_coeff_schedule
+  entropy_coeff: 0.05 # Increased from 0.01: prevents entropy collapse with MaskedSoftmax
   # CRITICAL FIX: Schedule points must be in AGENT TIMESTEPS (not iterations)
   # With 16 agents × 67 steps × 2 workers = ~2144 agent_steps/iteration
   # Old schedule [[0,0.01],[100,0.005],[300,0.001]] decayed to min by iteration 1!
   # New schedule: decay over ~100-200 iterations (proper exploration period)
   # entropy_coeff_schedule: [[0, 0.01], [200000, 0.005], [500000, 0.001]]
-  clip_param: 0.1 # Reduced from 0.2 (Tighter clipping due to weak critic)
-  kl_target: 0.03 # KL target for adaptive KL coefficient. Default 0.01 is too aggressive
+  clip_param: 0.2 # Reduced from 0.2 (Tighter clipping due to weak critic)
+  kl_target: 0.01 # KL target for adaptive KL coefficient. Default 0.01 is too aggressive
   # With per-minibatch advantage normalization, typical KL is 0.02-0.03
   # Setting target=0.03 keeps kl_coeff stable near initial value (0.2)
   kl_coeff_floor: 0.01 # CRITICAL: Minimum kl_coeff to prevent trust-region collapse
   # Without floor, kl_coeff *= 0.5 can decay to ~0, disabling KL penalty entirely
   # This causes policy drift → value explosion → reward collapse
   # Floor of 0.01 ensures trust-region constraint is always active
-  vf_clip_param: 10000.0 # Must be >> (V-target)² to avoid killing value gradients
+  vf_clip_param: 10.0 # Must be >> (V-target)² to avoid killing value gradients
   # With V≈0, target≈11: MSE=121. Old clamp(loss,0,100) zeroed gradient for these!
   # Set to 10000 so clamp never activates during normal training
-  vf_loss_coeff: 0.01 # Balance: 0.01*30=0.3 vs policy_loss~0.01 → ratio ~30x
-  # Advantages are normalized in loss fn → surrogate_loss fixed at ~0.005-0.02
-  train_batch_size: 4267 # Fixed: matches 2 workers * 1072 agent_steps/episode
-  # With 4 workers: 4 * 1072 = 4288, will auto-collect enough with complete_episodes
-  minibatch_size: 512 # SGD minibatch size (2144/268 = 8 minibatches per epoch)
-  num_sgd_iter: 3 # Reduced from 4: with clip_param=0.1, 4 epochs → 42% clip fraction
+  vf_loss_coeff: 0.5 # Reduced from 1.0: vf_loss≈9.7 was dominating policy_loss≈0.02
+  # 0.5 gives better balance: 0.5*9.7=4.85 vs policy contribution
+  train_batch_size: 2000 # Increased from 400: more data per update reduces variance
+  # With 2 workers × 3 agents × 67 steps = ~402 per episode, collect ~5 episodes
+  minibatch_size: 128 # Increased from 64 for more stable gradient estimates
+  num_sgd_iter: 6 # Reduced from 10: fewer passes over same data reduces overfitting
   # DIAGNOSTIC FIX (Steps 1-2): Reduced grad_clip from 10.0 to 1.0
   # Prevents logit explosion in policy head which caused KL coefficient to explode
   # Combined with per-minibatch advantage normalization in MGMQPPOTorchPolicy
-  grad_clip: 1.0
+  grad_clip: 10.0
   # Learning rate schedule: linear decay over training
   # Points are [agent_timestep, lr_value]
   # lr_schedule: [[0, 0.0003], [500000, 0.0001], [1000000, 0.00003]]
@@ -131,7 +131,7 @@ reward:
     - halt-veh-by-detectors
     - diff-departed-veh
     - diff-waiting-time
-    # - occupancy
+    - occupancy
     # - average-speed
     # - teleport-penalty   # Uncomment to penalize teleportation (requires time_to_teleport > 0)
   weights: null # Auto-compute equal weights if null
@@ -145,5 +145,5 @@ environment:
   min_green: 5 # Minimum green time
   cycle_time: 90 # Traffic light cycle time
   yellow_time: 3 # Yellow time
-  time_to_teleport: 500 # Teleport stuck vehicles (-1 to disable)
+  time_to_teleport: 50 # Teleport stuck vehicles (-1 to disable)
   use_phase_standardizer: true # Map 4-value action to signal phases

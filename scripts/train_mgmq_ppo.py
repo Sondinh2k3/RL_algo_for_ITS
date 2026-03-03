@@ -42,6 +42,7 @@ from src.environment.rllib_utils import (
     override_config,
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
+from src.models.mlp_model import MLPTorchModel
 from src.models.dirichlet_distribution import register_dirichlet_distribution
 from src.models.masked_softmax_distribution import register_masked_softmax_distribution
 from src.config import (
@@ -62,6 +63,7 @@ from src.callbacks.diagnostic_callback import DiagnosticCallback
 # Register custom MGMQ models with RLlib
 ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
 ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
+ModelCatalog.register_custom_model("mlp_model", MLPTorchModel)
 
 # Register Dirichlet distribution for proper simplex-constrained actions
 # This solves the "Scale Ambiguity & Vanishing Gradient" problem
@@ -188,7 +190,7 @@ def create_mgmq_ppo_config(
     num_sgd_iter: int = 10,
     grad_clip: float = 10.0,
     vf_clip_param: float = 100.0,
-    vf_loss_coeff: float = 0.5,
+    vf_loss_coeff: float = 0.01,
     use_gpu: bool = False,
     custom_model_name: str = "mgmq_model",
     lr_schedule: list = None,
@@ -343,6 +345,7 @@ def train_mgmq_ppo(
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
     reward_weights: list = None,  # Default: equal weights for all reward functions
     use_local_gnn: bool = False,  # Use LocalMGMQTorchModel with pre-packaged neighbor obs
+    use_mlp: bool = False,  # Use MLPTorchModel (no GNN) as diagnostic baseline
     max_neighbors: int = 4,  # Max neighbors (K) for local GNN
     # Ablation / experiment overrides
     normalize_reward: bool = True,  # Enable running mean/std normalization
@@ -556,8 +559,14 @@ def train_mgmq_ppo(
             "vf_share_coeff": vf_share_coeff,
         }
         
-        # Select custom model based on use_local_gnn flag
-        custom_model_name = "local_mgmq_model" if use_local_gnn else "mgmq_model"
+        # Select custom model based on flags
+        if use_mlp:
+            custom_model_name = "mlp_model"
+            print(f"  Model: MLP BASELINE (no GNN)")
+        elif use_local_gnn:
+            custom_model_name = "local_mgmq_model"
+        else:
+            custom_model_name = "mgmq_model"
         
         # Register environment
         register_sumo_env(env_config)
@@ -724,7 +733,7 @@ if __name__ == "__main__":
     
     # Basic arguments
     parser.add_argument("--network", type=str, default=None,
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1"],
                         help="Network name")
     parser.add_argument("--iterations", type=int, default=None,
                         help="Number of training iterations")
@@ -777,6 +786,8 @@ if __name__ == "__main__":
     # Local GNN arguments
     parser.add_argument("--use-local-gnn", action="store_true",
                         help="Use LocalMGMQTorchModel with pre-packaged neighbor observations")
+    parser.add_argument("--use-mlp", action="store_true",
+                        help="Use MLPTorchModel (no GNN) as baseline diagnostic")
     parser.add_argument("--max-neighbors", type=int, default=None,
                         help="Maximum neighbors (K) for local GNN. Default: 4")
     
@@ -864,6 +875,7 @@ if __name__ == "__main__":
         reward_fn=args.reward_fn or reward_cfg["reward_fn"],
         reward_weights=args.reward_weights or reward_cfg["reward_weights"],
         use_local_gnn=args.use_local_gnn or is_local_gnn_enabled(config),
+        use_mlp=args.use_mlp,
         max_neighbors=args.max_neighbors if args.max_neighbors is not None else mgmq_cfg["max_neighbors"],
         # Ablation overrides
         normalize_reward=not args.no_normalize_reward,

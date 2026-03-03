@@ -209,7 +209,7 @@ def evaluate_mgmq(
                 "yellow_time": int(stored_env_config.get("yellow_time", 3)),
                 # Force enable teleport for evaluation to prevent permanent deadlocks
                 # Training might use -1 (disabled) to punish agents, but eval needs to keep moving
-                "time_to_teleport": 500, 
+                "time_to_teleport": yaml_env_cfg.get("time_to_teleport", 500),
                 "single_agent": False,
                 "window_size": int(stored_env_config.get("window_size", 1)),
                 "preprocessing_config": preprocessing_config, # FROM YAML CONFIG
@@ -554,7 +554,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", type=str, required=True,
                         help="Path to checkpoint directory")
     parser.add_argument("--network", type=str, default="grid4x4",
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1"],
                         help="Network name")
     parser.add_argument("--episodes", type=int, default=10,
                         help="Number of evaluation episodes")

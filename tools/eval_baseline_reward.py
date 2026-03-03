@@ -348,7 +348,7 @@ if __name__ == "__main__":
         description="Evaluate baseline (no AI) traffic signal control"
     )
     parser.add_argument("--network", type=str, default="grid4x4",
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1"],
                         help="Network name")
     parser.add_argument("--episodes", type=int, default=5,
                         help="Number of evaluation episodes")

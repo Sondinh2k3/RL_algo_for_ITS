@@ -52,6 +52,7 @@ BASELINE_CLI = {
     "--use-local-gnn": True,         # flag (bool = present/absent)
     "--seed": "42",
     "--output-dir": "./results_ablation",
+    "--network": "test1",              # Use test1 network instead of grid4x4
 }
 
 # ─────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ EXPERIMENTS: Dict[str, Dict[str, Any]] = {
             "__yaml_overrides__": {
                 "ppo": {
                     "kl_coeff_floor": 0.01,
-                    "vf_loss_coeff": 0.01,
+                    "vf_loss_coeff": 0.001,
                     "clip_param": 0.1,
                 },
             },

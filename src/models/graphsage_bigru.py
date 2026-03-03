@@ -74,12 +74,13 @@ class DirectionalGraphSAGE(nn.Module):
         )
         
         # 3. Output projection: [h_self || G_k] -> out
-        # G_k = BiGRU output for all 4 directions = 4 * (hidden_features * 2)
-        # Total: hidden_features (self) + 4 * hidden_features * 2 (neighbors)
-        self.output_linear = nn.Linear(hidden_features + 4 * hidden_features * 2, out_features)
+        # G_k = BiGRU FINAL hidden states (paper Eq.20): cat(h_forward, h_backward)
+        # Shape: 2 * hidden_features (forward_final + backward_final)
+        # Total: hidden_features (self) + 2 * hidden_features (BiGRU final hidden)
+        self.output_linear = nn.Linear(hidden_features + 2 * hidden_features, out_features)
         
-        # LeakyReLU as per MGMQ specification
-        self.activation = nn.LeakyReLU(negative_slope=0.2)
+        # LeakyReLU(0.05) as per MGMQ paper specification
+        self.activation = nn.LeakyReLU(negative_slope=0.05)
         
         # STEP 3 FIX: LayerNorm for output stabilization
         self.output_norm = nn.LayerNorm(out_features)
@@ -120,12 +121,13 @@ class DirectionalGraphSAGE(nn.Module):
         mask_south = adj_directions[:, 2, :, :]
         mask_west  = adj_directions[:, 3, :, :]
         
-        # Step 1: Directional Projections
-        g_self = F.relu(self.proj_self(h))
-        g_north = F.relu(self.proj_north(h))
-        g_east = F.relu(self.proj_east(h))
-        g_south = F.relu(self.proj_south(h))
-        g_west = F.relu(self.proj_west(h))
+        # Step 1: Directional Projections (Eq. 19)
+        # Each direction has its own Dense layer: g_k^d = LeakyReLU(Dense^d(g_k))
+        g_self = F.leaky_relu(self.proj_self(h), 0.05)
+        g_north = F.leaky_relu(self.proj_north(h), 0.05)
+        g_east = F.leaky_relu(self.proj_east(h), 0.05)
+        g_south = F.leaky_relu(self.proj_south(h), 0.05)
+        g_west = F.leaky_relu(self.proj_west(h), 0.05)
         
         # Step 2: Topology-aware neighbor exchange
         in_north = torch.bmm(mask_north, g_south)
@@ -138,14 +140,16 @@ class DirectionalGraphSAGE(nn.Module):
         seq_tensor = torch.stack([in_north, in_east, in_south, in_west], dim=2)
         seq_flat = seq_tensor.view(batch_size * num_nodes, 4, self.hidden_features)
         
-        # BiGRU processes sequence in both directions:
-        # Forward: N -> E -> S -> W (upstream flow)
-        # Backward: W -> S -> E -> N (downstream feedback)
-        bigru_output, _ = self.bigru(seq_flat)  # [batch*nodes, 4, hidden*2]
+        # BiGRU processes sequence in both directions (Eq. 20):
+        # Forward:  N -> E -> S -> W (upstream flow)
+        # Backward: W -> S -> E -> N (downstream feedback / spillback)
+        _, hidden_state = self.bigru(seq_flat)
+        # hidden_state: (2, batch*nodes, hidden) — [forward_final, backward_final]
         
-        # G_k = Concat all BiGRU outputs for all 4 directions
-        # Shape: [batch*nodes, 4 * hidden * 2]
-        G_k = bigru_output.reshape(batch_size * num_nodes, -1)
+        # G_k = Connect(GRU→, GRU←) = cat(forward_final, backward_final)
+        # Paper Eq. 20: Only use FINAL hidden states, not all time-step outputs
+        # Shape: [batch*nodes, 2 * hidden]
+        G_k = torch.cat([hidden_state[0], hidden_state[1]], dim=-1)
         
         # Step 4: Combine self + neighbor context
         # z_raw = Concat(h_v, G_k)
@@ -256,7 +260,7 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         # Self projection
         self.self_proj = nn.Sequential(
             nn.Linear(in_features, gru_hidden_size),
-            nn.ReLU(),
+            nn.LeakyReLU(0.05),
             nn.Dropout(dropout)
         )
         
@@ -266,7 +270,7 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         self.dir_projections = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(in_features, gru_hidden_size),
-                nn.ReLU(),
+                nn.LeakyReLU(0.05),
                 nn.Dropout(dropout)
             )
             for _ in range(4)  # N=0, E=1, S=2, W=3
@@ -275,7 +279,7 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         # Fallback projection for unknown direction (e.g., padding or no direction info)
         self.fallback_proj = nn.Sequential(
             nn.Linear(in_features, gru_hidden_size),
-            nn.ReLU(),
+            nn.LeakyReLU(0.05),
             nn.Dropout(dropout)
         )
         
@@ -289,10 +293,11 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         )
         
         # Output projection
-        # Input: h_self (gru_hidden_size) + G_k (max_neighbors * gru_hidden_size * 2)
+        # Input: h_self (gru_hidden_size) + G_k (2 * gru_hidden_size) — BiGRU FINAL hidden
+        # Paper: G_k = cat(forward_final, backward_final)
         self.output_proj = nn.Sequential(
-            nn.Linear(gru_hidden_size + max_neighbors * gru_hidden_size * 2, hidden_features),
-            nn.LeakyReLU(negative_slope=0.2),
+            nn.Linear(gru_hidden_size + 2 * gru_hidden_size, hidden_features),
+            nn.LeakyReLU(negative_slope=0.05),
             nn.Dropout(dropout)
         )
         
@@ -368,11 +373,12 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         h_neighbors_masked = h_neighbors * mask_expanded
         
         # BiGRU Spatial Aggregation over K neighbors
-        # Output contains forward and backward hidden states for all positions
-        bigru_output, _ = self.spatial_bigru(h_neighbors_masked)  # [Batch, K, hidden*2]
+        # Use FINAL hidden states (paper spec), not all time-step outputs
+        _, hidden_state = self.spatial_bigru(h_neighbors_masked)
+        # hidden_state: (2, batch, hidden) — [forward_final, backward_final]
         
-        # G_k = Concat all BiGRU outputs for all K neighbors
-        G_k = bigru_output.reshape(bigru_output.size(0), -1)  # [Batch, K * hidden * 2]
+        # G_k = cat(forward_final, backward_final) → [Batch, 2 * hidden]
+        G_k = torch.cat([hidden_state[0], hidden_state[1]], dim=-1)
         
         # Combine: z_raw = Concat(h_self, G_k)
         z_raw = torch.cat([h_self, G_k], dim=-1)

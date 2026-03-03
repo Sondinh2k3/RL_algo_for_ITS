@@ -304,6 +304,9 @@ class SumoEnvironment(gym.Env):
         self.vehicles = dict()
         self.metrics = []
         
+        # Reset episode raw reward accumulator (used by DiagnosticCallback and eval scripts)
+        self._episode_raw_reward = 0.0
+        
         if self.single_agent:
             return observations[self.ts_ids[0]], self._compute_info()
         else:
