@@ -1,9 +1,0 @@
-{
-  "test": "T3_kl_floor",
-  "desc": "Add KL coeff floor=0.01 to prevent trust-region collapse (kl_coeff \u2192 0)",
-  "exp_name": "T3_kl_floor_20260228_163758",
-  "status": "success",
-  "returncode": 0,
-  "elapsed_seconds": 12251.3,
-  "timestamp": "2026-02-28T20:02:09.335820"
-}

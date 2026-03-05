@@ -1,9 +1,0 @@
-{
-  "test": "T0_baseline",
-  "desc": "Baseline (control) \u2014 reproduce the collapse",
-  "exp_name": "T0_baseline_20260228_101105",
-  "status": "failed",
-  "returncode": 1,
-  "elapsed_seconds": 1284.9,
-  "timestamp": "2026-02-28T10:32:30.340898"
-}

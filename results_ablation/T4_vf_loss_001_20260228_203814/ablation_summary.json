@@ -1,9 +1,0 @@
-{
-  "test": "T4_vf_loss_001",
-  "desc": "T3 + reduce vf_loss_coeff 0.02 \u2192 0.01 (rebalance critic gradient weight)",
-  "exp_name": "T4_vf_loss_001_20260228_203814",
-  "status": "success",
-  "returncode": 0,
-  "elapsed_seconds": 10843.2,
-  "timestamp": "2026-02-28T23:38:57.602408"
-}
