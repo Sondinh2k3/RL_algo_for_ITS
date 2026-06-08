@@ -1,18 +1,18 @@
 """
 GraphSAGE + Bi-GRU Layer for Network Embedding.
 
-This module implements the GraphSAGE aggregation combined with 
+This module implements the GraphSAGE aggregation combined with
 Bidirectional GRU for capturing SPATIAL features from neighbors
 in the MGMQ architecture.
 
 IMPORTANT NOTE:
     BiGRU in this module is used for SPATIAL aggregation (over directions or neighbors),
     NOT for temporal sequence processing.
-    
-    - DirectionalGraphSAGE: BiGRU aggregates over 4 SPATIAL directions (N, E, S, W)
-    - NeighborGraphSAGE_BiGRU: BiGRU aggregates over K neighbors in star-graph topology
 
-Reference: 
+    - DirectionalGraphSAGE: BiGRU aggregates over 4 SPATIAL directions (N, E, S, W)
+    - NeighborGraphSAGE_BiGRU: BiGRU aggregates over K neighbors (star-graph topology)
+
+Reference:
 # - Hamilton et al., "Inductive Representation Learning on Large Graphs", NeurIPS 2017
 # - MGMQ Paper: Multi-Layer graph masking Q-Learning
 """
@@ -49,7 +49,7 @@ class DirectionalGraphSAGE(nn.Module):
         in_features: int,
         hidden_features: int = 32,
         out_features: int = 64,
-        dropout: float = 0.5
+        dropout: float = 0.2
     ):
         super(DirectionalGraphSAGE, self).__init__()
         self.hidden_features = hidden_features
@@ -189,7 +189,7 @@ class GraphSAGE_BiGRU(nn.Module):
         in_features: int,
         hidden_features: int = 64,
         gru_hidden_size: int = 32,
-        dropout: float = 0.5
+        dropout: float = 0.2
     ):
         super(GraphSAGE_BiGRU, self).__init__()
         
@@ -208,11 +208,11 @@ class GraphSAGE_BiGRU(nn.Module):
     def forward(self, h: torch.Tensor, adj_directions: torch.Tensor) -> torch.Tensor:
         """
         Forward pass through DirectionalGraphSAGE.
-        
+
         Args:
             h: [Batch, N, In_Features] - Node features
             adj_directions: [Batch, 4, N, N] or [4, N, N] - Directional adjacency
-            
+
         Returns:
             out: [Batch, N, Out_Features] - Node embeddings
         """
@@ -222,20 +222,17 @@ class GraphSAGE_BiGRU(nn.Module):
 class NeighborGraphSAGE_BiGRU(nn.Module):
     """
     Directional Neighbor-based GraphSAGE with Bi-GRU for Spatial Aggregation.
-    
+
     Used when --use-local-gnn is enabled. BiGRU aggregates over K neighbors spatially,
     with directional awareness via separate projection heads for each direction.
-    
+
     Architecture:
     1. Project self features: h_self = Linear(self_features)
     2. Project neighbor features with DIRECTIONAL projections:
        - Each direction (N, E, S, W) has its own Linear projection
-       - This provides "inductive bias" so the network learns directional 
-         congestion propagation patterns faster (e.g., "congestion from North
-         will spill over to South")
     3. BiGRU aggregation over neighbors (spatial sequence, ordered by direction)
     4. Combine: output = Linear([h_self || BiGRU_output])
-    
+
     Args:
         in_features: Input feature dimension per node
         hidden_features: Output feature dimension
@@ -243,153 +240,127 @@ class NeighborGraphSAGE_BiGRU(nn.Module):
         max_neighbors: Maximum number of neighbors
         dropout: Dropout rate
     """
-    
+
     def __init__(
         self,
         in_features: int,
         hidden_features: int = 64,
         gru_hidden_size: int = 32,
         max_neighbors: int = 4,
-        dropout: float = 0.5
+        dropout: float = 0.5,
     ):
         super(NeighborGraphSAGE_BiGRU, self).__init__()
-        
+
         self.hidden_features = hidden_features
         self.gru_hidden_size = gru_hidden_size
-        
+
         # Self projection
         self.self_proj = nn.Sequential(
             nn.Linear(in_features, gru_hidden_size),
             nn.LeakyReLU(0.05),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
         )
-        
+
         # Directional neighbor projections (4 directions: N, E, S, W)
-        # Each direction has its own projection to provide "inductive bias"
-        # for learning directional congestion propagation patterns
         self.dir_projections = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(in_features, gru_hidden_size),
                 nn.LeakyReLU(0.05),
-                nn.Dropout(dropout)
+                nn.Dropout(dropout),
             )
             for _ in range(4)  # N=0, E=1, S=2, W=3
         ])
-        
-        # Fallback projection for unknown direction (e.g., padding or no direction info)
+
+        # Fallback projection for unknown direction
         self.fallback_proj = nn.Sequential(
             nn.Linear(in_features, gru_hidden_size),
             nn.LeakyReLU(0.05),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
         )
-        
+
         # Bi-GRU for SPATIAL aggregation over neighbors
         self.spatial_bigru = nn.GRU(
             input_size=gru_hidden_size,
             hidden_size=gru_hidden_size,
             num_layers=1,
             batch_first=True,
-            bidirectional=True
+            bidirectional=True,
         )
-        
-        # Output projection
-        # Input: h_self (gru_hidden_size) + G_k (2 * gru_hidden_size) — BiGRU FINAL hidden
-        # Paper: G_k = cat(forward_final, backward_final)
+
+        # Output projection: h_self(gru_h) + G_k(2*gru_h) -> hidden_features
         self.output_proj = nn.Sequential(
             nn.Linear(gru_hidden_size + 2 * gru_hidden_size, hidden_features),
             nn.LeakyReLU(negative_slope=0.05),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
         )
-        
+
         self.max_neighbors = max_neighbors
-        
-        # STEP 3 FIX: LayerNorm for output stabilization
+
+        # LayerNorm + residual
         self.output_norm = nn.LayerNorm(hidden_features)
-        
-        # STEP 3 FIX: Residual (Skip) Connection
-        # Projects self_features input to match output dim
         if in_features != hidden_features:
             self.residual_proj = nn.Linear(in_features, hidden_features)
         else:
             self.residual_proj = nn.Identity()
-        
+
     def forward(
         self,
         self_features: torch.Tensor,
         neighbor_features: torch.Tensor,
         neighbor_mask: torch.Tensor,
-        neighbor_directions: torch.Tensor = None
+        neighbor_directions: torch.Tensor = None,
     ) -> torch.Tensor:
         """
-        Forward pass for directional neighbor-based spatial aggregation.
-        
         Args:
-            self_features: [Batch, In_Features] - Self node features
-            neighbor_features: [Batch, MaxNeighbors, In_Features] - Neighbor features
-            neighbor_mask: [Batch, MaxNeighbors] - Binary mask (1=valid, 0=padding)
-            neighbor_directions: [Batch, MaxNeighbors] - Direction indices 
-                                (normalized: 0.0=N, 0.25=E, 0.5=S, 0.75=W, -1=padding)
-                                If None, falls back to generic projection (backward compatible)
-            
+            self_features:      [B, in_features]
+            neighbor_features:  [B, K, in_features]
+            neighbor_mask:      [B, K]  (1=valid, 0=padding)
+            neighbor_directions:[B, K]  (0.0=N, 0.25=E, 0.5=S, 0.75=W, -1=pad) or None
+
         Returns:
-            output: [Batch, Hidden_Features] - Aggregated embedding
+            output: [B, hidden_features]
         """
         B = self_features.size(0)
         K = neighbor_features.size(1)
-        
+
         # Project self features
         h_self = self.self_proj(self_features)  # [B, gru_hidden_size]
-        
+
         # Project neighbor features with directional awareness
         if neighbor_directions is not None:
-            # Convert normalized directions back to integer indices
-            # 0.0->0(N), 0.25->1(E), 0.5->2(S), 0.75->3(W), -1->fallback
             dir_indices = (neighbor_directions * 4.0).long()  # [B, K]
-            
-            # Apply directional projections
-            h_neighbors = torch.zeros(B, K, self.gru_hidden_size, 
-                                      device=self_features.device)
-            
+            h_neighbors = torch.zeros(B, K, self.gru_hidden_size, device=self_features.device)
+
             for d in range(4):
-                # Create mask for this direction
                 dir_mask = (dir_indices == d)  # [B, K]
                 if dir_mask.any():
-                    # Get features for neighbors in this direction
-                    # Apply projection for all and mask later
-                    proj_d = self.dir_projections[d](neighbor_features)  # [B, K, gru_hidden_size]
+                    proj_d = self.dir_projections[d](neighbor_features)  # [B, K, gru_h]
                     h_neighbors = h_neighbors + proj_d * dir_mask.unsqueeze(-1).float()
-            
-            # Handle fallback for padding/unknown directions
+
             fallback_mask = (dir_indices < 0) | (dir_indices > 3)
             if fallback_mask.any():
                 proj_fallback = self.fallback_proj(neighbor_features)
                 h_neighbors = h_neighbors + proj_fallback * fallback_mask.unsqueeze(-1).float()
         else:
-            # Backward compatible: use fallback projection for all neighbors
             h_neighbors = self.fallback_proj(neighbor_features)
-        
-        # Apply neighbor mask (zero out padded neighbors)
-        mask_expanded = neighbor_mask.unsqueeze(-1).float()
-        h_neighbors_masked = h_neighbors * mask_expanded
-        
-        # BiGRU Spatial Aggregation over K neighbors
-        # Use FINAL hidden states (paper spec), not all time-step outputs
+
+        # Apply neighbor mask
+        h_neighbors_masked = h_neighbors * neighbor_mask.unsqueeze(-1).float()
+
+        # BiGRU Spatial Aggregation
         _, hidden_state = self.spatial_bigru(h_neighbors_masked)
-        # hidden_state: (2, batch, hidden) — [forward_final, backward_final]
-        
-        # G_k = cat(forward_final, backward_final) → [Batch, 2 * hidden]
-        G_k = torch.cat([hidden_state[0], hidden_state[1]], dim=-1)
-        
-        # Combine: z_raw = Concat(h_self, G_k)
+        G_k = torch.cat([hidden_state[0], hidden_state[1]], dim=-1)  # [B, 2*gru_h]
+
+        # Combine and project
         z_raw = torch.cat([h_self, G_k], dim=-1)
         output = self.output_proj(z_raw)
-        
-        # STEP 3 FIX: Residual connection + LayerNorm
+
+        # Residual + LayerNorm
         residual = self.residual_proj(self_features)
         output = self.output_norm(output + residual)
-        
+
         return output
-    
+
     @property
     def output_dim(self) -> int:
         return self.hidden_features

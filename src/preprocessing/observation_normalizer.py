@@ -272,3 +272,104 @@ class RewardNormalizer:
         else:
             self.rms.reset()
             self.returns = 0.0
+
+
+class ReturnNormalizer:
+    """Scale-only return-based reward normalizer (SB3 / OpenAI baselines style).
+
+    Maintains a running estimate of the standard deviation of the *discounted
+    return* and divides each reward by it:
+
+        R_t = γ · R_{t-1} + r_t                       # per-agent return
+        rms.update(R_t)                                # online RMS on returns
+        r_normalized = r_t / sqrt(var(R) + ε)          # SCALE only — no shift
+
+    Two design choices that make this network-agnostic:
+
+    1. **Scale only, never shift.** Subtracting a mean from the reward is a
+       constant offset on V(s); it cancels out of advantages (A = Q − V), so
+       it has no effect on the policy gradient — but it inflates the value
+       target scale and confuses the critic when policy quality changes.
+       SB3 / Tianshou / CleanRL all do scale-only.
+
+    2. **Normalize by std of the return, not the reward.** The critic predicts
+       a return-shaped quantity, so this is what should have a controlled
+       scale. Reward-stream variance is much smaller than return variance and
+       under-normalizes the critic target.
+
+    There is no warmup parameter and no freezing: the running estimate is
+    update-only, and because we never subtract a (drifting) mean, it stays
+    stable as the policy improves on any network size.
+    """
+
+    def __init__(
+        self,
+        gamma: float,
+        epsilon: float = 1e-8,
+        clip: Optional[float] = 10.0,
+    ):
+        if not 0.0 < gamma < 1.0:
+            raise ValueError(f"gamma must be in (0, 1), got {gamma}")
+        self.gamma = float(gamma)
+        self.epsilon = float(epsilon)
+        self.clip = clip
+        self.rms = RunningMeanStd(shape=())
+        # Per-agent discounted-return accumulator.
+        self._returns: dict = {}
+
+    def normalize(self, rewards: dict, dones: Optional[dict] = None) -> dict:
+        """Normalize a multi-agent reward dict in-place over one env step.
+
+        Args:
+            rewards: ``{agent_id: float}``
+            dones:   optional ``{agent_id: bool}``; on done, the agent's
+                     return accumulator is reset *after* the step's update
+                     (SB3 convention).
+        """
+        # 1) Advance per-agent returns and gather them for a single batch RMS update.
+        return_batch = []
+        per_agent_returns = {}
+        for agent_id, reward in rewards.items():
+            r_acc = self._returns.get(agent_id, 0.0)
+            r_acc = self.gamma * r_acc + float(reward)
+            per_agent_returns[agent_id] = r_acc
+            return_batch.append(r_acc)
+
+        if return_batch:
+            self.rms.update(np.asarray(return_batch, dtype=np.float64))
+
+        # 2) Scale rewards by sqrt(var(returns)). No mean subtraction.
+        std = float(np.sqrt(self.rms.var + self.epsilon))
+        normalized: dict = {}
+        for agent_id, reward in rewards.items():
+            scaled = float(reward) / std
+            if self.clip is not None:
+                scaled = float(np.clip(scaled, -self.clip, self.clip))
+            normalized[agent_id] = scaled
+
+        # 3) Persist accumulators; reset for agents whose episode ended.
+        for agent_id, r_acc in per_agent_returns.items():
+            done = bool(dones.get(agent_id, False)) if dones else False
+            self._returns[agent_id] = 0.0 if done else r_acc
+
+        return normalized
+
+    def reset_returns(self) -> None:
+        """Clear per-agent return accumulators (call on env reset)."""
+        self._returns.clear()
+
+    def get_state(self) -> dict:
+        return {
+            "rms": self.rms.get_state(),
+            "returns": dict(self._returns),
+            "gamma": self.gamma,
+            "clip": self.clip,
+        }
+
+    def set_state(self, state: dict) -> None:
+        if "rms" in state:
+            self.rms.set_state(state["rms"])
+        else:
+            # Backwards-compat: a bare RunningMeanStd state dict.
+            self.rms.set_state(state)
+        self._returns = dict(state.get("returns", {}))

@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "area_id": 1,
+  "network_id": "cologne3",
+  "sim_config_path": "network/cologne3/intersection_config.json",
+  "sim_config_sha256": null,
+  "created_by": "operator-example",
+  "created_at": "2026-05-14T10:00:00+07:00",
+  "notes": "Ví dụ commissioning cologne3 sang DB pilot. Real IDs là placeholder, operator điền thực tế từ DB.",
+
+  "feature_formula": {
+    "channels": ["density", "queue", "occupancy", "speed"],
+    "formulas": {
+      "density":   "clip(occupancy / 100.0, 0.0, 1.0)",
+      "queue":     "clip((occupancy / 100.0) * lanes * length / 7.5, 0.0, lanes * length / 7.5)",
+      "occupancy": "clip(occupancy / 100.0, 0.0, 1.0)",
+      "speed":     "clip(speed / max(speed_design, 50.0), 0.0, 1.5)"
+    }
+  },
+
+  "crosses": [
+    {
+      "sim_tls_id": "33202549",
+      "real_cross_id": 567001,
+      "notes": "Nut giao 33202549, 3-way (S khong co).",
+      "roads_by_direction": {
+        "N": {"sim_edge_id": "4999334",      "real_road_id": 100001, "real_lanes": 1, "sim_lanes": 1},
+        "E": {"sim_edge_id": "-241660955#6", "real_road_id": 100002, "real_lanes": 2, "sim_lanes": 2},
+        "S": null,
+        "W": {"sim_edge_id": "241660955#4",  "real_road_id": 100003, "real_lanes": 2, "sim_lanes": 2}
+      },
+      "cycles": [
+        {
+          "real_cycle_id": 700001,
+          "is_primary": true,
+          "phase_to_stage": [
+            {"sim_phase_idx": 0, "real_stage_id": 800001, "std_phase_idx": 1},
+            {"sim_phase_idx": 2, "real_stage_id": 800002, "std_phase_idx": 4}
+          ]
+        }
+      ]
+    },
+    {
+      "sim_tls_id": "360082",
+      "real_cross_id": 567002,
+      "notes": "Nut giao 360082, 3-way (N khong co), 3 pha.",
+      "roads_by_direction": {
+        "N": null,
+        "E": {"sim_edge_id": "-241660955#17", "real_road_id": 100004, "real_lanes": 2, "sim_lanes": 2},
+        "S": {"sim_edge_id": "-130160207#0",  "real_road_id": 100005, "real_lanes": 1, "sim_lanes": 1},
+        "W": {"sim_edge_id": "241660955#14",  "real_road_id": 100006, "real_lanes": 2, "sim_lanes": 2}
+      },
+      "cycles": [
+        {
+          "real_cycle_id": 700002,
+          "is_primary": true,
+          "phase_to_stage": [
+            {"sim_phase_idx": 0, "real_stage_id": 800003, "std_phase_idx": 1},
+            {"sim_phase_idx": 2, "real_stage_id": 800004, "std_phase_idx": 3},
+            {"sim_phase_idx": 4, "real_stage_id": 800005, "std_phase_idx": 5}
+          ]
+        }
+      ]
+    },
+    {
+      "sim_tls_id": "360086",
+      "real_cross_id": 567003,
+      "notes": "Nut giao 360086, 4-way, 4 pha.",
+      "roads_by_direction": {
+        "N": {"sim_edge_id": "4045329#5",     "real_road_id": 100007, "real_lanes": 1, "sim_lanes": 1},
+        "E": {"sim_edge_id": "-241660955#10", "real_road_id": 100008, "real_lanes": 2, "sim_lanes": 2},
+        "S": {"sim_edge_id": "-41910185#2",   "real_road_id": 100009, "real_lanes": 1, "sim_lanes": 1},
+        "W": {"sim_edge_id": "241660955#7",   "real_road_id": 100010, "real_lanes": 2, "sim_lanes": 2}
+      },
+      "cycles": [
+        {
+          "real_cycle_id": 700003,
+          "is_primary": true,
+          "phase_to_stage": [
+            {"sim_phase_idx": 0, "real_stage_id": 800006, "std_phase_idx": 1},
+            {"sim_phase_idx": 2, "real_stage_id": 800007, "std_phase_idx": 3},
+            {"sim_phase_idx": 4, "real_stage_id": 800008, "std_phase_idx": 0},
+            {"sim_phase_idx": 6, "real_stage_id": 800009, "std_phase_idx": 2}
+          ]
+        }
+      ]
+    },
+    {
+      "sim_tls_id": "360088",
+      "real_cross_id": 567004,
+      "notes": "Nut giao 360088, 4-way, 2 pha.",
+      "roads_by_direction": {
+        "N": {"sim_edge_id": "41910186",     "real_road_id": 100011, "real_lanes": 1, "sim_lanes": 1},
+        "E": {"sim_edge_id": "-241660955#5", "real_road_id": 100012, "real_lanes": 2, "sim_lanes": 2},
+        "S": {"sim_edge_id": "-31800061#0",  "real_road_id": 100013, "real_lanes": 1, "sim_lanes": 1},
+        "W": {"sim_edge_id": "241660955#0",  "real_road_id": 100014, "real_lanes": 2, "sim_lanes": 2}
+      },
+      "cycles": [
+        {
+          "real_cycle_id": 700004,
+          "is_primary": true,
+          "phase_to_stage": [
+            {"sim_phase_idx": 0, "real_stage_id": 800010, "std_phase_idx": 1},
+            {"sim_phase_idx": 2, "real_stage_id": 800011, "std_phase_idx": 0}
+          ]
+        }
+      ]
+    },
+    {
+      "sim_tls_id": "cluster_2415878664_254486231_359566_359576",
+      "real_cross_id": 567005,
+      "notes": "Cluster cross, 4-way, 4 pha.",
+      "roads_by_direction": {
+        "N": {"sim_edge_id": "319261593#16", "real_road_id": 100015, "real_lanes": 2, "sim_lanes": 2},
+        "E": {"sim_edge_id": "-241660955#3", "real_road_id": 100016, "real_lanes": 2, "sim_lanes": 2},
+        "S": {"sim_edge_id": "241660957#0",  "real_road_id": 100017, "real_lanes": 2, "sim_lanes": 2},
+        "W": {"sim_edge_id": "200818108#0",  "real_road_id": 100018, "real_lanes": 2, "sim_lanes": 2}
+      },
+      "cycles": [
+        {
+          "real_cycle_id": 700005,
+          "is_primary": true,
+          "phase_to_stage": [
+            {"sim_phase_idx": 0, "real_stage_id": 800012, "std_phase_idx": 1},
+            {"sim_phase_idx": 2, "real_stage_id": 800013, "std_phase_idx": 3},
+            {"sim_phase_idx": 4, "real_stage_id": 800014, "std_phase_idx": 0},
+            {"sim_phase_idx": 6, "real_stage_id": 800015, "std_phase_idx": 2}
+          ]
+        }
+      ]
+    }
+  ]
+}

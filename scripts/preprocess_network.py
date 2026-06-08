@@ -34,11 +34,93 @@ import sumolib
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "preprocessing"))
 
-from src.preprocessing import IntersectionStandardizer, PhaseStandardizer
+from standardizer import IntersectionStandardizer
+from frap import PhaseStandardizer
 
 
-def parse_detector_file(detector_file: str) -> Dict[str, Any]:
+def _dedupe_preserve_order(items: List[str]) -> List[str]:
+    """Return items without duplicates while keeping their first-seen order."""
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+
+def _get_detector_lanes(det: ET.Element) -> List[str]:
+    """Get lane IDs for single-lane and multi-lane E2 detectors."""
+    lane_id = det.get('lane')
+    if lane_id:
+        return [lane_id]
+    lanes = det.get('lanes')
+    if lanes:
+        return lanes.split()
+    return []
+
+
+def _get_lane_length(net: Optional[Any], lane_id: str) -> Optional[float]:
+    """Read a lane length from the SUMO network when available."""
+    if net is None:
+        return None
+    try:
+        edge_id, lane_index = lane_id.rsplit('_', 1)
+        edge = net.getEdge(edge_id)
+        return float(edge.getLane(int(lane_index)).getLength())
+    except Exception:
+        return None
+
+
+def _parse_float(value: Optional[str]) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
+def _get_e2_detector_length(det: ET.Element, lanes: List[str], net: Optional[Any]) -> float:
+    """Estimate laneAreaDetector length for lane= and lanes= definitions."""
+    explicit_length = _parse_float(det.get('length'))
+    if explicit_length is not None:
+        return explicit_length
+
+    pos = _parse_float(det.get('pos')) or 0.0
+    end_pos = _parse_float(det.get('endPos'))
+    if end_pos is None:
+        return 60.0
+
+    if not lanes:
+        return abs(end_pos - pos)
+
+    if len(lanes) == 1:
+        lane_length = _get_lane_length(net, lanes[0])
+        if end_pos < 0 and lane_length is not None:
+            end_pos = lane_length + end_pos
+        return max(0.0, abs(end_pos - pos))
+
+    first_lane_length = _get_lane_length(net, lanes[0])
+    if first_lane_length is None:
+        return max(0.0, abs(end_pos - pos))
+
+    length = max(0.0, first_lane_length - pos)
+    for lane_id in lanes[1:-1]:
+        lane_length = _get_lane_length(net, lane_id)
+        if lane_length is not None:
+            length += lane_length
+
+    last_lane_length = _get_lane_length(net, lanes[-1])
+    if end_pos < 0 and last_lane_length is not None:
+        end_pos = last_lane_length + end_pos
+    length += max(0.0, end_pos)
+    return length
+
+
+def parse_detector_file(detector_file: str, net_file: Optional[str] = None) -> Dict[str, Any]:
     """Parse detector.add.xml to get lane-to-detector mapping.
     
     Args:
@@ -52,6 +134,7 @@ def parse_detector_file(detector_file: str) -> Dict[str, Any]:
         - 'e2_detectors': List of all E2 detector IDs
         - 'e1_lengths': Dict[detector_id, length]
         - 'e2_lengths': Dict[detector_id, length]
+        - 'e2_to_lanes': Dict[detector_id, List[lane_id]]
     """
     result = {
         'lane_to_e1': defaultdict(list),
@@ -60,6 +143,7 @@ def parse_detector_file(detector_file: str) -> Dict[str, Any]:
         'e2_detectors': [],
         'e1_lengths': {},
         'e2_lengths': {},
+        'e2_to_lanes': {},
     }
     
     if not os.path.exists(detector_file):
@@ -69,6 +153,12 @@ def parse_detector_file(detector_file: str) -> Dict[str, Any]:
     try:
         tree = ET.parse(detector_file)
         root = tree.getroot()
+        net = None
+        if net_file and os.path.exists(net_file):
+            try:
+                net = sumolib.net.readNet(net_file)
+            except Exception as e:
+                print(f"Warning: Could not read net file for detector lengths: {e}")
         
         # Parse E1 detectors (inductionLoop)
         for det in root.findall('.//inductionLoop'):
@@ -81,15 +171,13 @@ def parse_detector_file(detector_file: str) -> Dict[str, Any]:
         # Parse E2 detectors (laneAreaDetector)
         for det in root.findall('.//laneAreaDetector'):
             det_id = det.get('id')
-            lane_id = det.get('lane')
-            length = det.get('length', '0')
-            if det_id and lane_id:
-                result['lane_to_e2'][lane_id].append(det_id)
+            lanes = _get_detector_lanes(det)
+            if det_id and lanes:
+                for lane_id in lanes:
+                    result['lane_to_e2'][lane_id].append(det_id)
                 result['e2_detectors'].append(det_id)
-                try:
-                    result['e2_lengths'][det_id] = float(length)
-                except ValueError:
-                    result['e2_lengths'][det_id] = 60.0  # Default length
+                result['e2_to_lanes'][det_id] = lanes
+                result['e2_lengths'][det_id] = _get_e2_detector_length(det, lanes, net)
         
         # Convert defaultdicts to regular dicts
         result['lane_to_e1'] = dict(result['lane_to_e1'])
@@ -124,20 +212,125 @@ class NetworkDataProvider:
         """Get incoming edge IDs for a junction."""
         if junction_id in self._incoming_edges:
             return self._incoming_edges[junction_id]
-            
-        junction = self.net.getNode(junction_id)
+
+        try:
+            junction = self.net.getNode(junction_id)
+        except KeyError:
+            junction = None
         if junction is None:
-            return []
-            
+            # Fallback: Some TLS IDs are not junction IDs (e.g., cluster members).
+            # Derive incoming edges from controlled links.
+            edges = self._get_incoming_edges_from_tls(junction_id)
+            self._incoming_edges[junction_id] = edges
+            return edges
+
         edges = [e.getID() for e in junction.getIncoming()]
         self._incoming_edges[junction_id] = edges
         return edges
+
+    def _get_incoming_edges_from_tls(self, tls_id: str) -> List[str]:
+        """Fallback: derive incoming edges from TLS controlled links."""
+        return self._get_edges_from_tls_connections(tls_id, outgoing=False)
+
+    def _get_outgoing_edges_from_tls(self, tls_id: str) -> List[str]:
+        """Fallback: derive outgoing edges from TLS controlled links."""
+        return self._get_edges_from_tls_connections(tls_id, outgoing=True)
+
+    def _get_edges_from_tls_connections(self, tls_id: str, outgoing: bool) -> List[str]:
+        """Extract unique edge IDs from TLS-controlled connections."""
+        tls = self.net.getTLSSecure(tls_id)
+        if not tls:
+            return []
+
+        edges = []
+
+        # Prefer getConnections() if available (gives from/to lanes directly)
+        get_connections = getattr(tls, "getConnections", None)
+        if callable(get_connections):
+            try:
+                for rec in get_connections():
+                    lane_id = self._lane_id_from_tls_connection_record(rec, outgoing=outgoing)
+                    edge_id = self._edge_id_from_lane_id(lane_id)
+                    if edge_id:
+                        edges.append(edge_id)
+            except Exception:
+                edges = []
+
+        # Fallback to getLinks() when getConnections() is unavailable/empty
+        if not edges:
+            links_dict = tls.getLinks()
+            if links_dict:
+                for connections in links_dict.values():
+                    for conn in connections:
+                        lane_id = self._get_connection_from_lane_id(conn)
+                        edge_id = self._edge_id_from_lane_id(lane_id)
+                        if edge_id:
+                            edges.append(edge_id)
+
+        # Deduplicate while preserving order
+        seen = set()
+        result = []
+        for edge_id in edges:
+            if edge_id not in seen:
+                seen.add(edge_id)
+                result.append(edge_id)
+        return result
+
+    @staticmethod
+    def _lane_id_from_tls_connection_record(rec: Any, outgoing: bool) -> Optional[str]:
+        """Extract lane ID from a TLS connection record."""
+        if rec is None:
+            return None
+        lane_obj = None
+        if isinstance(rec, (list, tuple)) and len(rec) >= 2:
+            lane_obj = rec[1] if outgoing else rec[0]
+        if lane_obj is None:
+            return None
+        if isinstance(lane_obj, str):
+            return lane_obj
+        if hasattr(lane_obj, "getID"):
+            try:
+                return lane_obj.getID()
+            except Exception:
+                return None
+        return None
+
+    @staticmethod
+    def _edge_id_from_lane_id(lane_id: Optional[str]) -> Optional[str]:
+        if not lane_id:
+            return None
+        if "_" not in lane_id:
+            return lane_id
+        return lane_id.rsplit('_', 1)[0]
+
+    @staticmethod
+    def _get_connection_from_lane_id(conn: Any) -> Optional[str]:
+        """Try to extract the from-lane ID from a sumolib Connection."""
+        for attr in ("getFromLane", "getFromLaneID", "getFrom"):
+            getter = getattr(conn, attr, None)
+            if not callable(getter):
+                continue
+            try:
+                value = getter()
+            except Exception:
+                continue
+            if isinstance(value, str):
+                return value
+            if hasattr(value, "getID"):
+                try:
+                    return value.getID()
+                except Exception:
+                    continue
+        return None
     
     def get_outgoing_edges(self, junction_id: str) -> List[str]:
         """Get outgoing edge IDs for a junction."""
-        junction = self.net.getNode(junction_id)
+        try:
+            junction = self.net.getNode(junction_id)
+        except KeyError:
+            return self._get_outgoing_edges_from_tls(junction_id)
         if junction is None:
-            return []
+            return self._get_outgoing_edges_from_tls(junction_id)
         return [e.getID() for e in junction.getOutgoing()]
     
     def get_lane_shape(self, lane_id: str) -> List[tuple]:
@@ -166,7 +359,10 @@ class NetworkDataProvider:
     
     def get_junction_tls(self, junction_id: str) -> Optional[str]:
         """Get traffic light ID for a junction (if exists)."""
-        junction = self.net.getNode(junction_id)
+        try:
+            junction = self.net.getNode(junction_id)
+        except KeyError:
+            return None
         if junction is None:
             return None
         tls = junction.getTLS()
@@ -263,10 +459,10 @@ def preprocess_network(
         print(f"\nProcessing all {len(tls_ids)} traffic lights: {tls_ids}")
     
     # Parse detector file if provided
-    detector_info = {'lane_to_e1': {}, 'lane_to_e2': {}, 'e2_lengths': {}}
+    detector_info = {'lane_to_e1': {}, 'lane_to_e2': {}, 'e2_lengths': {}, 'e2_to_lanes': {}}
     if detector_file:
         print(f"\nParsing detector file: {detector_file}")
-        detector_info = parse_detector_file(detector_file)
+        detector_info = parse_detector_file(detector_file, net_file=net_file)
     
     # Process each intersection
     result = {
@@ -343,11 +539,17 @@ def preprocess_network(
                 for det_id in e2_dets:
                     if det_id in detector_info.get('e2_lengths', {}):
                         e2_detector_lengths[det_id] = detector_info['e2_lengths'][det_id]
+
+            direction_e1 = _dedupe_preserve_order(direction_e1)
+            direction_e2 = _dedupe_preserve_order(direction_e2)
             
             detectors_by_direction[direction] = {
                 "e1": direction_e1,
                 "e2": direction_e2
             }
+
+        all_e1_detectors = _dedupe_preserve_order(all_e1_detectors)
+        all_e2_detectors = _dedupe_preserve_order(all_e2_detectors)
         
         print(f"   Detectors: {len(all_e1_detectors)} E1, {len(all_e2_detectors)} E2")
             
@@ -376,6 +578,11 @@ def preprocess_network(
                         "green_indices": p.green_indices
                     } for p in frap.phases
                 ],
+                "transition_phases": frap.transition_phases,
+                "fixed_transition_time": sum(
+                    float(p.get("duration", 0.0))
+                    for p in frap.transition_phases
+                ),
                 "movement_to_phase": {
                     str(m): p for m, p in frap.movement_to_phase.items()
                 },

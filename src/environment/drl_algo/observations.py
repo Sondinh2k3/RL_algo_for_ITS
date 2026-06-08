@@ -1,452 +1,275 @@
-"""Observation functions for traffic signals."""
+"""Observation functions for traffic signals.
+
+Each observation function produces a Dict with at least:
+  * ``features``:    lane metrics + green-time ratios  [56]
+  * ``action_mask``: binary mask for valid phases      [8]
+
+Feature layout (56 dims):
+  [Lane0_density, Lane0_queue, Lane0_occupancy, Lane0_speed,
+   Lane1_density, ..., Lane11_speed,               # 48 dims  (12 lanes × 4)
+   GreenRatio_Phase0, ..., GreenRatio_Phase7]       #  8 dims
+"""
+
+from __future__ import annotations
 
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 from gymnasium import spaces
 
-from .traffic_signal import TrafficSignal
+if TYPE_CHECKING:
+    from .traffic_signal import TrafficSignal
 
-# Number of standard phases for FRAP action masking
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+TARGET_NUM_LANES = 12
+NUM_LANE_FEATURES = 4   # density, queue, occupancy, avg_speed
+NUM_GREEN_TIME_FEATURES = 8  # one per standard phase
 NUM_STANDARD_PHASES = 8
+LANE_FEATURE_DIM = TARGET_NUM_LANES * NUM_LANE_FEATURES          # 48
+TOTAL_FEATURE_DIM = LANE_FEATURE_DIM + NUM_GREEN_TIME_FEATURES   # 56
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _pad_or_trim(values: list, target_len: int, fill: float = 0.0) -> list:
+    """Pad with *fill* or trim *values* to exactly *target_len*."""
+    if len(values) >= target_len:
+        return values[:target_len]
+    return values + [fill] * (target_len - len(values))
+
+
+def _build_lane_features(ts: "TrafficSignal") -> np.ndarray:
+    """Build lane-major feature vector [48] = 12 lanes × 4 metrics.
+
+    If the intersection has fewer than 12 detectors, the missing lanes are
+    zero-padded.  If it has more, they are trimmed.
+    """
+    density = _pad_or_trim(ts.get_lanes_density_by_detectors(), TARGET_NUM_LANES)
+    queue = _pad_or_trim(ts.get_lanes_queue_by_detectors(), TARGET_NUM_LANES)
+    occupancy = _pad_or_trim(ts.get_lanes_occupancy_by_detectors(), TARGET_NUM_LANES)
+    avg_speed = _pad_or_trim(ts.get_lanes_average_speed_by_detectors(), TARGET_NUM_LANES, fill=1.0)
+
+    data = []
+    for i in range(TARGET_NUM_LANES):
+        data.extend([density[i], queue[i], occupancy[i], avg_speed[i]])
+
+    return np.clip(np.array(data, dtype=np.float32), 0.0, 1.0)
+
+
+def _build_green_time_features(ts: "TrafficSignal") -> np.ndarray:
+    """Green-time ratio features [8], each in [0, 1]."""
+    return ts.get_green_time_ratios()  # already float32, clipped
+
+
+def _build_full_features(ts: "TrafficSignal") -> np.ndarray:
+    """Concatenate lane features [48] + green-time ratios [8] → [56]."""
+    lane = _build_lane_features(ts)
+    green = _build_green_time_features(ts)
+    return np.concatenate([lane, green])
+
+
+# ---------------------------------------------------------------------------
+# Abstract base
+# ---------------------------------------------------------------------------
 
 class ObservationFunction:
     """Abstract base class for observation functions."""
 
-    def __init__(self, ts: TrafficSignal):
-        """Initialize observation function."""
+    def __init__(self, ts: "TrafficSignal"):
         self.ts = ts
 
     @abstractmethod
-    def __call__(self):
-        """Subclasses must override this method."""
-        pass
+    def __call__(self) -> dict:
+        ...
 
     @abstractmethod
-    def observation_space(self):
-        """Subclasses must override this method."""
-        pass
+    def observation_space(self) -> spaces.Dict:
+        ...
 
+
+# ---------------------------------------------------------------------------
+# Default (single-step)
+# ---------------------------------------------------------------------------
 
 class DefaultObservationFunction(ObservationFunction):
-    """Default observation function for traffic signals.
-    
-    Returns a Dict observation with:
-    - features: Lane features [48] = 12 lanes * 4 features
-    - action_mask: Binary mask [8] for valid phases (FRAP)
-    """
-
-    def __init__(self, ts: TrafficSignal):
-        """Initialize default observation function."""
-        super().__init__(ts)
+    """Single-step observation: features [56] + action_mask [8]."""
 
     def __call__(self) -> dict:
-        """Return the observation dict with features and action_mask."""
-        density = self.ts.get_lanes_density_by_detectors()
-        queue = self.ts.get_lanes_queue_by_detectors()
-        occupancy = self.ts.get_lanes_occupancy_by_detectors()
-        average_speed = self.ts.get_lanes_average_speed_by_detectors()
-        # CRITICAL FIX: Reorder to Lane-major [Lane0_Feats, Lane1_Feats, ...]
-        # This matches the model's expectation: .view(-1, 12, 4)
-        obs_data = []
-        num_lanes = len(self.ts.detectors_e2)
-        for i in range(num_lanes):
-            obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
-            
-        features = np.array(obs_data, dtype=np.float32)
-        # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
-        features = np.clip(features, 0.0, 1.0).astype(np.float32)
-        
-        # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
-        action_mask = self.ts.get_action_mask()
-        action_mask = np.array(action_mask, dtype=np.float32)
-        
         return {
-            "features": features,
-            "action_mask": action_mask,
+            "features": _build_full_features(self.ts),
+            "action_mask": np.array(self.ts.get_action_mask(), dtype=np.float32),
         }
 
     def observation_space(self) -> spaces.Dict:
-        """Return the observation space as Dict."""
-        feature_dim = 4 * len(self.ts.detectors_e2)
         return spaces.Dict({
-            "features": spaces.Box(
-                low=np.zeros(feature_dim, dtype=np.float32),
-                high=np.ones(feature_dim, dtype=np.float32),
-            ),
-            "action_mask": spaces.Box(
-                low=np.zeros(NUM_STANDARD_PHASES, dtype=np.float32),
-                high=np.ones(NUM_STANDARD_PHASES, dtype=np.float32),
-            ),
+            "features": spaces.Box(0.0, 1.0, shape=(TOTAL_FEATURE_DIM,), dtype=np.float32),
+            "action_mask": spaces.Box(0.0, 1.0, shape=(NUM_STANDARD_PHASES,), dtype=np.float32),
         })
 
+
+# ---------------------------------------------------------------------------
+# Spatio-Temporal (history window)
+# ---------------------------------------------------------------------------
 
 class SpatioTemporalObservationFunction(ObservationFunction):
-    """Observation function that returns a history of observations.
-    
-    Returns a Dict observation with:
-    - features: Flattened history [window_size * feature_dim]
-    - action_mask: Binary mask [8] for valid phases (FRAP)
-    """
+    """Stacked history observation: features [T × 56] + action_mask [8]."""
 
-    def __init__(self, ts: TrafficSignal, window_size: int = 5):
-        """Initialize spatio-temporal observation function."""
+    def __init__(self, ts: "TrafficSignal", window_size: int = 5):
         super().__init__(ts)
-        self.window_size = window_size
-        # Try to get window_size from TrafficSignal if available (will be added later)
-        if hasattr(ts, "window_size"):
-            self.window_size = ts.window_size
+        self.window_size = getattr(ts, "window_size", window_size)
 
     def compute_current_observation(self) -> np.ndarray:
-        """Return the current single-step observation."""
-        density = self.ts.get_lanes_density_by_detectors()
-        queue = self.ts.get_lanes_queue_by_detectors()
-        occupancy = self.ts.get_lanes_occupancy_by_detectors()
-        average_speed = self.ts.get_lanes_average_speed_by_detectors()
-        # CRITICAL FIX: Reorder to Lane-major [Lane0_Feats, Lane1_Feats, ...]
-        # This matches the model's expectation: .view(-1, 12, 4)
-        obs_data = []
-        num_lanes = len(self.ts.detectors_e2)
-        for i in range(num_lanes):
-            obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
-
-        observation = np.array(obs_data, dtype=np.float32)
-        # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
-        observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
-        return observation
+        """Single-step feature vector [56] for history tracking."""
+        return _build_full_features(self.ts)
 
     def __call__(self) -> dict:
-        """Return the stacked observation history with action_mask."""
-        # Get history from TrafficSignal
         history = self.ts.get_observation_history(self.window_size)
-        
-        # Stack into a single array [window_size, features]
-        # Flattening might be needed depending on how the model expects it, 
-        # but usually we want to keep the time dimension separate or flatten it.
-        # Here we return flattened array [window_size * features] to be compatible with Gym spaces
-        # The model will reshape it back to [window_size, features]
-        stacked_obs = np.array(history, dtype=np.float32).flatten()
-        # CRITICAL: Clip to [0, 1] AND ensure dtype is float32 to match observation_space
-        features = np.clip(stacked_obs, 0.0, 1.0).astype(np.float32)
-        
-        # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
-        action_mask = self.ts.get_action_mask()
-        action_mask = np.array(action_mask, dtype=np.float32)
-        
+        stacked = np.array(history, dtype=np.float32).flatten()
+        features = np.clip(stacked, 0.0, 1.0).astype(np.float32)
         return {
             "features": features,
-            "action_mask": action_mask,
+            "action_mask": np.array(self.ts.get_action_mask(), dtype=np.float32),
         }
 
     def observation_space(self) -> spaces.Dict:
-        """Return the observation space as Dict."""
-        # Base feature size
-        feature_size = 4 * len(self.ts.detectors_e2)
-        
         return spaces.Dict({
             "features": spaces.Box(
-                low=np.zeros(self.window_size * feature_size, dtype=np.float32),
-                high=np.ones(self.window_size * feature_size, dtype=np.float32),
+                0.0, 1.0,
+                shape=(self.window_size * TOTAL_FEATURE_DIM,),
+                dtype=np.float32,
             ),
-            "action_mask": spaces.Box(
-                low=np.zeros(NUM_STANDARD_PHASES, dtype=np.float32),
-                high=np.ones(NUM_STANDARD_PHASES, dtype=np.float32),
-            ),
+            "action_mask": spaces.Box(0.0, 1.0, shape=(NUM_STANDARD_PHASES,), dtype=np.float32),
         })
 
 
+# ---------------------------------------------------------------------------
+# Neighbor-Temporal (for Local GNN)
+# ---------------------------------------------------------------------------
+
 class NeighborTemporalObservationFunction(ObservationFunction):
-    """Spatio-Temporal observation with pre-packaged neighbor features.
-    
-    This observation function is designed for Local GNN processing with RLlib.
-    Instead of requiring global graph structure, each observation contains:
-    - Self features history: [T, feature_dim]
-    - Neighbor features history: [K, T, feature_dim]
-    - Neighbor mask: [K] indicating which neighbors are valid
-    
-    This allows the model to perform local GNN operations without
-    needing to reconstruct the global graph from shuffled batches.
+    """Observation with pre-packaged neighbour features for Local GNN.
+
+    Returns:
+        self_features       [T, 56]
+        neighbor_features   [K, T, 56]
+        neighbor_mask       [K]
+        neighbor_directions [K]
+        action_mask         [8]
     """
 
     def __init__(
-        self, 
-        ts: TrafficSignal, 
+        self,
+        ts: "TrafficSignal",
         neighbor_provider=None,
         max_neighbors: int = 4,
-        window_size: int = 5
+        window_size: int = 5,
     ):
-        """Initialize neighbor temporal observation function.
-        
-        Args:
-            ts: TrafficSignal instance for this agent
-            neighbor_provider: Object that provides neighbor info and observations
-            max_neighbors: Maximum number of neighbors (pad if less)
-            window_size: Number of historical timesteps (T)
-        """
         super().__init__(ts)
         self.neighbor_provider = neighbor_provider
         self.max_neighbors = max_neighbors
-        self.window_size = window_size
-        
-        # Override from TrafficSignal if available
-        if hasattr(ts, "window_size"):
-            self.window_size = ts.window_size
-            
+        self.window_size = getattr(ts, "window_size", window_size)
+
     def compute_current_observation(self) -> np.ndarray:
-        """Return the current single-step observation (for history tracking)."""
-        density = self.ts.get_lanes_density_by_detectors()
-        queue = self.ts.get_lanes_queue_by_detectors()
-        occupancy = self.ts.get_lanes_occupancy_by_detectors()
-        average_speed = self.ts.get_lanes_average_speed_by_detectors()
-        # CRITICAL FIX: Reorder to Lane-major [Lane0_Feats, Lane1_Feats, ...]
-        obs_data = []
-        num_lanes = len(self.ts.detectors_e2)
-        for i in range(num_lanes):
-            obs_data.extend([density[i], queue[i], occupancy[i], average_speed[i]])
-            
-        observation = np.array(obs_data, dtype=np.float32)
-        observation = np.clip(observation, 0.0, 1.0).astype(np.float32)
-        return observation
+        """Single-step feature vector [56]."""
+        return _build_full_features(self.ts)
 
     def __call__(self) -> dict:
-        """Return Dict observation with self, neighbor features and mask.
-        
-        Returns:
-            Dict with keys:
-                - self_features: np.ndarray of shape [T, feature_dim]
-                - neighbor_features: np.ndarray of shape [K, T, feature_dim]  
-                - neighbor_mask: np.ndarray of shape [K]
-        """
-        feature_dim = 4 * len(self.ts.detectors_e2)  # Typically 48
-        
-        # Get T-step history for self
-        # Note: self.ts.get_observation_history now returns validated/clipped observations
-        # which might be Dicts if using nested observations.
-        # However, for Local GNN, we expect the BASE observation to be a vector (Box)
-        # We need to extract the raw features vector if the history contains Dicts.
-        
-        self_history = self.ts.get_observation_history(self.window_size)
-        
-        # Helper to extract feature vector from observation history element
-        def extract_features(obs):
-            if isinstance(obs, dict):
-                # If observation is already a dict (e.g. from previous step's NeighborObs),
-                # we need to extract the "self_features" part or flatten it.
-                # BUT: The base observation function usually returns a vector.
-                # If we get a dict here, it means we are using a complex observation class
-                # that wraps another one.
-                # For NeighborTemporalObservationFunction, the base internal observation
-                # should be the DEFAULT vector observation.
-                if "self_features" in obs:
-                    return obs["self_features"][-1] # Take most recent if it's a sequence
-                # Fallback: flatten values
-                return np.concatenate([v.flatten() for v in obs.values()])
-            return np.asarray(obs, dtype=np.float32)
+        feature_dim = TOTAL_FEATURE_DIM
+        T = self.window_size
+        K = self.max_neighbors
 
-        processed_history = [extract_features(obs) for obs in self_history]
-        self_features = np.array(processed_history, dtype=np.float32)  # [T, feature_dim]
-        # Ensure shape [T, feature_dim] (handle if extract_features returns [1, feature_dim])
-        if self_features.ndim > 2:
-             self_features = self_features.reshape(self.window_size, -1)
-             
-        self_features = np.clip(self_features, 0.0, 1.0)
-        
-        # Get neighbor features
-        neighbor_features, neighbor_mask = self._get_neighbor_features(feature_dim)
-        
-        # Get neighbor directions (0=N, 1=E, 2=S, 3=W, -1=padding)
+        # --- Self history ---
+        self_history = self.ts.get_observation_history(T)
+        processed = [self._extract_features(o) for o in self_history]
+        self_features = np.clip(
+            np.array(processed, dtype=np.float32).reshape(T, -1)[:, :feature_dim],
+            0.0, 1.0,
+        )
+        # Ensure exactly [T, feature_dim]
+        if self_features.shape != (T, feature_dim):
+            padded = np.zeros((T, feature_dim), dtype=np.float32)
+            rows = min(self_features.shape[0], T)
+            cols = min(self_features.shape[1], feature_dim)
+            padded[:rows, :cols] = self_features[:rows, :cols]
+            self_features = padded
+
+        # --- Neighbour features ---
+        neighbor_features = np.zeros((K, T, feature_dim), dtype=np.float32)
+        neighbor_mask = np.zeros(K, dtype=np.float32)
+
+        if self.neighbor_provider is not None:
+            neighbor_ids = self.neighbor_provider.get_neighbor_ids(self.ts.id)
+            if neighbor_ids:
+                neighbor_ids = sorted(neighbor_ids)
+            for i, nid in enumerate(neighbor_ids[:K]):
+                if nid is None:
+                    continue
+                nh = self.neighbor_provider.get_observation_history(nid, T)
+                if nh and len(nh) > 0:
+                    try:
+                        arr = np.array(
+                            [self._extract_features(o) for o in nh], dtype=np.float32
+                        )
+                        arr = np.clip(arr.reshape(-1, feature_dim)[-T:], 0.0, 1.0)
+                        if arr.shape == neighbor_features[i].shape:
+                            neighbor_features[i] = arr
+                            neighbor_mask[i] = 1.0
+                    except Exception:
+                        pass
+
+        # --- Directions ---
         neighbor_directions = self._get_neighbor_directions()
-        
-        # Get action mask from TrafficSignal (FRAP PhaseStandardizer)
-        action_mask = self.ts.get_action_mask()
-        action_mask = np.array(action_mask, dtype=np.float32)
-        
+
         return {
             "self_features": self_features,
             "neighbor_features": neighbor_features,
             "neighbor_mask": neighbor_mask,
             "neighbor_directions": neighbor_directions,
-            "action_mask": action_mask,
+            "action_mask": np.array(self.ts.get_action_mask(), dtype=np.float32),
         }
-        
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_features(obs) -> np.ndarray:
+        """Pull a flat feature vector from whatever the history stores."""
+        if isinstance(obs, dict):
+            if "self_features" in obs:
+                val = obs["self_features"]
+                if hasattr(val, "ndim") and val.ndim > 1:
+                    return val[-1]
+                return np.asarray(val, dtype=np.float32)
+            if "features" in obs:
+                return np.asarray(obs["features"], dtype=np.float32)
+            return np.concatenate([np.asarray(v).flatten() for v in obs.values()])
+        return np.asarray(obs, dtype=np.float32)
+
     def _get_neighbor_directions(self) -> np.ndarray:
-        """Get direction indices for neighbors.
-        
-        Returns:
-            np.ndarray of shape [K] with direction indices:
-            0=North, 1=East, 2=South, 3=West, -1=padding.
-            Encoded as float: N=0.0, E=0.25, S=0.5, W=0.75, padding=-1.0
-        """
+        """Direction indices: 0.0=N, 0.25=E, 0.5=S, 0.75=W, -1=pad."""
         K = self.max_neighbors
-        # Default: all padding (-1)
-        directions = np.full(K, -1.0, dtype=np.float32)
-        
-        if self.neighbor_provider is not None and hasattr(self.neighbor_provider, 'get_neighbor_directions'):
-            dir_indices = self.neighbor_provider.get_neighbor_directions(self.ts.id)
-            for i, d in enumerate(dir_indices[:K]):
+        dirs = np.full(K, -1.0, dtype=np.float32)
+        if self.neighbor_provider is not None and hasattr(self.neighbor_provider, "get_neighbor_directions"):
+            raw = self.neighbor_provider.get_neighbor_directions(self.ts.id)
+            for i, d in enumerate(raw[:K]):
                 if d >= 0:
-                    # Encode as normalized float: 0=0.0, 1=0.25, 2=0.5, 3=0.75
-                    directions[i] = d / 4.0
-        
-        return directions
-    
-    def _get_neighbor_features(self, feature_dim: int):
-        """Get T-step history for all neighbors with padding.
-        
-        Args:
-            feature_dim: Single observation feature dimension
-            
-        Returns:
-            Tuple of (neighbor_features, neighbor_mask)
-            - neighbor_features: [K, T, feature_dim]
-            - neighbor_mask: [K] with 1.0 for valid neighbors, 0.0 for padding
-        """
-        K = self.max_neighbors
-        T = self.window_size
-        
-        # Initialize with zeros (padding)
-        neighbor_features = np.zeros((K, T, feature_dim), dtype=np.float32)
-        neighbor_mask = np.zeros(K, dtype=np.float32)
-        
-        if self.neighbor_provider is None:
-            return neighbor_features, neighbor_mask
-            
-        # Get list of neighbor IDs
-        neighbor_ids = self.neighbor_provider.get_neighbor_ids(self.ts.id)
-
-        # === FIX: SORT NEIGHBOR IDS TO ENSURE CONSISTENT ORDER FOR BiGRU ===
-        # BiGRU is sequence-sensitive. Random order from Set causes fluctuation.
-        if neighbor_ids:
-            neighbor_ids = sorted(neighbor_ids)
-        # ===================================================================
-        
-        for i, neighbor_id in enumerate(neighbor_ids[:K]):
-            if neighbor_id is None:
-                continue
-                
-            # Get neighbor's observation history
-            neighbor_history = self.neighbor_provider.get_observation_history(
-                neighbor_id, T
-            )
-            
-            if neighbor_history is not None and len(neighbor_history) > 0:
-                # Helper to extract feature vector from observation history element
-                # Same logic as above: handle if neighbor history contains Dicts
-                def extract_features(obs):
-                    if isinstance(obs, dict):
-                        if "self_features" in obs:
-                            feat = obs["self_features"]
-                            # If shape is [T, F], take last? Or is it [F]?
-                            # Usually history items are individual time steps.
-                            # If obs is a Dict from NeighborObs, it has 'self_features' as [T, F]
-                            # BUT neighbor history should store raw per-step observations from BaseObs
-                            # If it stores NeighborObs, we have recursion.
-                            # ASSUMPTION: Neighbor provider returns the history of the NEIGHBOR'S
-                            # observation function. If neighbor also uses NeighborObs, it returns Dicts.
-                            # We need the RAW feature vector (density, queue, etc.)
-                            
-                            # If the neighbor uses NeighborTemporalObservationFunction, 
-                            # its compute_observation() returns a Dict.
-                            # We want the 'self_features' part of it, which represents its own state.
-                            # 'self_features' in NeighborObs is [T, F] (history).
-                            # We just want the most recent one? Or the whole history?
-                            
-                            # Wait, get_observation_history returns list of observations.
-                            # If Neighbor uses NeighborObs, each item in history is a Dict.
-                            # Inside that Dict, 'self_features' is ALREADY a history [T, F].
-                            # This is redundant.
-                            
-                            # CORRECT APPROACH:
-                            # The neighbor_provider should provide access to the neighbor's BASE features.
-                            # But currently it likely calls get_observation_history() on the neighbor TS.
-                            
-                            # If neighbor supports 'get_lanes_density...' etc, we can reconstruct? No.
-                            
-                            # Simplification: extracting 'self_features' from the Dict
-                            # If obs is {self: [T,F], ...}, we likely want the last step of self.
-                            # But wait, history contains T steps.
-                            # If each step is a Dict, it means we stored Dicts in history.
-                            
-                            # Let's look at TrafficSignal.compute_observation():
-                            # It appends current_obs to history.
-                            # If obs_fn returns Dict, history has Dicts.
-                            
-                            if "self_features" in obs: # It's a NeighborObs output
-                                # It contains a history window [T, F]. 
-                                # We probably just want the most recent frame from it?
-                                # Or is this a single step obs that just happens to be shaped [1, F]?
-                                val = obs["self_features"]
-                                if val.ndim > 1: return val[-1] # Take last time step
-                                return val
-                        return np.concatenate([v.flatten() for v in obs.values()])
-                    return np.asarray(obs, dtype=np.float32)
-
-                try:
-                    processed_history = [extract_features(obs) for obs in neighbor_history]
-                    hist_array = np.array(processed_history, dtype=np.float32)
-                    
-                    # Ensure shape [T, feature_dim]
-                    if hist_array.ndim != 2:
-                        # Try to reshape if total elements match
-                        if hist_array.size == T * feature_dim:
-                            hist_array = hist_array.reshape(T, feature_dim)
-                        else:
-                            # Log warning or skip?
-                            # Fallback: slice or pad
-                            if hist_array.shape[0] > T: hist_array = hist_array[-T:]
-                            # Dimension mismatch is hard to fix blindly
-                            pass
-
-                    hist_array = np.clip(hist_array, 0.0, 1.0)
-                    
-                    # Only assign if shapes match
-                    if hist_array.shape == neighbor_features[i].shape:
-                        neighbor_features[i] = hist_array
-                        neighbor_mask[i] = 1.0
-                except Exception:
-                    pass # Skip this neighbor if parsing fails
-                
-        return neighbor_features, neighbor_mask
+                    dirs[i] = d / 4.0
+        return dirs
 
     def observation_space(self) -> spaces.Dict:
-        """Return the Dict observation space.
-        
-        Returns:
-            spaces.Dict with:
-                - self_features: Box [T, feature_dim]
-                - neighbor_features: Box [K, T, feature_dim]
-                - neighbor_mask: Box [K]
-                - action_mask: Box [8] for valid phases (FRAP)
-        """
-        feature_dim = 4 * len(self.ts.detectors_e2)
+        feature_dim = TOTAL_FEATURE_DIM
         T = self.window_size
         K = self.max_neighbors
-        
         return spaces.Dict({
-            "self_features": spaces.Box(
-                low=0.0, high=1.0, 
-                shape=(T, feature_dim), 
-                dtype=np.float32
-            ),
-            "neighbor_features": spaces.Box(
-                low=0.0, high=1.0,
-                shape=(K, T, feature_dim),
-                dtype=np.float32
-            ),
-            "neighbor_mask": spaces.Box(
-                low=0.0, high=1.0,
-                shape=(K,),
-                dtype=np.float32
-            ),
-            "neighbor_directions": spaces.Box(
-                low=-1.0, high=1.0,
-                shape=(K,),
-                dtype=np.float32
-            ),
-            "action_mask": spaces.Box(
-                low=0.0, high=1.0,
-                shape=(NUM_STANDARD_PHASES,),
-                dtype=np.float32
-            ),
+            "self_features": spaces.Box(0.0, 1.0, shape=(T, feature_dim), dtype=np.float32),
+            "neighbor_features": spaces.Box(0.0, 1.0, shape=(K, T, feature_dim), dtype=np.float32),
+            "neighbor_mask": spaces.Box(0.0, 1.0, shape=(K,), dtype=np.float32),
+            "neighbor_directions": spaces.Box(-1.0, 1.0, shape=(K,), dtype=np.float32),
+            "action_mask": spaces.Box(0.0, 1.0, shape=(NUM_STANDARD_PHASES,), dtype=np.float32),
         })

@@ -1,0 +1,15 @@
+<configuration>
+    <net-file value="leductho.net.xml"/>
+    <output-trip-file value="leductho-demo.rou.xml"/>
+    <trip-attributes value="type=&quot;td_0&quot; departLane=&quot;best&quot; departSpeed=&quot;max&quot; departPos=&quot;random&quot;"/>
+    <lanes value="True"/>
+    <!-- <insertion-density value="300.0"/> -->
+    <begin value="0"/>
+    <end value="3600"/>
+    <insertion-rate value="1500,8000,2000,9500,2500"/>
+    <!-- <insertion-rate value="3000"/> -->
+    <!-- <period value="0.0001"/> -->
+    <!-- <binomial value="10"/> -->
+    <random-depart value="True"/>
+    <seed value="124"/>
+</configuration>

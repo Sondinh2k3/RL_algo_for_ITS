@@ -36,7 +36,7 @@ class GATLayer(nn.Module):
         self,
         in_features: int,
         out_features: int,
-        dropout: float = 0.6,
+        dropout: float = 0.15,
         alpha: float = 0.05,
         concat: bool = True
     ):
@@ -162,7 +162,7 @@ class MultiHeadGATLayer(nn.Module):
         in_features: int,
         out_features: int,
         n_heads: int = 4,
-        dropout: float = 0.6,
+        dropout: float = 0.15,
         alpha: float = 0.05,
         concat: bool = True
     ):

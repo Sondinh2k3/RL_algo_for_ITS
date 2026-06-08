@@ -9,18 +9,6 @@ from typing import Callable, List, Optional, Tuple, Union
 import gymnasium as gym
 import numpy as np
 import pandas as pd
-from gymnasium.utils import EzPickle, seeding
-from pettingzoo import AECEnv
-from pettingzoo.utils import wrappers
-
-try:
-    # pettingzoo 1.25+
-    from pettingzoo.utils import AgentSelector
-except ImportError:
-    # pettingzoo 1.24 or earlier
-    from pettingzoo.utils import agent_selector as AgentSelector
-
-from pettingzoo.utils.conversions import parallel_wrapper_fn
 
 from .observations import DefaultObservationFunction, ObservationFunction
 from .traffic_signal import TrafficSignal
@@ -33,19 +21,7 @@ if str(_src_path) not in sys.path:
 
 from sim.simulator_api import SimulatorAPI
 from sim.Sumo_sim import SumoSimulator
-from preprocessing.observation_normalizer import RunningMeanStd 
-
-
-
-def env(**kwargs):
-    """Instantiate a PettingoZoo environment."""
-    env = SumoEnvironmentPZ(**kwargs)
-    env = wrappers.AssertOutOfBoundsWrapper(env)
-    env = wrappers.OrderEnforcingWrapper(env)
-    return env
-
-
-parallel_env = parallel_wrapper_fn(env)
+from preprocessing.observation_normalizer import RunningMeanStd, ReturnNormalizer
 
 
 class SumoEnvironment(gym.Env):
@@ -126,9 +102,12 @@ class SumoEnvironment(gym.Env):
         use_phase_standardizer: bool = False,  # Enable phase standardization for action translation
         use_neighbor_obs: bool = False,  # Enable neighbor observation for Local GNN
         max_neighbors: int = 4,  # Maximum neighbors (K) for neighbor observation
-        normalize_reward: bool = False,  # Enable reward normalization
-        clip_rewards: float = None,  # Clip rewards to [-clip_rewards, clip_rewards]
+        normalize_reward: bool = False,  # Enable scale-only return-based reward normalization
+        clip_rewards: float = None,  # Clip normalized rewards to [-clip_rewards, clip_rewards]
+        reward_norm_gamma: float = 0.99,  # Discount factor for the return RMS (must match PPO gamma)
         normalizer_state_file: Optional[str] = None,  # Path to load normalizer state from (for resume)
+        action_mode: str = "ratio",  # "ratio", "cycle_level_continuous", or "discrete_adjustment"
+        green_time_step: int = 5,  # Step size for discrete adjustment mode
     ) -> None:
         """Initialize the environment."""
         assert render_mode is None or render_mode in self.metadata["render_modes"], "Invalid render mode."
@@ -203,6 +182,8 @@ class SumoEnvironment(gym.Env):
             use_neighbor_obs=use_neighbor_obs,  # Pass neighbor observation flag
             max_neighbors=max_neighbors,  # Pass max neighbors
             fixed_ts=self.fixed_ts, # Pass fixed_ts flag to Simulator
+            action_mode=action_mode,  # Action mode for TrafficSignal
+            green_time_step=green_time_step,  # Step size for discrete adjustment
         )
         
         # Initialize simulator and get initial state
@@ -242,13 +223,15 @@ class SumoEnvironment(gym.Env):
         self.observations = {ts: None for ts in self.ts_ids}
         self.rewards = {ts: None for ts in self.ts_ids}
         
-        # Reward normalization
+        # Reward normalization (scale-only return-based, SB3-style).
         self.normalize_reward = normalize_reward
         self.clip_rewards = clip_rewards
         self._normalizer_state_file = normalizer_state_file  # Store path for periodic saving
         if self.normalize_reward:
-            self.reward_normalizer = RunningMeanStd(shape=())
-            # Try to restore normalizer state from file (for resume training)
+            self.reward_normalizer = ReturnNormalizer(
+                gamma=reward_norm_gamma,
+                clip=clip_rewards,
+            )
             if normalizer_state_file:
                 try:
                     import json
@@ -258,32 +241,26 @@ class SumoEnvironment(gym.Env):
                         with open(state_path, 'r') as f:
                             state = json.load(f)
                         self.reward_normalizer.set_state(state)
-                        print(f"[SumoEnv] Restored normalizer from {state_path}: "
-                              f"mean={state['mean']:.4f}, var={state['var']:.4f}, "
-                              f"count={state['count']:.0f}")
+                        rms_state = state.get("rms", state)
+                        print(
+                            f"[SumoEnv] Restored ReturnNormalizer from {state_path}: "
+                            f"std={float(rms_state['var'])**0.5:.4f}, "
+                            f"count={float(rms_state['count']):.0f}"
+                        )
                     else:
                         print(f"[SumoEnv] Normalizer state file not found, starting fresh")
                 except Exception as e:
                     print(f"[SumoEnv] Warning: Failed to restore normalizer state: {e}")
-            print(f"[SumoEnv] Reward normalization enabled (clip={clip_rewards})")
+            print(
+                f"[SumoEnv] Reward normalization: scale-only return RMS "
+                f"(gamma={reward_norm_gamma}, clip={clip_rewards})"
+            )
 
-        # Debug logging is disabled by default for performance
-        # Uncomment to enable: self.enable_debug_logging(True, level=2)
-    # def _setup_reward_functions(self):
-    #     """Setup reward functions for each traffic signal."""
-    #     if not isinstance(self.reward_fn, dict):
-    #         self.reward_fn = {ts: self.reward_fn for ts in self.ts_ids}
-
-    # def _start_simulation(self):
-    #     """Start a new simulation episode."""
-    #     self.simulator.reset()  # Reset simulator to initial state
-
-    # Đặt lại môi trường về trạng thái ban đầu khi bắt đầu một episode mới.
     def reset(self, seed: Optional[int] = None, **kwargs):
         """Reset the environment."""
         super().reset(seed=seed, **kwargs)
 
-        # Lần đầu khởi tạo sẽ không cần phải đóng môi trường và lưu kết quả
+        # First episode doesn't need close/save
         if self.episode != 0:
             self.close()
             self.save_csv(self.out_csv_name, self.episode)
@@ -303,9 +280,15 @@ class SumoEnvironment(gym.Env):
         # Reset metrics
         self.vehicles = dict()
         self.metrics = []
-        
+
         # Reset episode raw reward accumulator (used by DiagnosticCallback and eval scripts)
         self._episode_raw_reward = 0.0
+
+        # Clear per-agent return accumulators so the new episode starts at R=0.
+        # The RMS itself is *not* reset — it is meant to track stats across
+        # the entire training run.
+        if self.normalize_reward and hasattr(self, "reward_normalizer"):
+            self.reward_normalizer.reset_returns()
         
         if self.single_agent:
             return observations[self.ts_ids[0]], self._compute_info()
@@ -317,7 +300,6 @@ class SumoEnvironment(gym.Env):
         """Return current simulation second on SUMO."""
         return self.simulator.get_sim_step()
 
-    # Thực hiện một bước trong môi trường với hành động đã cho.
     def step(self, action: Union[dict, int]):
         """Apply the action(s) and then step the simulation for delta_time seconds.
 
@@ -348,43 +330,12 @@ class SumoEnvironment(gym.Env):
         # Store raw rewards BEFORE normalization (for logging/monitoring)
         raw_rewards = dict(rewards)  # shallow copy of raw values
         
-        # Normalize rewards if enabled
+        # Scale-only return-based normalization (no warmup, no freeze, no
+        # mean shift). The ReturnNormalizer accumulates per-agent discounted
+        # returns, runs RMS over those returns, and divides each reward by
+        # sqrt(var(R)). Network-agnostic by construction.
         if self.normalize_reward:
-            # Collect all rewards for batch update
-            reward_values = np.array(list(rewards.values()), dtype=np.float64)
-            
-            # Only update statistics if we have valid (non-zero variance) data
-            # and enough samples to compute meaningful statistics
-            if len(reward_values) > 0 and not np.all(reward_values == reward_values[0]):
-                self.reward_normalizer.update(reward_values)
-            
-            # Normalize each reward (only if we have enough samples)
-            normalized_rewards = {}
-            min_samples_for_norm = 10  # Require at least 10 samples before normalizing
-            
-            for ts_id, reward in rewards.items():
-                if self.reward_normalizer.count > min_samples_for_norm:
-                    # Safe normalization with proper variance check
-                    std = np.sqrt(float(self.reward_normalizer.var) + 1e-8)
-                    if std > 1e-6:  # Only normalize if std is meaningful
-                        normalized = (reward - float(self.reward_normalizer.mean)) / std
-                    else:
-                        normalized = reward  # Don't normalize if variance too small
-                else:
-                    # Not enough samples yet, use raw reward
-                    normalized = reward
-                
-                # Clip if specified
-                if self.clip_rewards is not None:
-                    normalized = np.clip(normalized, -self.clip_rewards, self.clip_rewards)
-                
-                # Final NaN check
-                if np.isnan(normalized) or np.isinf(normalized):
-                    normalized = 0.0
-                
-                normalized_rewards[ts_id] = float(normalized)
-            
-            rewards = normalized_rewards
+            rewards = self.reward_normalizer.normalize(rewards, dones=dones)
         
         # Update internal state
         self.observations = observations
@@ -463,10 +414,6 @@ class SumoEnvironment(gym.Env):
         if self.simulator is not None:
             self.simulator.close()
 
-    # def __del__(self):
-    #     """Close the environment when object is deleted."""
-    #     self.close()
-
     def render(self):
         """Render the environment.
         
@@ -492,24 +439,9 @@ class SumoEnvironment(gym.Env):
             df.to_csv(out_csv_name + f"_conn{self.label}_ep{episode}" + ".csv", index=False)
 
     def enable_debug_logging(self, enable: bool = True, level: int = 1, ts_ids: list = None):
-        """Enable or disable debug logging for traffic signals.
-        
-        This is useful for debugging reward and action calculations during training.
-        
-        Args:
-            enable: True to enable logging, False to disable
-            level: Logging detail level:
-                   1 = Basic (reward values, action ratios)
-                   2 = Detailed (+ traffic state info)
-                   3 = Verbose (+ detector history)
-            ts_ids: Optional list of specific traffic signal IDs.
-                   If None, enables for all traffic signals.
-        
-        Example:
-            env.enable_debug_logging(True, level=2)  # Enable detailed logging
-            env.enable_debug_logging(True, level=1, ts_ids=['tl_1'])  # Enable for specific signal
-        """
-        self.simulator.enable_debug_logging(enable, level, ts_ids)
+        """Enable or disable debug logging (delegates to simulator)."""
+        if hasattr(self.simulator, "enable_debug_logging"):
+            self.simulator.enable_debug_logging(enable, level, ts_ids)
 
     def get_normalizer_state(self) -> dict:
         """Get current reward normalizer state for checkpoint saving.
@@ -522,26 +454,22 @@ class SumoEnvironment(gym.Env):
         return None
     
     def set_normalizer_state(self, state: dict) -> None:
-        """Restore reward normalizer state from checkpoint.
-        
-        Args:
-            state: Dictionary from get_normalizer_state()
-        """
+        """Restore reward normalizer state from a checkpoint dict."""
         if self.normalize_reward and hasattr(self, 'reward_normalizer') and state:
             self.reward_normalizer.set_state(state)
-            print(f"[SumoEnv] Restored reward normalizer: mean={state['mean']:.4f}, "
-                  f"var={state['var']:.4f}, count={state['count']:.0f}")
-    
+            rms = state.get("rms", state)
+            print(
+                f"[SumoEnv] Restored reward normalizer: "
+                f"std={float(rms['var']) ** 0.5:.4f}, count={float(rms['count']):.0f}"
+            )
+
     def _save_normalizer_state(self) -> None:
-        """Save normalizer state to file (called at end of each episode).
-        
-        This ensures normalizer state is preserved even if training is interrupted.
-        """
+        """Persist normalizer state (RMS + per-agent return accumulators)."""
         if not self.normalize_reward or not hasattr(self, 'reward_normalizer'):
             return
         if not hasattr(self, '_normalizer_state_file') or not self._normalizer_state_file:
             return
-        
+
         try:
             import json
             from pathlib import Path
@@ -550,150 +478,11 @@ class SumoEnvironment(gym.Env):
             state = self.reward_normalizer.get_state()
             with open(state_path, 'w') as f:
                 json.dump(state, f, indent=2)
-            # Only log occasionally to avoid spam
             if self.episode % 10 == 0:
-                print(f"[SumoEnv] Saved normalizer state (ep={self.episode}): "
-                      f"mean={state['mean']:.4f}, var={state['var']:.4f}")
+                rms = state["rms"]
+                print(
+                    f"[SumoEnv] Saved normalizer state (ep={self.episode}): "
+                    f"std={float(rms['var']) ** 0.5:.4f}, count={float(rms['count']):.0f}"
+                )
         except Exception as e:
             print(f"[SumoEnv] Warning: Failed to save normalizer state: {e}")
-
-    # Below functions are for discrete state space
-    # TODO: Update API to support these functions if needed
-    # def encode(self, state, ts_id):
-    #     """Encode the state of the traffic signal into a hashable object."""
-    #     phase = int(np.where(state[: self.traffic_signals[ts_id].num_green_phases] == 1)[0])
-    #     min_green = state[self.traffic_signals[ts_id].num_green_phases]
-    #     density_queue = [self._discretize_density(d) for d in state[self.traffic_signals[ts_id].num_green_phases + 1 :]]
-    #     # tuples are hashable and can be used as key in python dictionary
-    #     return tuple([phase, min_green] + density_queue)
-
-    # def _discretize_density(self, density):
-    #     return min(int(density * 10), 9)
-
-
-class SumoEnvironmentPZ(AECEnv, EzPickle):
-    """A wrapper for the SUMO environment that implements the AECEnv interface from PettingZoo.
-
-    For more information, see https://pettingzoo.farama.org/api/aec/.
-
-    The arguments are the same as for :py:class:`sumo_rl.environment.env.SumoEnvironment`.
-    """
-
-    metadata = {"render.modes": ["human", "rgb_array"], "name": "sumo_rl_v0", "is_parallelizable": True}
-
-    def __init__(self, **kwargs):
-        """Initialize the environment."""
-        EzPickle.__init__(self, **kwargs)
-        self._kwargs = kwargs
-
-        self.seed()
-        self.env = SumoEnvironment(**self._kwargs)
-        self.render_mode = self.env.render_mode
-
-        self.agents = self.env.ts_ids
-        self.possible_agents = self.env.ts_ids
-        self._agent_selector = AgentSelector(self.agents)
-        self.agent_selection = self._agent_selector.reset()
-        # spaces
-        self.action_spaces = {a: self.env.action_spaces(a) for a in self.agents}
-        self.observation_spaces = {a: self.env.observation_spaces(a) for a in self.agents}
-
-        # dicts
-        self.rewards = {a: 0 for a in self.agents}
-        self.terminations = {a: False for a in self.agents}
-        self.truncations = {a: False for a in self.agents}
-        self.infos = {a: {} for a in self.agents}
-
-    def seed(self, seed=None):
-        """Set the seed for the environment."""
-        self.randomizer, seed = seeding.np_random(seed)
-
-    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
-        """Reset the environment."""
-        self.env.reset(seed=seed, options=options)
-        self.agents = self.possible_agents[:]
-        self.agent_selection = self._agent_selector.reset()
-        self.rewards = {agent: 0 for agent in self.agents}
-        self._cumulative_rewards = {agent: 0 for agent in self.agents}
-        self.terminations = {a: False for a in self.agents}
-        self.truncations = {a: False for a in self.agents}
-        self.compute_info()
-
-    def compute_info(self):
-        """Compute the info for the current step."""
-        self.infos = {a: {} for a in self.agents}
-        infos = self.env._compute_info()
-        for a in self.agents:
-            for k, v in infos.items():
-                if k.startswith(a) or k.startswith("system"):
-                    self.infos[a][k] = v
-
-    def observation_space(self, agent):
-        """Return the observation space for the agent."""
-        return self.env.simulator.get_observation_space(agent)
-
-    def action_space(self, agent):
-        """Return the action space for the agent."""
-        return self.env.simulator.get_action_space(agent)
-
-    def observe(self, agent):
-        """Return the observation for the agent."""
-        obs = self.env.observations[agent].copy()
-        return obs
-
-    def close(self):
-        """Close the environment."""
-        self.env.simulator.close()
-
-    def render(self):
-        """Render the environment."""
-        if self.render_mode == "human":
-            return  # GUI already rendering
-        elif self.render_mode == "rgb_array":
-            return self.env.simulator.get_rgb_array()
-
-    def save_csv(self, out_csv_name, episode):
-        """Save metrics of the simulation to a .csv file."""
-        if out_csv_name:
-            df = pd.DataFrame(self.env.metrics)
-            Path(Path(out_csv_name).parent).mkdir(parents=True, exist_ok=True)
-            df.to_csv(out_csv_name + f"_ep{episode}" + ".csv", index=False)
-
-    def step(self, action):
-        """Step the environment with the given action."""
-        # Check if agent is done
-        if self.truncations[self.agent_selection] or self.terminations[self.agent_selection]:
-            return self._was_dead_step(action)
-
-        agent = self.agent_selection
-        
-        # Validate action
-        if not self.action_spaces[agent].contains(action):
-            raise Exception(
-                "Action for agent {} must be in Discrete({})."
-                "It is currently {}".format(agent, self.action_spaces[agent].n, action)
-            )
-
-        # Step simulator if this is the last agent
-        if self._agent_selector.is_last():
-            # Convert single agent action to dict
-            actions = {agent: action} if not self.env.fixed_ts else {}
-            
-            # Step simulator and get results
-            observations, rewards, dones, info = self.env.simulator.step(actions)
-            
-            # Update environment state
-            self.observations = observations
-            self.rewards = rewards
-            self.compute_info()
-            
-            # Check if episode is done
-            done = dones["__all__"]
-            self.truncations = {a: done for a in self.agents}
-        else:
-            self._clear_rewards()
-
-        # Update agent selection
-        self.agent_selection = self._agent_selector.next()
-        self._cumulative_rewards[agent] = 0
-        self._accumulate_rewards()

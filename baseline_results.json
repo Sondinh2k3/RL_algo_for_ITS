@@ -1,41 +1,41 @@
 {
-  "network": "test1",
+  "network": "leductho",
   "num_episodes": 1,
-  "mean_reward": 196.47647070890253,
+  "mean_reward": 24.033501832000912,
   "std_reward": 0.0,
-  "min_reward": 196.47647070890253,
-  "max_reward": 196.47647070890253,
-  "mean_raw_reward": 196.47647070890253,
+  "min_reward": 24.033501832000912,
+  "max_reward": 24.033501832000912,
+  "mean_raw_reward": 24.033501832000912,
   "std_raw_reward": 0.0,
-  "min_raw_reward": 196.47647070890253,
-  "max_raw_reward": 196.47647070890253,
-  "mean_length": 67.0,
+  "min_raw_reward": 24.033501832000912,
+  "max_raw_reward": 24.033501832000912,
+  "mean_length": 24.0,
   "episode_rewards": [
-    196.47647070890253
+    24.033501832000912
   ],
   "episode_raw_rewards": [
-    196.47647070890253
+    24.033501832000912
   ],
   "episode_lengths": [
-    67
+    24
   ],
   "per_agent_stats": {
-    "B3": {
-      "mean_reward": 65.48005876010393,
+    "cluster10123839429_1312668863_1312668913_1720251781_#8more": {
+      "mean_reward": 16.101627954281863,
       "std_reward": 0.0,
-      "mean_raw_reward": 65.48005876010393,
+      "mean_raw_reward": 16.101627954281863,
       "std_raw_reward": 0.0
     },
-    "C3": {
-      "mean_reward": 64.40276964938585,
+    "cluster10222796214_cluster10222796210_10222796211_10222796215_10222808620_#5more": {
+      "mean_reward": 10.913502709940078,
       "std_reward": 0.0,
-      "mean_raw_reward": 64.40276964938585,
+      "mean_raw_reward": 10.913502709940078,
       "std_raw_reward": 0.0
     },
-    "D3": {
-      "mean_reward": 66.59364229941275,
+    "cluster1312668928_1312668940_1720251725_1720251748_#8more": {
+      "mean_reward": -2.981628832221032,
       "std_reward": 0.0,
-      "mean_raw_reward": 66.59364229941275,
+      "mean_raw_reward": -2.981628832221032,
       "std_raw_reward": 0.0
     }
   }

@@ -14,7 +14,6 @@ import sumolib
 import libsumo
 import traci
 import numpy as np
-import numpy as nplibsumo
 from typing import Dict, List, Optional, Tuple, Any, Union
 from pyvirtualdisplay.smartdisplay import SmartDisplay
 
@@ -273,6 +272,34 @@ def build_adjacency_map_from_network(
     return adjacency_map, direction_map
 
 
+_DIRECTION_TO_INDEX = {"N": 0, "E": 1, "S": 2, "W": 3}
+
+
+def build_adjacency_map_from_config(
+    adjacency_config: Dict[str, Any], ts_ids: List[str]
+) -> Tuple[Dict[str, List[str]], Dict[str, Dict[str, int]]]:
+    """Build neighbor maps from preprocessing JSON adjacency data."""
+    ts_set = set(ts_ids)
+    adjacency_map = {ts_id: [] for ts_id in ts_ids}
+    direction_map = {ts_id: {} for ts_id in ts_ids}
+
+    for ts_id in ts_ids:
+        neighbors = adjacency_config.get(ts_id, [])
+        for item in neighbors:
+            if isinstance(item, dict):
+                neighbor_id = item.get("neighbor_id")
+                direction = item.get("direction")
+            else:
+                neighbor_id = item
+                direction = None
+            if not neighbor_id or neighbor_id not in ts_set:
+                continue
+            adjacency_map[ts_id].append(neighbor_id)
+            direction_map[ts_id][neighbor_id] = _DIRECTION_TO_INDEX.get(direction, 0)
+
+    return adjacency_map, direction_map
+
+
 class SumoSimulator(SimulatorAPI):
     """SUMO traffic simulator implementing SimulatorAPI interface.
     
@@ -319,6 +346,8 @@ class SumoSimulator(SimulatorAPI):
         use_phase_standardizer: bool = False,  # Enable phase standardization
         use_neighbor_obs: bool = False,  # Enable neighbor observation for Local GNN
         max_neighbors: int = 4,  # Maximum neighbors (K) for neighbor observation
+        action_mode: str = "ratio",  # "ratio", "cycle_level_continuous", or "discrete_adjustment"
+        green_time_step: int = 5,  # Step size for discrete adjustment mode
     ):
         """Initialize SUMO simulator with all parameters."""
         # Configuration
@@ -358,6 +387,8 @@ class SumoSimulator(SimulatorAPI):
         self.use_phase_standardizer = use_phase_standardizer
         self.use_neighbor_obs = use_neighbor_obs
         self.max_neighbors = max_neighbors
+        self.action_mode = action_mode
+        self.green_time_step = green_time_step
         
         # State
         self.sumo = None
@@ -367,6 +398,7 @@ class SumoSimulator(SimulatorAPI):
         self._unique_label = None  # Store unique label for multi-worker
         self.traffic_signals = {}
         self.ts_lanes = {}  # Store controlled lanes per TS (ordered)
+        self.ts_green_phase_indices = {}  # Store controllable SUMO phase indices per TS
         self.gpi_standardizers = {}  # Store GPI modules per TS
         self.phase_standardizers = {}  # Store FRAP modules per TS
         self.vehicles = {}
@@ -376,6 +408,71 @@ class SumoSimulator(SimulatorAPI):
         self.neighbor_provider = None  # Will be created in initialize()
         self.adjacency_map = {}  # Map ts_id -> neighbor ts_ids
         self.direction_map = {}  # Map ts_id -> {neighbor_id: direction_index}
+        self._preprocessing_full_config = None
+        self._preprocessing_intersections = None
+
+    def _load_preprocessing_config(self) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+        """Load intersection preprocessing data once and keep it available."""
+        if self._preprocessing_intersections is not None:
+            return self._preprocessing_full_config, self._preprocessing_intersections
+
+        self._preprocessing_full_config = None
+        self._preprocessing_intersections = {}
+        if not self.preprocessing_config:
+            return None, {}
+
+        if not os.path.exists(self.preprocessing_config):
+            print(f"[SumoSim] Warning: preprocessing config not found: {self.preprocessing_config}")
+            return None, {}
+
+        try:
+            with open(self.preprocessing_config, "r") as f:
+                full_config = json.load(f)
+            intersections = full_config.get("intersections", {})
+            if not isinstance(intersections, dict):
+                intersections = {}
+            self._preprocessing_full_config = full_config
+            self._preprocessing_intersections = intersections
+        except Exception as e:
+            print(f"[SumoSim] Warning: Failed to load preprocessing config: {e}")
+            self._preprocessing_full_config = None
+            self._preprocessing_intersections = {}
+
+        return self._preprocessing_full_config, self._preprocessing_intersections
+
+    @staticmethod
+    def _phase_has_green(phase: Any) -> bool:
+        state = getattr(phase, "state", None)
+        if state is None and isinstance(phase, dict):
+            state = phase.get("state", "")
+        return any(c in (state or "") for c in ("G", "g"))
+
+    @classmethod
+    def _green_phase_indices_from_config(cls, phase_config: Dict[str, Any]) -> List[int]:
+        phases = phase_config.get("phases", []) if phase_config else []
+        green_indices = []
+        for phase in phases:
+            if phase.get("green_indices") or cls._phase_has_green(phase):
+                try:
+                    green_indices.append(int(phase["index"]))
+                except (KeyError, TypeError, ValueError):
+                    continue
+        return green_indices
+
+    @classmethod
+    def _green_phase_indices_from_logic(cls, logic: Any) -> List[int]:
+        return [
+            idx for idx, phase in enumerate(getattr(logic, "phases", []))
+            if cls._phase_has_green(phase)
+        ]
+
+    @classmethod
+    def _fixed_transition_time(cls, logic: Any) -> float:
+        return sum(
+            float(getattr(phase, "duration", 0.0) or 0.0)
+            for phase in getattr(logic, "phases", [])
+            if not cls._phase_has_green(phase)
+        )
 
     # =====================================================================
     # SimulatorAPI Implementation
@@ -392,16 +489,27 @@ class SumoSimulator(SimulatorAPI):
         """
         # Start simulation (handles both fresh start and reload)
         self._start_simulation()
+
+        preprocessing_full_config, intersection_config = self._load_preprocessing_config()
         
         # Get agent IDs if not provided
         if self.ts_ids is None:
-            self.ts_ids = list(self.conn.trafficlight.getIDList())
+            if intersection_config:
+                self.ts_ids = list(intersection_config.keys())
+            else:
+                self.ts_ids = list(self.conn.trafficlight.getIDList())
         
         # Build adjacency map for neighbor observation
         if self.use_neighbor_obs:
-            self.adjacency_map, self.direction_map = build_adjacency_map_from_network(
-                self.net_file, self.ts_ids
-            )
+            adjacency_config = (preprocessing_full_config or {}).get("adjacency", {})
+            if adjacency_config:
+                self.adjacency_map, self.direction_map = build_adjacency_map_from_config(
+                    adjacency_config, self.ts_ids
+                )
+            else:
+                self.adjacency_map, self.direction_map = build_adjacency_map_from_network(
+                    self.net_file, self.ts_ids
+                )
             # Create NeighborProvider (traffic_signals will be updated later)
             self.neighbor_provider = NeighborProvider(
                 traffic_signals={},
@@ -464,15 +572,18 @@ class SumoSimulator(SimulatorAPI):
         # This can happen when RLlib is initializing or sampling.
         # NOTE: If fixed_ts is enabled, we DO NOT want to interfere with SUMO logic.
         if not self.fixed_ts:
+            from environment.drl_algo.traffic_signal import NUM_STANDARD_PHASES
             for ts_id in self.ts_ids:
                 if ts_id in self.traffic_signals:
                     ts = self.traffic_signals[ts_id]
                     if ts.time_to_act and ts_id not in actions:
-                        # Apply default action: equal distribution across 8 standard phases
-                        # CRITICAL: set_next_phase() expects 8 standard phase ratios,
-                        # NOT num_green_phases (actual phases). The FRAP pipeline
-                        # handles mapping from standard → actual phases.
-                        default_action = np.ones(ts.NUM_STANDARD_PHASES) / ts.NUM_STANDARD_PHASES
+                        # Default action shape depends on action_mode so the
+                        # env-side translator receives a valid input.
+                        if getattr(ts, "action_mode", "ratio") == "discrete_adjustment":
+                            keep_idx = ts.num_discrete_actions // 2
+                            default_action = np.full(NUM_STANDARD_PHASES, keep_idx, dtype=np.int64)
+                        else:
+                            default_action = np.ones(NUM_STANDARD_PHASES) / NUM_STANDARD_PHASES
                         ts.set_next_phase(default_action)
                         actions_applied += 1
         else:
@@ -738,29 +849,8 @@ class SumoSimulator(SimulatorAPI):
             return None
 
     def enable_debug_logging(self, enable: bool = True, level: int = 1, ts_ids: list = None):
-        """Enable or disable debug logging for traffic signals.
-        
-        Args:
-            enable: True to enable logging, False to disable
-            level: Logging detail level (1=basic, 2=detailed, 3=verbose)
-            ts_ids: Optional list of specific traffic signal IDs to enable logging for.
-                   If None, enables for all traffic signals.
-        
-        Example:
-            simulator.enable_debug_logging(True, level=2)  # Enable for all
-            simulator.enable_debug_logging(True, level=1, ts_ids=['tl_1', 'tl_2'])  # Specific ones
-        """
-        if ts_ids is None:
-            ts_ids = list(self.traffic_signals.keys())
-        
-        for ts_id in ts_ids:
-            if ts_id in self.traffic_signals:
-                self.traffic_signals[ts_id].enable_debug_logging(enable, level)
-        
-        if enable:
-            print(f"[SumoSim] Debug logging enabled for {len(ts_ids)} traffic signals at level {level}")
-        else:
-            print(f"[SumoSim] Debug logging disabled for {len(ts_ids)} traffic signals")
+        """Enable or disable debug logging for traffic signals (no-op after refactor)."""
+        pass
 
     # =====================================================================
     # Internal SUMO Management (Private Methods)
@@ -929,23 +1019,25 @@ class SumoSimulator(SimulatorAPI):
         self.traffic_signals = {}
         self.ts_lanes = {}
         
-        # Load preprocessing config FIRST to get ts_ids
-        intersection_config = None
-        if self.preprocessing_config and os.path.exists(self.preprocessing_config):
-            try:
-                with open(self.preprocessing_config, 'r') as f:
-                    full_config = json.load(f)
-                    intersection_config = full_config.get("intersections", {})
-            except Exception as e:
-                print(f"[SumoSim] Warning: Failed to load preprocessing config: {e}")
+        # Load preprocessing config FIRST to get ts_ids, lanes, detectors and phase maps.
+        _, intersection_config = self._load_preprocessing_config()
         
         # PRIORITIZE: Use ts_ids from intersection_config if available
         # This ensures we only use the signals explicitly defined by user
         if intersection_config:
             ts_ids = list(intersection_config.keys())
+            if self.ts_ids is None:
+                self.ts_ids = ts_ids
+            else:
+                requested = set(self.ts_ids)
+                ts_ids = [ts_id for ts_id in ts_ids if ts_id in requested]
+                if not ts_ids:
+                    ts_ids = list(self.ts_ids)
         else:
             # Fallback: Get all traffic light IDs from SUMO
             ts_ids = conn.trafficlight.getIDList()
+            if self.ts_ids is None:
+                self.ts_ids = list(ts_ids)
         
         if not ts_ids:
             self.traffic_signals = {}
@@ -954,15 +1046,12 @@ class SumoSimulator(SimulatorAPI):
         # OPTIMIZATION: Build lane -> detectors map ONCE to avoid O(N_TS * N_Det) TRACI calls
         # This is only used as fallback if intersection_config doesn't have detector info
         lane_to_detectors = {}
-        use_config_detectors = False
-        
-        # Check if intersection_config has detector info
-        if intersection_config:
-            sample_ts = next(iter(intersection_config.values()), {})
-            if "detectors_e2" in sample_ts:
-                use_config_detectors = True
-        
-        if not use_config_detectors:
+        needs_detector_fallback = not intersection_config or any(
+            "detectors_e2" not in intersection_config.get(ts_id, {})
+            for ts_id in ts_ids
+        )
+
+        if needs_detector_fallback:
             # Fallback: Build mapping from SUMO API
             try:
                 all_e2 = conn.lanearea.getIDList()
@@ -978,16 +1067,26 @@ class SumoSimulator(SimulatorAPI):
         
         for ts_id in ts_ids:
             try:
-                # Get number of green phases
+                ts_config = intersection_config.get(ts_id, {}) if intersection_config else {}
+
+                # Get controllable green phases. Transition phases (yellow/all-red)
+                # keep their SUMO durations and are not part of the RL action.
                 logic = conn.trafficlight.getAllProgramLogics(ts_id)[0]
-                num_green_phases = len(logic.phases) // 2
+                phase_config = ts_config.get("phase_config", {}) if ts_config else {}
+                green_phase_indices = self._green_phase_indices_from_config(phase_config)
+                if not green_phase_indices:
+                    green_phase_indices = self._green_phase_indices_from_logic(logic)
+                fixed_transition_time = self._fixed_transition_time(logic)
+                num_green_phases = len(green_phase_indices)
+                if num_green_phases <= 0:
+                    continue
+                self.ts_green_phase_indices[ts_id] = green_phase_indices
                 
                 # Determine controlled lanes
                 controlled_lanes = []
                 
                 # Strategy 1: Use JSON config if available (Preferred)
-                if intersection_config and ts_id in intersection_config:
-                    ts_config = intersection_config[ts_id]
+                if ts_config:
                     # Flatten lanes from all directions in standard order (N, E, S, W)
                     # and standard lane order (Left to Right)
                     if "lanes_by_direction" in ts_config:
@@ -1038,9 +1137,8 @@ class SumoSimulator(SimulatorAPI):
                 e1_detectors = []
                 e2_detectors = []
                 
-                if use_config_detectors and ts_id in intersection_config:
-                    # NEW: Read detectors directly from intersection_config.json
-                    ts_config = intersection_config[ts_id]
+                if "detectors_e2" in ts_config:
+                    # Read detectors directly from intersection_config.json.
                     e1_detectors = ts_config.get("detectors_e1", [])
                     e2_detectors = ts_config.get("detectors_e2", [])
                 else:
@@ -1066,10 +1164,10 @@ class SumoSimulator(SimulatorAPI):
                         if IntersectionStandardizer is not None:
                             gpi = IntersectionStandardizer(ts_id, data_provider=self)
                             # Optimization: Load direction map from config to avoid TraCI calls
-                            if ts_id in intersection_config and "direction_map" in intersection_config[ts_id]:
+                            if "direction_map" in ts_config:
                                 gpi.load_config(
-                                    intersection_config[ts_id]["direction_map"],
-                                    intersection_config[ts_id].get("observation_mask")
+                                    ts_config["direction_map"],
+                                    ts_config.get("observation_mask")
                                 )
                             else:
                                 gpi.map_intersection()
@@ -1083,8 +1181,8 @@ class SumoSimulator(SimulatorAPI):
                         )
                         
                         # Optimization: Load mapping from config if available to avoid TraCI calls
-                        if ts_id in intersection_config and "phase_config" in intersection_config[ts_id]:
-                            phase_std.load_config(intersection_config[ts_id]["phase_config"])
+                        if "phase_config" in ts_config:
+                            phase_std.load_config(ts_config["phase_config"])
                         else:
                             # Fallback: Configure using TraCI
                             pass
@@ -1117,9 +1215,12 @@ class SumoSimulator(SimulatorAPI):
                     window_size=self.window_size,
                     phase_standardizer=phase_std,
                     use_phase_standardizer=self.use_phase_standardizer,
-                    detectors_e2_length=ts_config.get("e2_detector_lengths") if ts_id in intersection_config else None,
+                    detectors_e2_length=ts_config.get("e2_detector_lengths"),
                     neighbor_provider=self.neighbor_provider,  # Pass neighbor provider for Local GNN
                     max_neighbors=self.max_neighbors,
+                    action_mode=self.action_mode,
+                    green_time_step=self.green_time_step,
+                    fixed_transition_time=fixed_transition_time,
                 )
                 
                 self.traffic_signals[ts_id] = ts
@@ -1156,33 +1257,38 @@ class SumoSimulator(SimulatorAPI):
         return self.get_sim_time() >= next_action_time
 
     def set_traffic_light_phase(self, ts_id: str, green_times: List[float]):
-        """Set traffic light phase durations and synchronize to cycle start.
-        
-        IMPORTANT: After setting new phase durations, we reset the traffic light
-        to phase 0 to ensure the new timing takes effect immediately and the
-        total cycle time remains consistent (e.g., 90s).
-        
-        Without resetting to phase 0, if we change durations mid-cycle, the
-        actual observed cycle time will vary because:
-        - Phases that already completed keep their old duration
-        - Only future phases use the new duration
-        
+        """Update green-phase durations and restart the cycle from phase 0.
+
+        Without resetting to phase 0, new durations only affect phases that
+        haven't started yet in the current cycle — phases already in progress
+        keep their old duration, so the observed cycle length drifts and agent
+        actions don't fully take effect until the *next* cycle. Since we act
+        at cycle boundaries (delta_time == cycle_time), resetting to phase 0
+        forces the signal to start a fresh cycle with the new timings.
+
         Args:
             ts_id: Traffic signal ID
             green_times: List of green phase durations (one per green phase)
         """
         try:
             logic = self.sumo.trafficlight.getAllProgramLogics(ts_id)[0]
-            num_phases = len(green_times)
-            for i in range(num_phases):
-                logic.phases[2 * i].duration = green_times[i]
+            green_phase_indices = self.ts_green_phase_indices.get(ts_id)
+            if not green_phase_indices:
+                green_phase_indices = self._green_phase_indices_from_logic(logic)
+
+            if len(green_times) != len(green_phase_indices):
+                print(
+                    f"[SumoSim] Warning: {ts_id} got {len(green_times)} green durations "
+                    f"for {len(green_phase_indices)} controllable green phases"
+                )
+
+            for i, phase_idx in enumerate(green_phase_indices):
+                if i >= len(green_times):
+                    break
+                logic.phases[phase_idx].duration = green_times[i]
             self.sumo.trafficlight.setProgramLogic(ts_id, logic)
-            
-            # CRITICAL: Reset to phase 0 to start a fresh cycle with new timings
-            # This ensures the total cycle time = sum(green_times) + sum(yellow_times)
-            # Without this, cycle time varies depending on when action is applied
+            # Start a fresh cycle so new durations take effect immediately.
             self.sumo.trafficlight.setPhase(ts_id, 0)
-            
         except Exception as e:
             print(f"Warning: Failed to set traffic light phase for {ts_id}: {e}")
 

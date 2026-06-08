@@ -76,35 +76,32 @@ def get_mgmq_config(config: Dict[str, Any]) -> Dict[str, Any]:
     mgmq = config.get("mgmq", {})
     
     return {
-        "gat_hidden_dim": mgmq.get("gat", {}).get("hidden_dim", 256),
-        "gat_output_dim": mgmq.get("gat", {}).get("output_dim", 128),
+        "gat_hidden_dim": mgmq.get("gat", {}).get("hidden_dim", 64),
+        "gat_output_dim": mgmq.get("gat", {}).get("output_dim", 32),
         "gat_num_heads": mgmq.get("gat", {}).get("num_heads", 4),
-        "graphsage_hidden_dim": mgmq.get("graphsage", {}).get("hidden_dim", 256),
-        "gru_hidden_dim": mgmq.get("gru", {}).get("hidden_dim", 128),
-        "policy_hidden_dims": mgmq.get("policy", {}).get("hidden_dims", [256, 128]),
-        "value_hidden_dims": mgmq.get("value", {}).get("hidden_dims", [256, 128]),
+        "graphsage_hidden_dim": mgmq.get("graphsage", {}).get("hidden_dim", 64),
+        "gru_hidden_dim": mgmq.get("gru", {}).get("hidden_dim", 32),
+        "policy_hidden_dims": mgmq.get("policy", {}).get("hidden_dims", [128, 64]),
+        "value_hidden_dims": mgmq.get("value", {}).get("hidden_dims", [128, 64]),
         "dropout": mgmq.get("dropout", 0.3),
         "window_size": mgmq.get("history_length", 4),
-        "obs_dim": mgmq.get("local_gnn", {}).get("obs_dim", 48),
+        "obs_dim": mgmq.get("local_gnn", {}).get("obs_dim", 56),
         "max_neighbors": mgmq.get("local_gnn", {}).get("max_neighbors", 4),
-        # Gradient isolation coefficient for shared encoder
-        # 1.0 = full sharing (baseline), 0.0 = full isolation (value grad detached)
         "vf_share_coeff": mgmq.get("vf_share_coeff", 1.0),
+        "action_mode": mgmq.get("action_mode", "ratio"),
+        "green_time_step": mgmq.get("green_time_step", 5),
     }
 
 
 def get_ppo_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Extract PPO training configuration from loaded config.
-    
-    Args:
-        config: Full configuration dictionary from model_config.yml
-        
-    Returns:
-        PPO configuration dictionary
+    Extract network-agnostic PPO hyperparameters.
+
+    Batch sizing and iteration count are NOT here — see ``get_scaling_config``;
+    they are derived per-network from ``scaling`` + N_agents + episode length.
     """
     ppo = config.get("ppo", {})
-    
+
     return {
         "learning_rate": ppo.get("learning_rate", 3e-4),
         "gamma": ppo.get("gamma", 0.99),
@@ -113,32 +110,39 @@ def get_ppo_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "entropy_coeff_schedule": ppo.get("entropy_coeff_schedule", None),
         "clip_param": ppo.get("clip_param", 0.2),
         "kl_target": ppo.get("kl_target", 0.01),
-        "kl_coeff_floor": ppo.get("kl_coeff_floor", 0.01),
-        "vf_clip_param": ppo.get("vf_clip_param", 100.0),
+        "kl_coeff_floor": ppo.get("kl_coeff_floor", 0.1),
+        # Symmetric Δvalue clip (scale-free), not MSE clamp.
+        "vf_clip_param": ppo.get("vf_clip_param", 0.2),
         "vf_loss_coeff": ppo.get("vf_loss_coeff", 0.5),
-        "train_batch_size": ppo.get("train_batch_size", 4096),
-        "minibatch_size": ppo.get("minibatch_size", 256),
-        "num_sgd_iter": ppo.get("num_sgd_iter", 10),
-        "grad_clip": ppo.get("grad_clip", 10.0),
+        "num_sgd_iter": ppo.get("num_sgd_iter", 6),
+        "grad_clip": ppo.get("grad_clip", 1.0),
         "lr_schedule": ppo.get("lr_schedule", None),
+    }
+
+
+def get_scaling_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract batch/iteration scaling knobs (used to derive batch & num_iter)."""
+    scaling = config.get("scaling", {})
+    return {
+        "target_episodes_per_iter": scaling.get("target_episodes_per_iter", 8),
+        "minibatch_per_iter": scaling.get("minibatch_per_iter", 4),
+        "target_agent_steps": scaling.get("target_agent_steps", 5_000_000),
     }
 
 
 def get_training_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Extract training settings from loaded config.
-    
-    Args:
-        config: Full configuration dictionary from model_config.yml
-        
-    Returns:
-        Training configuration dictionary
+    Extract training settings.
+
+    ``num_iterations`` and ``num_workers`` may be the literal string ``"auto"``,
+    in which case the training script derives them at runtime from the scaling
+    knobs and host CPU count.
     """
     training = config.get("training", {})
-    
+
     return {
-        "num_iterations": training.get("num_iterations", 200),
-        "num_workers": training.get("num_workers", 2),
+        "num_iterations": training.get("num_iterations", "auto"),
+        "num_workers": training.get("num_workers", "auto"),
         "num_envs_per_worker": training.get("num_envs_per_worker", 1),
         "checkpoint_interval": training.get("checkpoint_interval", 20),
         "patience": training.get("patience", 50),
@@ -160,7 +164,7 @@ def get_reward_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """
     reward = config.get("reward", {})
     
-    reward_fn = reward.get("functions", ["halt-veh-by-detectors", "diff-departed-veh"])
+    reward_fn = reward.get("functions", ["queue", "throughput"])
     reward_weights = reward.get("weights", None)
 
     if reward_weights == "auto":
@@ -177,17 +181,10 @@ def get_reward_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def get_env_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Extract environment configuration from loaded config.
-    
-    Args:
-        config: Full configuration dictionary from model_config.yml
-        
-    Returns:
-        Environment configuration dictionary
-    """
+    """Extract environment configuration from loaded config."""
     env = config.get("environment", {})
-    
+    rn = env.get("reward_norm", {})
+
     return {
         "num_seconds": env.get("num_seconds", 8000),
         "max_green": env.get("max_green", 90),
@@ -196,6 +193,10 @@ def get_env_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "yellow_time": env.get("yellow_time", 3),
         "time_to_teleport": env.get("time_to_teleport", -1),
         "use_phase_standardizer": env.get("use_phase_standardizer", True),
+        "action_mode": env.get("action_mode", "ratio"),
+        "green_time_step": env.get("green_time_step", 5),
+        "reward_norm_enabled": rn.get("enabled", True),
+        "reward_norm_clip": rn.get("clip", 10.0),
     }
 
 

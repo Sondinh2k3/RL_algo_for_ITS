@@ -1,0 +1,184 @@
+{
+  "areaId": 1308701,
+  "crosses": [
+    {
+      "crossId": 33000000201001,
+      "cycleId": 2001,
+      "stages": [
+        {
+          "stageId": 99101,
+          "greenTime": 65
+        },
+        {
+          "stageId": 99102,
+          "greenTime": 40
+        },
+        {
+          "stageId": 99103,
+          "greenTime": 33
+        }
+      ],
+      "roads": [
+        {
+          "roadId": 710001,
+          "averageSpeed": 24.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 48.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710002,
+          "averageSpeed": 9.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 86.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710003,
+          "averageSpeed": 30.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 34.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710004,
+          "averageSpeed": 18.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 62.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        }
+      ]
+    },
+    {
+      "crossId": 33000000201002,
+      "cycleId": 2002,
+      "stages": [
+        {
+          "stageId": 99201,
+          "greenTime": 40
+        },
+        {
+          "stageId": 99202,
+          "greenTime": 27
+        },
+        {
+          "stageId": 99203,
+          "greenTime": 40
+        },
+        {
+          "stageId": 99204,
+          "greenTime": 27
+        }
+      ],
+      "roads": [
+        {
+          "roadId": 710005,
+          "averageSpeed": 28.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 40.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710006,
+          "averageSpeed": 13.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 78.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710007,
+          "averageSpeed": 31.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 29.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710008,
+          "averageSpeed": 16.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 70.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        }
+      ]
+    },
+    {
+      "crossId": 33000000201003,
+      "cycleId": 2003,
+      "stages": [
+        {
+          "stageId": 99301,
+          "greenTime": 40
+        },
+        {
+          "stageId": 99302,
+          "greenTime": 27
+        },
+        {
+          "stageId": 99303,
+          "greenTime": 40
+        },
+        {
+          "stageId": 99304,
+          "greenTime": 27
+        }
+      ],
+      "roads": [
+        {
+          "roadId": 710009,
+          "averageSpeed": 34.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 24.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710010,
+          "averageSpeed": 11.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 82.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710011,
+          "averageSpeed": 27.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 45.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        },
+        {
+          "roadId": 710012,
+          "averageSpeed": 20.0,
+          "averageSpeedUnit": "km/h",
+          "occupancySpace": 58.0,
+          "totalVehicle": 0,
+          "queueLength": 0,
+          "windowSeconds": 60
+        }
+      ]
+    }
+  ],
+  "minGreen": 15,
+  "maxGreen": 90,
+  "greenTimeStep": 5
+}

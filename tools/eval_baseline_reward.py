@@ -125,6 +125,7 @@ def evaluate_baseline(
         "--lateral-resolution 0.5 "
         "--ignore-route-errors "
         "--tls.actuated.jam-threshold 30 "
+        "--no-internal-links true "
         "--device.rerouting.adaptation-steps 18 "
         "--device.rerouting.adaptation-interval 10"
     )
@@ -165,6 +166,7 @@ def evaluate_baseline(
         # Raw rewards are still available via info["raw_reward"]
         "normalize_reward": yaml_env_cfg.get("normalize_reward", False),
         "clip_rewards": yaml_env_cfg.get("clip_rewards", None),
+        "sumo_seed": seed,  # Deterministic seed; overridden per-episode via env.reset(seed=seed+ep)
         # CRITICAL DIFFERENCE: fixed_ts=True means NO agent actions are applied
         # SUMO's default traffic light program (from .net.xml) controls the signals
         "fixed_ts": True,
@@ -348,7 +350,7 @@ if __name__ == "__main__":
         description="Evaluate baseline (no AI) traffic signal control"
     )
     parser.add_argument("--network", type=str, default="grid4x4",
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1", "osm", "leductho"],
                         help="Network name")
     parser.add_argument("--episodes", type=int, default=5,
                         help="Number of evaluation episodes")

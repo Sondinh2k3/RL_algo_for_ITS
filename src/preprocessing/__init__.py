@@ -13,12 +13,11 @@ from src.preprocessing.graph_builder import (
     build_directional_adjacency_from_net_file,
     adjacency_to_tensor,
     expand_adjacency_for_batch,
-    build_simple_adjacency,
 )
 
 __all__ = [
     'IntersectionStandardizer',
-    'PhaseStandardizer', 
+    'PhaseStandardizer',
     'MovementType',
     'Movement',
     'Phase',
@@ -26,5 +25,4 @@ __all__ = [
     'build_directional_adjacency_from_net_file',
     'adjacency_to_tensor',
     'expand_adjacency_for_batch',
-    'build_simple_adjacency',
 ]

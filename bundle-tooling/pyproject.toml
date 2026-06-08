@@ -1,0 +1,27 @@
+[project]
+name = "traffic-rl-bundle-tooling"
+version = "1.0.0"
+description = "Build-time CLI/library to package trained policy + operator deployment_map into a deployable Model Bundle. Independent of ai-algorithm-service runtime."
+authors = [{ name = "ITS Toan" }]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic==2.8.2",
+    "numpy>=1.24.0",
+    "traffic-rl-features>=1.0,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.2.2",
+]
+
+[project.scripts]
+build-bundle = "bundle_tooling.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bundle_tooling"]

@@ -16,11 +16,12 @@ Date: 2025
 
 import os
 import sys
+import math
 import json
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, Tuple
 
 import numpy as np
 import torch
@@ -43,18 +44,19 @@ from src.environment.rllib_utils import (
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
 from src.models.mlp_model import MLPTorchModel
-from src.models.dirichlet_distribution import register_dirichlet_distribution
-from src.models.masked_softmax_distribution import register_masked_softmax_distribution
+from src.models.masked_multi_categorical import register_masked_multi_categorical
+from src.models.masked_dirichlet import register_masked_dirichlet
 from src.config import (
     load_model_config,
     get_mgmq_config,
     get_ppo_config,
+    get_scaling_config,
     get_training_config,
     get_reward_config,
     get_env_config,
     get_network_config,
-    is_local_gnn_enabled,
     get_history_length,
+    is_local_gnn_enabled,
 )
 from src.algorithm.mgmq_ppo import MGMQPPO, MGMQPPOConfig, MGMQPPOTorchPolicy
 from src.callbacks.diagnostic_callback import DiagnosticCallback
@@ -65,17 +67,67 @@ ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
 ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
 ModelCatalog.register_custom_model("mlp_model", MLPTorchModel)
 
-# Register Dirichlet distribution for proper simplex-constrained actions
-# This solves the "Scale Ambiguity & Vanishing Gradient" problem
-register_dirichlet_distribution()
+register_masked_multi_categorical()
+register_masked_dirichlet()
 
-# Register Masked Softmax distribution (NEW - RECOMMENDED)
-# This applies action masking BEFORE softmax, not post-hoc
-# - Invalid phases get exactly 0.0
-# - Gradient only flows through valid phases
-# - Entropy correctly measures uncertainty over valid phases
-register_masked_softmax_distribution()
 
+def _auto_num_workers() -> int:
+    """Pick a sensible default for `num_env_runners`.
+
+    Leaves 2 cores for the driver/learner and caps at 8 so we don't oversubscribe
+    laptops. Override by setting `training.num_workers` in the YAML config.
+    """
+    return max(1, min((os.cpu_count() or 4) - 2, 8))
+
+
+def derive_runtime_scaling(
+    num_agents: int,
+    num_seconds: int,
+    cycle_time: int,
+    scaling_cfg: Dict[str, Any],
+    num_iterations_cfg: Any,
+    num_workers_cfg: Any,
+) -> Dict[str, int]:
+    """Derive batch / minibatch / iteration count from network shape.
+
+    Returns a dict with: train_batch_size, minibatch_size, num_iterations,
+    num_workers, episode_steps, episodes_per_iter.
+
+    The scaling rules:
+        train_batch_size = num_agents · T_episode · target_episodes_per_iter
+        minibatch_size   = train_batch_size // minibatch_per_iter
+        num_iterations   = ceil(target_agent_steps / train_batch_size)
+    """
+    episode_steps = max(1, num_seconds // max(1, cycle_time))
+    default_eps = max(1, int(scaling_cfg["target_episodes_per_iter"]))
+    # Use a larger episode multiplier only for tiny networks (<=3 agents).
+    episodes_per_iter = default_eps if num_agents <= 3 else 2
+    train_batch_size = num_agents * episode_steps * episodes_per_iter
+
+    mb_per_iter = max(1, int(scaling_cfg["minibatch_per_iter"]))
+    minibatch_size = max(1, train_batch_size // mb_per_iter)
+
+    if num_iterations_cfg in (None, "auto"):
+        num_iterations = max(
+            1,
+            math.ceil(int(scaling_cfg["target_agent_steps"]) / train_batch_size),
+        )
+    else:
+        num_iterations = int(num_iterations_cfg)
+
+    if num_workers_cfg in (None, "auto"):
+        num_workers = _auto_num_workers()
+    else:
+        num_workers = int(num_workers_cfg)
+
+    return {
+        "train_batch_size": train_batch_size,
+        "minibatch_size": minibatch_size,
+        "num_iterations": num_iterations,
+        "num_workers": num_workers,
+        "episode_steps": episode_steps,
+        "episodes_per_iter": episodes_per_iter,
+    }
 
 
 class MGMQStopper(Stopper):
@@ -172,6 +224,16 @@ class NormalizerStateCallback:
             return False
 
 
+def _action_dist_for_mode(action_mode: str) -> dict:
+    """Map action_mode to the RLlib custom_action_dist registration name."""
+    if action_mode == "discrete_adjustment":
+        return {"custom_action_dist": "masked_multi_categorical"}
+    if action_mode == "cycle_level_continuous":
+        return {"custom_action_dist": "masked_dirichlet"}
+    # Default: ratio mode uses the Gaussian + softmax MaskedSoftmax distribution.
+    return {"custom_action_dist": "masked_softmax"}
+
+
 def create_mgmq_ppo_config(
     env_config: dict,
     mgmq_config: dict,
@@ -236,49 +298,39 @@ def create_mgmq_ppo_config(
         )
         .training(
             lr=learning_rate,
-            # lr_schedule=lr_schedule,
             gamma=gamma,
             lambda_=lambda_,
             entropy_coeff=entropy_coeff,
-            # entropy_coeff_schedule=entropy_coeff_schedule,
             clip_param=clip_param,
             kl_target=kl_target,
-            # vf_clip_param must be large enough for reward scale
-            # Episode reward ~ -600 to -700, so vf predictions can be large
+            # Symmetric Δvalue clip applied in MGMQPPOTorchPolicy.loss().
             vf_clip_param=vf_clip_param,
-            # Value function loss coefficient (from YAML config)
             vf_loss_coeff=vf_loss_coeff,
             use_gae=True,
             train_batch_size=train_batch_size,
             minibatch_size=minibatch_size,
             num_epochs=num_sgd_iter,
-            # CRITICAL: grad_clip must be large enough for GNN models
-            # GNN (GAT + GraphSAGE + BiGRU) has naturally larger gradients
-            # Too small grad_clip prevents value function from learning
             grad_clip=grad_clip,
             # Use custom MGMQ model
             model={
                 "custom_model": custom_model_name,
                 "custom_model_config": mgmq_config,
                 "vf_share_layers": False,  # Separate policy and value networks
-                # Use Masked Softmax distribution (NEW - RECOMMENDED)
-                # Action masking applied BEFORE softmax → invalid phases = 0.0
-                # Better gradient flow than Dirichlet + post-hoc masking
-                "custom_action_dist": "masked_softmax",
+                # Custom action distributions with proper masking:
+                # - ratio:                 MaskedSoftmax (Gaussian -> softmax on simplex)
+                # - cycle_level_continuous: MaskedDirichlet (true simplex sampling)
+                # - discrete_adjustment:   MaskedMultiCategorical (8 independent categoricals)
+                **_action_dist_for_mode(mgmq_config.get("action_mode", "ratio")),
             },
         )
         .resources(num_gpus=1 if use_gpu else 0)
         .debugging(log_level="WARN")  # Reduce log verbosity
     )
-    # CRITICAL FIX: Disable normalize_actions for MaskedSoftmax distribution
-    # RLlib's normalize_actions=True (default) applies unsquash_action() which maps
-    # model output from [-1,1] to [low, high]. But MaskedSoftmax already outputs
-    # valid simplex actions in [0,1] with sum=1 and masked phases=0.
-    # With unsquash, the action gets distorted: (action + 1) / 2
-    #   -> masked 0.0 becomes 0.5 (mask broken!)
-    #   -> simplex sum 1.0 becomes 1.5~2.5 (simplex broken!)
-    # Setting normalize_actions=False ensures raw MaskedSoftmax output is used directly.
-    config.normalize_actions = False
+    # Continuous simplex modes (ratio, cycle_level_continuous) must keep
+    # normalize_actions=False so RLlib does not rescale the [0, 1] simplex
+    # output into [-1, 1].
+    if mgmq_config.get("action_mode", "ratio") in ("ratio", "cycle_level_continuous"):
+        config.normalize_actions = False
     
     # CRITICAL: Set KL coeff floor to prevent trust-region collapse
     # Without this, kl_coeff can decay to 0 via adaptive KL halving,
@@ -344,13 +396,16 @@ def train_mgmq_ppo(
     history_length: int = 1,
     reward_fn = None,  # Default: ["halt-veh-by-detectors", "diff-departed-veh"]
     reward_weights: list = None,  # Default: equal weights for all reward functions
-    use_local_gnn: bool = False,  # Use LocalMGMQTorchModel with pre-packaged neighbor obs
+    use_local_gnn: bool = True,  # Use LocalMGMQTorchModel (star-graph) instead of global graph
     use_mlp: bool = False,  # Use MLPTorchModel (no GNN) as diagnostic baseline
     max_neighbors: int = 4,  # Max neighbors (K) for local GNN
+    # Action mode
+    action_mode: str = "ratio",      # "ratio", "cycle_level_continuous", or "discrete_adjustment"
+    green_time_step: int = 5,        # Step size for discrete adjustment (legacy, unused with new 7-action)
     # Ablation / experiment overrides
-    normalize_reward: bool = True,  # Enable running mean/std normalization
-    clip_rewards: float = 10.0,     # Clip normalized rewards to [-clip, +clip]
-    vf_share_coeff: float = 1.0,    # 1.0 = shared encoder (baseline), 0.0 = detach value
+    normalize_reward: bool = True,   # Scale-only return-based normalization
+    clip_rewards: float = 10.0,      # Clip normalized rewards to [-clip, +clip]
+    vf_share_coeff: float = 1.0,     # 1.0 = shared encoder (baseline), 0.0 = detach value
 ):
     """
     Main training function for MGMQ-PPO.
@@ -424,6 +479,7 @@ def train_mgmq_ppo(
     print(f"  History Length: {history_length}")
     print(f"  Reward Function: {reward_fn}")
     print(f"  Reward Weights: {reward_weights}")
+    print(f"  Action Mode: {action_mode}")
     print("-"*80)
     print("PPO Hyperparameters:")
     print(f"  gamma: {gamma}, lambda: {lambda_}, clip_param: {clip_param}")
@@ -500,6 +556,7 @@ def train_mgmq_ppo(
             "--lateral-resolution 0.5 "
             "--ignore-route-errors "
             "--tls.actuated.jam-threshold 30 "
+            "--no-internal-links true "
             "--device.rerouting.adaptation-steps 18 "
             "--device.rerouting.adaptation-interval 10"
         )
@@ -527,14 +584,18 @@ def train_mgmq_ppo(
             "reward_fn": reward_fn,
             "reward_weights": reward_weights,  # Weights for combining multiple reward functions
             "use_phase_standardizer": use_phase_standardizer,
-            # Local GNN config
-            "use_neighbor_obs": use_local_gnn,  # Enable pre-packaged neighbor observation
+            "use_neighbor_obs": use_local_gnn,
             "max_neighbors": max_neighbors,
-            # Them phan chuan hoa reward o file env
-            "normalize_reward": normalize_reward,    # Enable running mean/std normalization
-            "clip_rewards": clip_rewards,             # Clip normalized rewards to [-clip, +clip]
-            # Path to normalizer state file (for resume training)
-            # Environment will load state from this file if it exists
+            # Action mode
+            "action_mode": action_mode,
+            "green_time_step": green_time_step,
+            # Reward normalization: scale-only return-based RMS (see env.py).
+            # `reward_norm_gamma` must match the PPO gamma so that the running
+            # return tracked here matches the discount used in the GAE target.
+            "normalize_reward": normalize_reward,
+            "clip_rewards": clip_rewards,
+            "reward_norm_gamma": gamma,
+            # Resume training will reload RMS state + return accumulators here.
             "normalizer_state_file": str(output_dir / experiment_name / "normalizer_state.json"),
         }
         
@@ -552,11 +613,16 @@ def train_mgmq_ppo(
             "value_hidden_dims": value_hidden_dims,
             "dropout": dropout,
             "window_size": history_length,
-            # Local GNN specific params
-            "obs_dim": 48,  # 4 features * 12 detectors
+            # Local GNN fallback obs_dim when obs_space is unavailable.
+            # 56 = 48 lane features (4 × 12 detectors) + 8 green-time ratios.
+            "obs_dim": 56,
             "max_neighbors": max_neighbors,
             # Gradient isolation for shared encoder (ablation parameter)
             "vf_share_coeff": vf_share_coeff,
+            # Action mode: "ratio" or "discrete_adjustment"
+            "action_mode": action_mode,
+            # Number of discrete actions per phase (7 = {-15,-10,-5,0,+5,+10,+15})
+            "num_discrete_actions": 7,
         }
         
         # Select custom model based on flags
@@ -565,6 +631,7 @@ def train_mgmq_ppo(
             print(f"  Model: MLP BASELINE (no GNN)")
         elif use_local_gnn:
             custom_model_name = "local_mgmq_model"
+            print(f"  Model: LOCAL MGMQ (star-graph, K={max_neighbors} neighbors)")
         else:
             custom_model_name = "mgmq_model"
         
@@ -733,7 +800,7 @@ if __name__ == "__main__":
     
     # Basic arguments
     parser.add_argument("--network", type=str, default=None,
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1", "osm", "leductho"],
                         help="Network name")
     parser.add_argument("--iterations", type=int, default=None,
                         help="Number of training iterations")
@@ -783,13 +850,16 @@ if __name__ == "__main__":
     parser.add_argument("--reward-weights", type=float, nargs='+', default=None,
                         help="Weights for reward functions. Must match number of reward functions. Default: equal weights.")
     
-    # Local GNN arguments
-    parser.add_argument("--use-local-gnn", action="store_true",
-                        help="Use LocalMGMQTorchModel with pre-packaged neighbor observations")
+    # Model arguments
+    parser.add_argument("--use-local-gnn", action="store_true", default=True,
+                        help="Use LocalMGMQTorchModel with star-graph topology (default: True)")
     parser.add_argument("--use-mlp", action="store_true",
                         help="Use MLPTorchModel (no GNN) as baseline diagnostic")
     parser.add_argument("--max-neighbors", type=int, default=None,
                         help="Maximum neighbors (K) for local GNN. Default: 4")
+    parser.add_argument("--action-mode", type=str, default=None,
+                        choices=["ratio", "cycle_level_continuous", "discrete_adjustment"],
+                        help="Action mode. Overrides `environment.action_mode` in config.")
     
     # Ablation / experiment arguments
     parser.add_argument("--no-normalize-reward", action="store_true",
@@ -822,16 +892,42 @@ if __name__ == "__main__":
     
     # Get environment configuration from YAML
     env_cfg = get_env_config(config)
-    
-    # CLI args override config file (if provided)
+    scaling_cfg = get_scaling_config(config)
+
+    # Derive batch size, minibatch size, num_iterations and num_workers from
+    # network shape so the same YAML works across networks of any size.
+    num_agents_for_scaling = len(get_network_ts_ids(network_cfg["network_name"]))
+    runtime = derive_runtime_scaling(
+        num_agents=num_agents_for_scaling,
+        num_seconds=env_cfg["num_seconds"],
+        cycle_time=env_cfg["cycle_time"],
+        scaling_cfg=scaling_cfg,
+        num_iterations_cfg=(
+            args.iterations if args.iterations is not None else training_cfg["num_iterations"]
+        ),
+        num_workers_cfg=(
+            args.workers if args.workers is not None else training_cfg["num_workers"]
+        ),
+    )
+
+    print(
+        f"\n[runtime] N_agents={num_agents_for_scaling}, "
+        f"T_episode={runtime['episode_steps']}, "
+        f"episodes/iter={runtime['episodes_per_iter']} "
+        f"→ train_batch_size={runtime['train_batch_size']}, "
+        f"minibatch_size={runtime['minibatch_size']}, "
+        f"num_iterations={runtime['num_iterations']}, "
+        f"num_workers={runtime['num_workers']}"
+    )
+
     train_mgmq_ppo(
         network_name=network_cfg["network_name"],
         net_file=network_cfg["net_file"],
         route_file=network_cfg["route_file"],
         detector_file=network_cfg["detector_file"],
         preprocessing_config=network_cfg["intersection_config"],
-        num_iterations=args.iterations if args.iterations is not None else training_cfg["num_iterations"],
-        num_workers=args.workers if args.workers is not None else training_cfg["num_workers"],
+        num_iterations=runtime["num_iterations"],
+        num_workers=runtime["num_workers"],
         checkpoint_interval=args.checkpoint_interval if args.checkpoint_interval is not None else training_cfg["checkpoint_interval"],
         reward_threshold=args.reward_threshold,
         experiment_name=args.experiment_name,
@@ -839,7 +935,7 @@ if __name__ == "__main__":
         use_gpu=args.gpu or training_cfg["use_gpu"],
         seed=args.seed if args.seed is not None else training_cfg["seed"],
         output_dir=args.output_dir or training_cfg["output_dir"],
-        resume_path=args.resume,  # Resume from previous experiment if provided
+        resume_path=args.resume,
         # Environment config from YAML
         num_seconds=env_cfg["num_seconds"],
         max_green=env_cfg["max_green"],
@@ -859,17 +955,15 @@ if __name__ == "__main__":
         gamma=ppo_cfg["gamma"],
         lambda_=ppo_cfg["lambda_"],
         clip_param=ppo_cfg["clip_param"],
-        kl_target=ppo_cfg.get("kl_target", 0.01),
-        kl_coeff_floor=ppo_cfg.get("kl_coeff_floor", 0.01),
-        entropy_coeff=ppo_cfg.get("entropy_coeff", 0.01),
-        # entropy_coeff_schedule=ppo_cfg.get("entropy_coeff_schedule", None),
-        train_batch_size=ppo_cfg["train_batch_size"],
-        minibatch_size=ppo_cfg["minibatch_size"],
+        kl_target=ppo_cfg["kl_target"],
+        kl_coeff_floor=ppo_cfg["kl_coeff_floor"],
+        entropy_coeff=ppo_cfg["entropy_coeff"],
+        train_batch_size=runtime["train_batch_size"],
+        minibatch_size=runtime["minibatch_size"],
         num_sgd_iter=ppo_cfg["num_sgd_iter"],
         grad_clip=ppo_cfg["grad_clip"],
-        vf_clip_param=ppo_cfg.get("vf_clip_param", 100.0),
-        vf_loss_coeff=ppo_cfg.get("vf_loss_coeff", 0.5),
-        # lr_schedule=ppo_cfg.get("lr_schedule", None),
+        vf_clip_param=ppo_cfg["vf_clip_param"],
+        vf_loss_coeff=ppo_cfg["vf_loss_coeff"],
         patience=args.patience if args.patience is not None else training_cfg["patience"],
         history_length=args.history_length if args.history_length is not None else mgmq_cfg["window_size"],
         reward_fn=args.reward_fn or reward_cfg["reward_fn"],
@@ -877,9 +971,11 @@ if __name__ == "__main__":
         use_local_gnn=args.use_local_gnn or is_local_gnn_enabled(config),
         use_mlp=args.use_mlp,
         max_neighbors=args.max_neighbors if args.max_neighbors is not None else mgmq_cfg["max_neighbors"],
-        # Ablation overrides
-        normalize_reward=not args.no_normalize_reward,
-        clip_rewards=args.clip_rewards if args.clip_rewards is not None else 10.0,
+        action_mode=args.action_mode or env_cfg.get("action_mode", "ratio"),
+        green_time_step=env_cfg.get("green_time_step", 5),
+        # Reward normalization: scale-only return-based RMS (see env.py).
+        normalize_reward=(not args.no_normalize_reward) and env_cfg["reward_norm_enabled"],
+        clip_rewards=args.clip_rewards if args.clip_rewards is not None else env_cfg["reward_norm_clip"],
         vf_share_coeff=args.vf_share_coeff if args.vf_share_coeff is not None else mgmq_cfg.get("vf_share_coeff", 1.0),
     )
 

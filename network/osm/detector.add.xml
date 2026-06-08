@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-04-15T23:13:00.837397+07:00 by Eclipse SUMO netedit 1.26.0
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <!-- Detectors -->
+    <inductionLoop id="E2C_0" lane="E2C_0" pos="186.15" period="10.00" file="E2C_0.xml"/>
+    <inductionLoop id="N2C_0" lane="N2C_0" pos="120.18" period="10.00" file="W2C_0.xml"/>
+    <inductionLoop id="N2C_1" lane="N2C_1" pos="120.58" period="10.00" file="N2C_1.xml"/>
+    <inductionLoop id="N2C_2" lane="N2C_2" pos="120.39" period="10.00" file="N2C_2.xml"/>
+    <inductionLoop id="S2C_0" lane="S2C_0" pos="96.55" period="10.00" file="S2C_0.xml"/>
+    <inductionLoop id="S2C_1" lane="S2C_1" pos="97.28" period="10.00" file="S2C_1.xml"/>
+    <inductionLoop id="S2C_2" lane="S2C_2" pos="97.18" period="10.00" file="S2C_2.xml"/>
+    <inductionLoop id="W2C_0" lane="W2C_0" pos="180.01" period="10.00" file="W2C_0.xml"/>
+    <laneAreaDetector id="E2C_0" lane="E2C_0" pos="105.48" length="80.00" period="10.00" file="e2E.xml"/>
+    <laneAreaDetector id="N2C_0" lane="N2C_0" pos="40.00" length="80.00" period="10.00" file="e2S_0.xml"/>
+    <laneAreaDetector id="N2C_1" lane="N2C_1" pos="40.00" length="80.00" period="10.00" file="e2_0.xml"/>
+    <laneAreaDetector id="N2C_2" lane="N2C_2" pos="40.00" length="80.00" period="10.00" file="e2_1.xml"/>
+    <laneAreaDetector id="S2C_0" lane="S2C_0" pos="16.00" length="80.00" friendlyPos="1" period="10.00" file="e2_2.xml"/>
+    <laneAreaDetector id="S2C_1" lane="S2C_1" pos="16.00" length="80.00" friendlyPos="1" period="10.00" file="e2_3.xml"/>
+    <laneAreaDetector id="S2C_2" lane="S2C_2" pos="16.00" length="80.00" friendlyPos="1" period="10.00" file="e2_4.xml"/>
+    <laneAreaDetector id="W2C_0" lane="W2C_0" pos="100.00" length="80.00" period="10.00" file="e2W.xml"/>
+</additional>

@@ -1,0 +1,6293 @@
+{
+  "network_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/network/zurich/zurich.net.xml",
+  "detector_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/network/zurich/detector.add.xml",
+  "num_intersections": 47,
+  "intersections": {
+    "5116225783": {
+      "direction_map": {
+        "N": null,
+        "E": null,
+        "S": "15675937#0",
+        "W": "526016660#0"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [],
+        "S": [
+          "15675937#0_0",
+          "15675937#0_1"
+        ],
+        "W": [
+          "526016660#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrG",
+            "duration": 42,
+            "green_indices": [
+              2
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 5,
+          "1": 3
+        },
+        "standard_to_actual": {
+          "5": 0,
+          "3": 1
+        }
+      }
+    },
+    "9954076990": {
+      "direction_map": {
+        "N": "842455631",
+        "E": "-15675745#0",
+        "S": null,
+        "W": "15675729#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "842455631_0"
+        ],
+        "E": [
+          "-15675745#0_0"
+        ],
+        "S": [],
+        "W": [
+          "15675729#0_0",
+          "15675729#0_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GrrGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              3,
+              4
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.EAST_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 2
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "2": 1
+        }
+      }
+    },
+    "J1": {
+      "direction_map": {
+        "N": "-1007827874#1",
+        "E": "4730718#0",
+        "S": "4730716#1",
+        "W": "-147164233#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-1007827874#1_0",
+          "-1007827874#1_1"
+        ],
+        "E": [
+          "4730718#0_0"
+        ],
+        "S": [
+          "4730716#1_0"
+        ],
+        "W": [
+          "-147164233#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_2",
+            "e1_1"
+          ],
+          "e2": [
+            "e2_0",
+            "e2_2"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_3"
+          ],
+          "e2": [
+            "e2_4"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_4"
+          ],
+          "e2": [
+            "e2_5"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_0"
+          ],
+          "e2": [
+            "e2_1"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_2",
+        "e1_1",
+        "e1_3",
+        "e1_4",
+        "e1_0"
+      ],
+      "detectors_e2": [
+        "e2_0",
+        "e2_2",
+        "e2_4",
+        "e2_5",
+        "e2_1"
+      ],
+      "e2_detector_lengths": {
+        "e2_0": 55.0,
+        "e2_2": 55.0,
+        "e2_4": 30.0,
+        "e2_5": 80.0,
+        "e2_1": 70.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrrGGgrrr",
+            "duration": 38,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGrrrrrGrrr",
+            "duration": 6,
+            "green_indices": [
+              2,
+              8
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrGGgrrrGGg",
+            "duration": 37,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "0": 0,
+          "2": 1
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "0": 0,
+          "1": 2
+        }
+      }
+    },
+    "J11": {
+      "direction_map": {
+        "N": "4803465#1",
+        "E": "29116100#9",
+        "S": null,
+        "W": "-1365026910#3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "4803465#1_0"
+        ],
+        "E": [
+          "29116100#9_0",
+          "29116100#9_1"
+        ],
+        "S": [],
+        "W": [
+          "-1365026910#3_0",
+          "-1365026910#3_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_14"
+          ],
+          "e2": [
+            "e2_14"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_16",
+            "e1_15"
+          ],
+          "e2": [
+            "e2_16",
+            "e2_15"
+          ]
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [
+            "e1_13",
+            "e1_12"
+          ],
+          "e2": [
+            "e2_12",
+            "e2_9"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_14",
+        "e1_16",
+        "e1_15",
+        "e1_13",
+        "e1_12"
+      ],
+      "detectors_e2": [
+        "e2_14",
+        "e2_16",
+        "e2_15",
+        "e2_12",
+        "e2_9"
+      ],
+      "e2_detector_lengths": {
+        "e2_14": 80.0,
+        "e2_16": 40.0,
+        "e2_15": 40.0,
+        "e2_12": 40.0,
+        "e2_9": 40.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgGGGg",
+            "duration": 38,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              9
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGGGrrrrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.EAST_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 3,
+          "2": 4,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "3": 1,
+          "4": 2,
+          "1": 0
+        }
+      }
+    },
+    "J12": {
+      "direction_map": {
+        "N": "-1209522756",
+        "E": "1172206635",
+        "S": "29116101#3",
+        "W": "26645942#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-1209522756_0"
+        ],
+        "E": [
+          "1172206635_0"
+        ],
+        "S": [
+          "29116101#3_0"
+        ],
+        "W": [
+          "26645942#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_102"
+          ],
+          "e2": [
+            "e2_102"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_103"
+          ],
+          "e2": [
+            "e2_105"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_104"
+          ],
+          "e2": [
+            "e2_104"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_101"
+          ],
+          "e2": [
+            "e2_103"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_102",
+        "e1_103",
+        "e1_104",
+        "e1_101"
+      ],
+      "detectors_e2": [
+        "e2_102",
+        "e2_105",
+        "e2_104",
+        "e2_103"
+      ],
+      "e2_detector_lengths": {
+        "e2_102": 40.0,
+        "e2_105": 15.0,
+        "e2_104": 40.0,
+        "e2_103": 15.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GggrrGGrrr",
+            "duration": 27,
+            "green_indices": [
+              0,
+              1,
+              2,
+              5,
+              6
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrrGGG",
+            "duration": 27,
+            "green_indices": [
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrGGGrrrr",
+            "duration": 27,
+            "green_indices": [
+              3,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "2": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 7,
+          "2": 6,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "7": 1,
+          "6": 2,
+          "0": 0
+        }
+      }
+    },
+    "J18": {
+      "direction_map": {
+        "N": "25957947#0",
+        "E": null,
+        "S": null,
+        "W": "821304189#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "25957947#0_0",
+          "25957947#0_1"
+        ],
+        "E": [],
+        "S": [],
+        "W": [
+          "821304189#0_0",
+          "821304189#0_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_127"
+          ],
+          "e2": [
+            "e2_130"
+          ]
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [
+            "e1_126",
+            "e1_125"
+          ],
+          "e2": [
+            "e2_128",
+            "e2_129"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_127",
+        "e1_126",
+        "e1_125"
+      ],
+      "detectors_e2": [
+        "e2_130",
+        "e2_128",
+        "e2_129"
+      ],
+      "e2_detector_lengths": {
+        "e2_130": 60.0,
+        "e2_128": 30.0,
+        "e2_129": 30.0
+      },
+      "observation_mask": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 4,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GrrrrGGG",
+            "duration": 26,
+            "green_indices": [
+              0,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrGGGrr",
+            "duration": 27,
+            "green_indices": [
+              3,
+              4,
+              5
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 5,
+            "state": "GGGrrrrr",
+            "duration": 27,
+            "green_indices": [
+              0,
+              1,
+              2
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_RIGHT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [],
+          "2": [],
+          "3": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 4,
+          "3": 2,
+          "1": 0,
+          "2": 1
+        },
+        "standard_to_actual": {
+          "4": 0,
+          "2": 3,
+          "0": 1,
+          "1": 2
+        }
+      }
+    },
+    "J2": {
+      "direction_map": {
+        "N": "-29116101#2",
+        "E": "313465298#1",
+        "S": "596514114#1",
+        "W": "-29116100#2"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-29116101#2_0"
+        ],
+        "E": [
+          "313465298#1_0"
+        ],
+        "S": [
+          "596514114#1_0",
+          "596514114#1_1"
+        ],
+        "W": [
+          "-29116100#2_0",
+          "-29116100#2_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_25"
+          ],
+          "e2": [
+            "e2_26"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_26"
+          ],
+          "e2": [
+            "e2_24"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_28",
+            "e1_27"
+          ],
+          "e2": [
+            "e2_29",
+            "e2_30"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_24",
+            "e1_23"
+          ],
+          "e2": [
+            "e2_23",
+            "e2_22"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_25",
+        "e1_26",
+        "e1_28",
+        "e1_27",
+        "e1_24",
+        "e1_23"
+      ],
+      "detectors_e2": [
+        "e2_26",
+        "e2_24",
+        "e2_29",
+        "e2_30",
+        "e2_23",
+        "e2_22"
+      ],
+      "e2_detector_lengths": {
+        "e2_26": 30.0,
+        "e2_24": 80.0,
+        "e2_29": 30.0,
+        "e2_30": 30.0,
+        "e2_23": 40.0,
+        "e2_22": 40.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGGgrrrGGGg",
+            "duration": 38,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6,
+              10,
+              11,
+              12,
+              13
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGgrrrrGGgrrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrGrrrrrrGrrrr",
+            "duration": 6,
+            "green_indices": [
+              2,
+              9
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "2": 2,
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "2": 2,
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "J20": {
+      "direction_map": {
+        "N": "-371342811#1",
+        "E": "81552976#0",
+        "S": "-4803465#2",
+        "W": "-596514086#3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-371342811#1_0",
+          "-371342811#1_1"
+        ],
+        "E": [
+          "81552976#0_0"
+        ],
+        "S": [
+          "-4803465#2_0"
+        ],
+        "W": [
+          "-596514086#3_0",
+          "-596514086#3_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 4,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrrrGGgrrr",
+            "duration": 33,
+            "green_indices": [
+              0,
+              1,
+              2,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGrrrrrrGrrr",
+            "duration": 6,
+            "green_indices": [
+              2,
+              9
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrGGGgrrrGGg",
+            "duration": 33,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6,
+              10,
+              11,
+              12
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrrrrrGrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              6,
+              12
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "3": [
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "3": 3,
+          "0": 0,
+          "2": 1
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "3": 3,
+          "0": 0,
+          "1": 2
+        }
+      }
+    },
+    "J21": {
+      "direction_map": {
+        "N": null,
+        "E": "-527458585#1",
+        "S": "4743764#2",
+        "W": "1169825562#0"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "-527458585#1_0",
+          "-527458585#1_1"
+        ],
+        "S": [
+          "4743764#2_0",
+          "4743764#2_1"
+        ],
+        "W": [
+          "1169825562#0_0",
+          "1169825562#0_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GgrrGG",
+            "duration": 38,
+            "green_indices": [
+              0,
+              1,
+              4,
+              5
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGrrrr",
+            "duration": 6,
+            "green_indices": [
+              0,
+              1
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrGGGr",
+            "duration": 37,
+            "green_indices": [
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ],
+          "1": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 6,
+          "2": 5,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "6": 1,
+          "5": 2,
+          "1": 0
+        }
+      }
+    },
+    "J29": {
+      "direction_map": {
+        "N": "56081883#1",
+        "E": "-1089407128#3",
+        "S": "860373106#1.9",
+        "W": "15675745#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "56081883#1_0"
+        ],
+        "E": [
+          "-1089407128#3_0",
+          "-1089407128#3_1"
+        ],
+        "S": [
+          "860373106#1.9_0"
+        ],
+        "W": [
+          "15675745#0_0",
+          "15675745#0_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_114"
+          ],
+          "e2": [
+            "e2_117"
+          ]
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [
+            "e1_115"
+          ],
+          "e2": [
+            "e2_121"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_117",
+            "e1_116"
+          ],
+          "e2": [
+            "e2_120",
+            "e2_119"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_114",
+        "e1_115",
+        "e1_117",
+        "e1_116"
+      ],
+      "detectors_e2": [
+        "e2_117",
+        "e2_121",
+        "e2_120",
+        "e2_119"
+      ],
+      "e2_detector_lengths": {
+        "e2_117": 40.0,
+        "e2_121": 30.0,
+        "e2_120": 20.0,
+        "e2_119": 20.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrrGGGgrrr",
+            "duration": 38,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGrrrrrrGrrr",
+            "duration": 6,
+            "green_indices": [
+              2,
+              9
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrGGgrrrrGGg",
+            "duration": 37,
+            "green_indices": [
+              3,
+              4,
+              5,
+              10,
+              11,
+              12
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 3,
+          "0": 1,
+          "2": 0
+        },
+        "standard_to_actual": {
+          "3": 1,
+          "1": 0,
+          "0": 2
+        }
+      }
+    },
+    "J32": {
+      "direction_map": {
+        "N": null,
+        "E": "4572091.56",
+        "S": "817867132#0.82",
+        "W": "-4440330#2"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "4572091.56_0",
+          "4572091.56_1"
+        ],
+        "S": [
+          "817867132#0.82_0",
+          "817867132#0.82_1",
+          "817867132#0.82_2"
+        ],
+        "W": [
+          "-4440330#2_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGrrrGGg",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGGGrrr",
+            "duration": 42,
+            "green_indices": [
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 5,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "5": 1,
+          "1": 0
+        }
+      }
+    },
+    "J4": {
+      "direction_map": {
+        "N": "-147390907#0",
+        "E": "35424540",
+        "S": "179097891#0",
+        "W": "284686648#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-147390907#0_0"
+        ],
+        "E": [
+          "35424540_0",
+          "35424540_1"
+        ],
+        "S": [
+          "179097891#0_0",
+          "179097891#0_1"
+        ],
+        "W": [
+          "284686648#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_53"
+          ],
+          "e2": [
+            "e2_53"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_55",
+            "e1_54"
+          ],
+          "e2": [
+            "e2_55",
+            "e2_54"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_57",
+            "e1_56"
+          ],
+          "e2": [
+            "e2_57",
+            "e2_56"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_52"
+          ],
+          "e2": [
+            "e2_49"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_53",
+        "e1_55",
+        "e1_54",
+        "e1_57",
+        "e1_56",
+        "e1_52"
+      ],
+      "detectors_e2": [
+        "e2_53",
+        "e2_55",
+        "e2_54",
+        "e2_57",
+        "e2_56",
+        "e2_49"
+      ],
+      "e2_detector_lengths": {
+        "e2_53": 80.0,
+        "e2_55": 20.0,
+        "e2_54": 20.0,
+        "e2_57": 40.0,
+        "e2_56": 40.0,
+        "e2_49": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 5,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgrrrGGg",
+            "duration": 33,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              11
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGgrrrGGgrrr",
+            "duration": 32,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrGrrrrrGrrr",
+            "duration": 6,
+            "green_indices": [
+              2,
+              8
+            ]
+          },
+          {
+            "index": 8,
+            "state": "rrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "3": [
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_LEFT"
+          ],
+          "4": []
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "3": 3,
+          "0": 0,
+          "2": 1,
+          "4": 4
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "3": 3,
+          "0": 0,
+          "1": 2,
+          "4": 4
+        }
+      }
+    },
+    "cluster10206979633_11813833529_30148022_30825863": {
+      "direction_map": {
+        "N": "422991319#2",
+        "E": "1213415600#2",
+        "S": "-26646987#1",
+        "W": "-4730718#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "422991319#2_0"
+        ],
+        "E": [
+          "1213415600#2_0"
+        ],
+        "S": [
+          "-26646987#1_0"
+        ],
+        "W": [
+          "-4730718#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_6"
+          ],
+          "e2": [
+            "e2_6"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_7"
+          ],
+          "e2": [
+            "e2_7"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_8"
+          ],
+          "e2": [
+            "e2_10"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_5"
+          ],
+          "e2": [
+            "e2_3"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_6",
+        "e1_7",
+        "e1_8",
+        "e1_5"
+      ],
+      "detectors_e2": [
+        "e2_6",
+        "e2_7",
+        "e2_10",
+        "e2_3"
+      ],
+      "e2_detector_lengths": {
+        "e2_6": 80.0,
+        "e2_7": 80.0,
+        "e2_10": 40.0,
+        "e2_3": 30.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGgrrGG",
+            "duration": 27,
+            "green_indices": [
+              3,
+              4,
+              7,
+              8
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGGrrrrrr",
+            "duration": 27,
+            "green_indices": [
+              0,
+              1,
+              2
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrrrGGGr",
+            "duration": 27,
+            "green_indices": [
+              5,
+              6,
+              7
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ],
+          "1": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ],
+          "2": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 4,
+          "2": 5,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "4": 1,
+          "5": 2,
+          "1": 0
+        }
+      }
+    },
+    "cluster107204001_12451744325_4956927680": {
+      "direction_map": {
+        "N": null,
+        "E": "82956882.11",
+        "S": null,
+        "W": "548701323#1"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "82956882.11_0"
+        ],
+        "S": [],
+        "W": [
+          "548701323#1_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        0.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GrrGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGGGr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH"
+          ],
+          "1": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 6,
+          "1": 1
+        },
+        "standard_to_actual": {
+          "6": 0,
+          "1": 1
+        }
+      }
+    },
+    "cluster10827082788_2567854590_27256989_2957061242": {
+      "direction_map": {
+        "N": "-1384314608#1",
+        "E": "4533224#9",
+        "S": "298904469#2",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-1384314608#1_0",
+          "-1384314608#1_1"
+        ],
+        "E": [
+          "4533224#9_0"
+        ],
+        "S": [
+          "298904469#2_0",
+          "298904469#2_1"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_106",
+            "e1_105"
+          ],
+          "e2": [
+            "e2_107",
+            "e2_106"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_107"
+          ],
+          "e2": [
+            "e2_110"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_109",
+            "e1_108"
+          ],
+          "e2": [
+            "e2_109",
+            "e2_108"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_106",
+        "e1_105",
+        "e1_107",
+        "e1_109",
+        "e1_108"
+      ],
+      "detectors_e2": [
+        "e2_107",
+        "e2_106",
+        "e2_110",
+        "e2_109",
+        "e2_108"
+      ],
+      "e2_detector_lengths": {
+        "e2_107": 60.0,
+        "e2_106": 60.0,
+        "e2_110": 10.0,
+        "e2_109": 60.0,
+        "e2_108": 60.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGggGGG",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGGrrrrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 6,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "6": 1,
+          "0": 0
+        }
+      }
+    },
+    "cluster10827082789_28582171_2957061238_2957062053": {
+      "direction_map": {
+        "N": "-298904469#2",
+        "E": null,
+        "S": "-298904471#1",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-298904469#2_0",
+          "-298904469#2_1"
+        ],
+        "E": [],
+        "S": [
+          "-298904471#1_0",
+          "-298904471#1_1"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_111",
+            "e1_110"
+          ],
+          "e2": [
+            "e2_111",
+            "e2_112"
+          ]
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [
+            "e1_144",
+            "e1_143"
+          ],
+          "e2": [
+            "e2_116",
+            "e2_115"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_111",
+        "e1_110",
+        "e1_144",
+        "e1_143"
+      ],
+      "detectors_e2": [
+        "e2_111",
+        "e2_112",
+        "e2_116",
+        "e2_115"
+      ],
+      "e2_detector_lengths": {
+        "e2_111": 60.0,
+        "e2_112": 60.0,
+        "e2_116": 60.0,
+        "e2_115": 60.0
+      },
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 4,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrGGGrrrGGg",
+            "duration": 26,
+            "green_indices": [
+              2,
+              3,
+              4,
+              8,
+              9,
+              10
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGGGrrr",
+            "duration": 27,
+            "green_indices": [
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGGrrrrrrrr",
+            "duration": 27,
+            "green_indices": [
+              0,
+              1,
+              2
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [],
+          "2": [
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "3": []
+        },
+        "actual_to_standard": {
+          "2": 5,
+          "0": 0,
+          "1": 1,
+          "3": 2
+        },
+        "standard_to_actual": {
+          "5": 2,
+          "0": 0,
+          "1": 1,
+          "2": 3
+        }
+      }
+    },
+    "cluster11583966683_6165393385_843205119": {
+      "direction_map": {
+        "N": "-28682845#4",
+        "E": "26646052#1",
+        "S": "28682845#1",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-28682845#4_0"
+        ],
+        "E": [
+          "26646052#1_0"
+        ],
+        "S": [
+          "28682845#1_0"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_92"
+          ],
+          "e2": [
+            "e2_94"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_93"
+          ],
+          "e2": [
+            "e2_95"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_94"
+          ],
+          "e2": [
+            "e2_91"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_92",
+        "e1_93",
+        "e1_94"
+      ],
+      "detectors_e2": [
+        "e2_94",
+        "e2_95",
+        "e2_91"
+      ],
+      "e2_detector_lengths": {
+        "e2_94": 25.0,
+        "e2_95": 80.0,
+        "e2_91": 10.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GrrG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              3
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rGGr",
+            "duration": 42,
+            "green_indices": [
+              1,
+              2
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 0,
+          "1": 6
+        },
+        "standard_to_actual": {
+          "0": 0,
+          "6": 1
+        }
+      }
+    },
+    "cluster11841694883_130113831": {
+      "direction_map": {
+        "N": "-147161798#0",
+        "E": null,
+        "S": "284686657",
+        "W": "-13863761#3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-147161798#0_0"
+        ],
+        "E": [],
+        "S": [
+          "284686657_0",
+          "284686657_1"
+        ],
+        "W": [
+          "-13863761#3_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGrGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGGGr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 0,
+          "1": 4
+        },
+        "standard_to_actual": {
+          "0": 0,
+          "4": 1
+        }
+      }
+    },
+    "cluster12453550285_cluster12453550280_292279061_7809714885": {
+      "direction_map": {
+        "N": "-683609958#8",
+        "E": null,
+        "S": "683609958#3",
+        "W": "-26646784#1"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-683609958#8_0"
+        ],
+        "E": [],
+        "S": [
+          "683609958#3_0"
+        ],
+        "W": [
+          "-26646784#1_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_82"
+          ],
+          "e2": [
+            "e2_83"
+          ]
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [
+            "e1_83"
+          ],
+          "e2": [
+            "e2_81"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_81"
+          ],
+          "e2": [
+            "e2_82"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_82",
+        "e1_83",
+        "e1_81"
+      ],
+      "detectors_e2": [
+        "e2_83",
+        "e2_81",
+        "e2_82"
+      ],
+      "e2_detector_lengths": {
+        "e2_83": 30.0,
+        "e2_81": 30.0,
+        "e2_82": 40.0
+      },
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGgrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GrrrGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 7,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "7": 1,
+          "0": 0
+        }
+      }
+    },
+    "cluster12625073140_12625073150_2884057670_2923898716_#1more": {
+      "direction_map": {
+        "N": null,
+        "E": "4803408#0",
+        "S": "147164232#0",
+        "W": "1121159178#0"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "4803408#0_0",
+          "4803408#0_1"
+        ],
+        "S": [
+          "147164232#0_0",
+          "147164232#0_1"
+        ],
+        "W": [
+          "1121159178#0_0",
+          "1121159178#0_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [
+            "e1_78",
+            "e1_77"
+          ],
+          "e2": [
+            "e2_77",
+            "e2_78"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_80",
+            "e1_79"
+          ],
+          "e2": [
+            "e2_80",
+            "e2_79"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_76",
+            "e1_75"
+          ],
+          "e2": [
+            "e2_76",
+            "e2_75"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_78",
+        "e1_77",
+        "e1_80",
+        "e1_79",
+        "e1_76",
+        "e1_75"
+      ],
+      "detectors_e2": [
+        "e2_77",
+        "e2_78",
+        "e2_80",
+        "e2_79",
+        "e2_76",
+        "e2_75"
+      ],
+      "e2_detector_lengths": {
+        "e2_77": 10.0,
+        "e2_78": 10.0,
+        "e2_80": 60.0,
+        "e2_79": 60.0,
+        "e2_76": 60.0,
+        "e2_75": 60.0
+      },
+      "observation_mask": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGrrrGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              5,
+              6
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGGGGr",
+            "duration": 42,
+            "green_indices": [
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH",
+            "MovementType.WEST_RIGHT"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 5
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "5": 1
+        }
+      }
+    },
+    "cluster12788209370_27256997_2884057642_J1": {
+      "direction_map": {
+        "N": null,
+        "E": "1213415600#0",
+        "S": "4803511#4",
+        "W": "-1213415600#3"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "1213415600#0_0"
+        ],
+        "S": [
+          "4803511#4_0"
+        ],
+        "W": [
+          "-1213415600#3_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [
+            "e1_11"
+          ],
+          "e2": [
+            "e2_13"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_9"
+          ],
+          "e2": [
+            "e2_8"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_11",
+        "e1_9"
+      ],
+      "detectors_e2": [
+        "e2_13",
+        "e2_8"
+      ],
+      "e2_detector_lengths": {
+        "e2_13": 40.0,
+        "e2_8": 80.0
+      },
+      "observation_mask": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrrGGg",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrGGGGrr",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 5,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "5": 1,
+          "1": 0
+        }
+      }
+    },
+    "cluster12867045509_1388689556_5116225741_5116225760_#3more": {
+      "direction_map": {
+        "N": "526016662#0",
+        "E": "526016651",
+        "S": "548529066#0",
+        "W": "408534466#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "526016662#0_0"
+        ],
+        "E": [
+          "526016651_0",
+          "526016651_1"
+        ],
+        "S": [
+          "548529066#0_0",
+          "548529066#0_1"
+        ],
+        "W": [
+          "408534466#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_119"
+          ],
+          "e2": [
+            "e2_122"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_122",
+            "e1_121"
+          ],
+          "e2": [
+            "e2_125",
+            "e2_124"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_124",
+            "e1_123"
+          ],
+          "e2": [
+            "e2_127",
+            "e2_126"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_118"
+          ],
+          "e2": [
+            "e2_123"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_119",
+        "e1_122",
+        "e1_121",
+        "e1_124",
+        "e1_123",
+        "e1_118"
+      ],
+      "detectors_e2": [
+        "e2_122",
+        "e2_125",
+        "e2_124",
+        "e2_127",
+        "e2_126",
+        "e2_123"
+      ],
+      "e2_detector_lengths": {
+        "e2_122": 20.0,
+        "e2_125": 30.0,
+        "e2_124": 30.0,
+        "e2_127": 20.0,
+        "e2_126": 20.0,
+        "e2_123": 50.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GgrrGGrrr",
+            "duration": 27,
+            "green_indices": [
+              0,
+              1,
+              4,
+              5
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGGGrrrr",
+            "duration": 27,
+            "green_indices": [
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrrrrGGG",
+            "duration": 27,
+            "green_indices": [
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 6,
+          "2": 7,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "6": 1,
+          "7": 2,
+          "0": 0
+        }
+      }
+    },
+    "cluster130115362_4956927675_J6": {
+      "direction_map": {
+        "N": "-82956882",
+        "E": null,
+        "S": "39013715#1",
+        "W": "377260838#1"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-82956882_0",
+          "-82956882_1"
+        ],
+        "E": [],
+        "S": [
+          "39013715#1_0"
+        ],
+        "W": [
+          "377260838#1_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GrrGGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              3,
+              4,
+              5
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGGGrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.NORTH_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.SOUTH_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 4,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "4": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster1388689544_1388689554_5116225746_5116225755_#2more": {
+      "direction_map": {
+        "N": "27014785#0",
+        "E": "4572161#1",
+        "S": null,
+        "W": "526016649"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "27014785#0_0",
+          "27014785#0_1",
+          "27014785#0_2"
+        ],
+        "E": [
+          "4572161#1_0"
+        ],
+        "S": [],
+        "W": [
+          "526016649_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGGrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GrrrGG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 4,
+          "1": 7
+        },
+        "standard_to_actual": {
+          "4": 0,
+          "7": 1
+        }
+      }
+    },
+    "cluster1552956912_2528311025_2528311028_2528311030_#4more": {
+      "direction_map": {
+        "N": null,
+        "E": "548370037#0",
+        "S": "5079287#0",
+        "W": "526016615#0"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "548370037#0_0",
+          "548370037#0_1",
+          "548370037#0_2"
+        ],
+        "S": [
+          "5079287#0_0"
+        ],
+        "W": [
+          "526016615#0_0",
+          "526016615#0_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 7,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGggrrrrrrrGGGg",
+            "duration": 23,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              11,
+              12,
+              13,
+              14
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGGrrrrrrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              2,
+              3,
+              14
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 5,
+            "state": "rrrrrrrrGGGGrrr",
+            "duration": 23,
+            "green_indices": [
+              8,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "index": 7,
+            "state": "rrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 8,
+            "state": "rrrrGGGGrrrrrrr",
+            "duration": 23,
+            "green_indices": [
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "index": 10,
+            "state": "rrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [],
+          "3": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "4": [],
+          "5": [],
+          "6": []
+        },
+        "actual_to_standard": {
+          "1": 3,
+          "3": 5,
+          "0": 1,
+          "2": 0,
+          "4": 2,
+          "5": 4,
+          "6": 6
+        },
+        "standard_to_actual": {
+          "3": 1,
+          "5": 3,
+          "1": 0,
+          "0": 2,
+          "2": 4,
+          "4": 5,
+          "6": 6
+        }
+      }
+    },
+    "cluster1584034520_1584034532_1584034534_1584034537": {
+      "direction_map": {
+        "N": "-313465298#1",
+        "E": "-596514115#1",
+        "S": "1384314608#1",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-313465298#1_0",
+          "-313465298#1_1"
+        ],
+        "E": [
+          "-596514115#1_0",
+          "-596514115#1_1"
+        ],
+        "S": [
+          "1384314608#1_0",
+          "1384314608#1_1"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_30",
+            "e1_29"
+          ],
+          "e2": [
+            "e2_27",
+            "e2_28"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_32",
+            "e1_31"
+          ],
+          "e2": [
+            "e2_32",
+            "e2_31"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_34",
+            "e1_33"
+          ],
+          "e2": [
+            "e2_35",
+            "e2_33"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_30",
+        "e1_29",
+        "e1_32",
+        "e1_31",
+        "e1_34",
+        "e1_33"
+      ],
+      "detectors_e2": [
+        "e2_27",
+        "e2_28",
+        "e2_32",
+        "e2_31",
+        "e2_35",
+        "e2_33"
+      ],
+      "e2_detector_lengths": {
+        "e2_27": 80.0,
+        "e2_28": 80.0,
+        "e2_32": 20.0,
+        "e2_31": 20.0,
+        "e2_35": 60.0,
+        "e2_33": 60.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrrGGgrrrGGGg",
+            "duration": 38,
+            "green_indices": [
+              4,
+              5,
+              6,
+              10,
+              11,
+              12,
+              13
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrGrrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              6,
+              13
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGggrrrGGGrrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              7,
+              8,
+              9
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "2": 6,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "6": 2,
+          "0": 0
+        }
+      }
+    },
+    "cluster2028647696_2028647698_2261078579_48932863": {
+      "direction_map": {
+        "N": "-70748311#1",
+        "E": "1169703853",
+        "S": "147161798#0",
+        "W": "70748314#1"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-70748311#1_0",
+          "-70748311#1_1"
+        ],
+        "E": [
+          "1169703853_0",
+          "1169703853_1"
+        ],
+        "S": [
+          "147161798#0_0",
+          "147161798#0_1"
+        ],
+        "W": [
+          "70748314#1_0",
+          "70748314#1_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 4,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrGGGgrrrrGGg",
+            "duration": 33,
+            "green_indices": [
+              2,
+              3,
+              4,
+              5,
+              10,
+              11,
+              12
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              12
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGrrrrGGggrrr",
+            "duration": 33,
+            "green_indices": [
+              0,
+              1,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrrrrrGGGGrrr",
+            "duration": 6,
+            "green_indices": [
+              6,
+              7,
+              8,
+              9
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "3": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "3": 7,
+          "2": 1,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "7": 3,
+          "1": 2,
+          "0": 0
+        }
+      }
+    },
+    "cluster2172694538_2498739556_81508252_843791894": {
+      "direction_map": {
+        "N": null,
+        "E": "27434049",
+        "S": "-488736536#2",
+        "W": "-39013715#1"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "27434049_0",
+          "27434049_1"
+        ],
+        "S": [
+          "-488736536#2_0",
+          "-488736536#2_1"
+        ],
+        "W": [
+          "-39013715#1_0",
+          "-39013715#1_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgGGGg",
+            "duration": 38,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              9
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGGGrrrrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_THROUGH",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "2": 6,
+          "0": 5
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "6": 2,
+          "5": 0
+        }
+      }
+    },
+    "cluster2172694601_2884057371_2884057377_3964600251_#2more": {
+      "direction_map": {
+        "N": "-207098749#3",
+        "E": "284686652#2",
+        "S": "-4743769#3",
+        "W": "284686649#1"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-207098749#3_0"
+        ],
+        "E": [
+          "284686652#2_0"
+        ],
+        "S": [
+          "-4743769#3_0"
+        ],
+        "W": [
+          "284686649#1_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_37"
+          ],
+          "e2": [
+            "e2_39"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_38"
+          ],
+          "e2": [
+            "e2_38"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_39"
+          ],
+          "e2": [
+            "e2_40"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_36"
+          ],
+          "e2": [
+            "e2_37"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_37",
+        "e1_38",
+        "e1_39",
+        "e1_36"
+      ],
+      "detectors_e2": [
+        "e2_39",
+        "e2_38",
+        "e2_40",
+        "e2_37"
+      ],
+      "e2_detector_lengths": {
+        "e2_39": 80.0,
+        "e2_38": 80.0,
+        "e2_40": 20.0,
+        "e2_37": 20.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgrrrGGg",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGgrrrGGgrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster2172694607_2261078657_2884057365_3955958142_#1more": {
+      "direction_map": {
+        "N": "4558441#0",
+        "E": "284686647#1",
+        "S": null,
+        "W": "-547047277#2"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "4558441#0_0"
+        ],
+        "E": [
+          "284686647#1_0"
+        ],
+        "S": [],
+        "W": [
+          "-547047277#2_0",
+          "-547047277#2_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_42"
+          ],
+          "e2": [
+            "e2_44"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_43"
+          ],
+          "e2": [
+            "e2_34"
+          ]
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [
+            "e1_41",
+            "e1_40"
+          ],
+          "e2": [
+            "e2_42",
+            "e2_41"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_42",
+        "e1_43",
+        "e1_41",
+        "e1_40"
+      ],
+      "detectors_e2": [
+        "e2_44",
+        "e2_34",
+        "e2_42",
+        "e2_41"
+      ],
+      "e2_detector_lengths": {
+        "e2_44": 10.0,
+        "e2_34": 20.0,
+        "e2_42": 80.0,
+        "e2_41": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GrrGGgGGg",
+            "duration": 38,
+            "green_indices": [
+              0,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              8
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGGGrrrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.EAST_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 3,
+          "2": 4,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "3": 1,
+          "4": 2,
+          "1": 0
+        }
+      }
+    },
+    "cluster2179364258_3954328258_3954328259_3964591267": {
+      "direction_map": {
+        "N": "208143935#1",
+        "E": "30640436#1",
+        "S": "207683801#1",
+        "W": "E3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "208143935#1_0"
+        ],
+        "E": [
+          "30640436#1_0"
+        ],
+        "S": [
+          "207683801#1_0"
+        ],
+        "W": [
+          "E3_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rGGr",
+            "duration": 42,
+            "green_indices": [
+              1,
+              2
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GrrG",
+            "duration": 42,
+            "green_indices": [
+              0,
+              3
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ],
+          "1": [
+            "MovementType.WEST_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 6,
+          "1": 3
+        },
+        "standard_to_actual": {
+          "6": 0,
+          "3": 1
+        }
+      }
+    },
+    "cluster2261078326_29970248_4971976330_J24": {
+      "direction_map": {
+        "N": "70748300",
+        "E": null,
+        "S": "1303164756#1",
+        "W": "1346189642#4"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "70748300_0"
+        ],
+        "E": [],
+        "S": [
+          "1303164756#1_0"
+        ],
+        "W": [
+          "1346189642#4_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GrrGg",
+            "duration": 42,
+            "green_indices": [
+              0,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rGGrr",
+            "duration": 42,
+            "green_indices": [
+              1,
+              2
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_RIGHT"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 7,
+          "0": 4
+        },
+        "standard_to_actual": {
+          "7": 1,
+          "4": 0
+        }
+      }
+    },
+    "cluster2261078667_2275742542_2884057379_4333509527": {
+      "direction_map": {
+        "N": null,
+        "E": "547047277#4",
+        "S": null,
+        "W": "298496090#1"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "547047277#4_0",
+          "547047277#4_1"
+        ],
+        "S": [],
+        "W": [
+          "298496090#1_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [
+            "e1_50",
+            "e1_49"
+          ],
+          "e2": [
+            "e2_51",
+            "e2_50"
+          ]
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [
+            "e1_48"
+          ],
+          "e2": [
+            "e2_48"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_50",
+        "e1_49",
+        "e1_48"
+      ],
+      "detectors_e2": [
+        "e2_51",
+        "e2_50",
+        "e2_48"
+      ],
+      "e2_detector_lengths": {
+        "e2_51": 20.0,
+        "e2_50": 20.0,
+        "e2_48": 40.0
+      },
+      "observation_mask": [
+        0.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 4,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GgGrGG",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              4,
+              5
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGrrrr",
+            "duration": 6,
+            "green_indices": [
+              0,
+              1
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrGGGr",
+            "duration": 37,
+            "green_indices": [
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.EAST_THROUGH"
+          ],
+          "2": [],
+          "3": []
+        },
+        "actual_to_standard": {
+          "1": 6,
+          "0": 1,
+          "2": 0,
+          "3": 2
+        },
+        "standard_to_actual": {
+          "6": 1,
+          "1": 0,
+          "0": 2,
+          "2": 3
+        }
+      }
+    },
+    "cluster2261078859_3946827990_6165393389_6165393416": {
+      "direction_map": {
+        "N": "-28682845#0",
+        "E": "26645995#1",
+        "S": "1211302819#0.13",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-28682845#0_0"
+        ],
+        "E": [
+          "26645995#1_0"
+        ],
+        "S": [
+          "1211302819#0.13_0"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_95"
+          ],
+          "e2": [
+            "e2_97"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_96"
+          ],
+          "e2": [
+            "e2_98"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_97"
+          ],
+          "e2": [
+            "e2_96"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_95",
+        "e1_96",
+        "e1_97"
+      ],
+      "detectors_e2": [
+        "e2_97",
+        "e2_98",
+        "e2_96"
+      ],
+      "e2_detector_lengths": {
+        "e2_97": 20.0,
+        "e2_98": 70.0,
+        "e2_96": 40.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrrGg",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrGGGrr",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 6,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "6": 1,
+          "0": 0
+        }
+      }
+    },
+    "cluster2463962663_2964071731_30825881_5682255964": {
+      "direction_map": {
+        "N": "-81552989#1",
+        "E": "29116100#2",
+        "S": "4803428#5",
+        "W": "-29116100#4"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-81552989#1_0"
+        ],
+        "E": [
+          "29116100#2_0",
+          "29116100#2_1"
+        ],
+        "S": [
+          "4803428#5_0"
+        ],
+        "W": [
+          "-29116100#4_0",
+          "-29116100#4_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_19"
+          ],
+          "e2": [
+            "e2_19"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_21",
+            "e1_20"
+          ],
+          "e2": [
+            "e2_20",
+            "e2_21"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_22"
+          ],
+          "e2": [
+            "e2_25"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_17",
+            "e1_18"
+          ],
+          "e2": [
+            "e2_18",
+            "e2_17"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_19",
+        "e1_21",
+        "e1_20",
+        "e1_22",
+        "e1_17",
+        "e1_18"
+      ],
+      "detectors_e2": [
+        "e2_19",
+        "e2_20",
+        "e2_21",
+        "e2_25",
+        "e2_18",
+        "e2_17"
+      ],
+      "e2_detector_lengths": {
+        "e2_19": 40.0,
+        "e2_20": 40.0,
+        "e2_21": 40.0,
+        "e2_25": 30.0,
+        "e2_18": 40.0,
+        "e2_17": 40.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGGgrrrGGGg",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6,
+              10,
+              11,
+              12,
+              13
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGgrrrrGGgrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              7,
+              8,
+              9
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster28581626_6165393392_6165393419_J11": {
+      "direction_map": {
+        "N": "-1211302819#0",
+        "E": null,
+        "S": "1209522756",
+        "W": "4803426#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-1211302819#0_0"
+        ],
+        "E": [],
+        "S": [
+          "1209522756_0"
+        ],
+        "W": [
+          "4803426#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_99"
+          ],
+          "e2": [
+            "e2_99"
+          ]
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [
+            "e1_100"
+          ],
+          "e2": [
+            "e2_101"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_98"
+          ],
+          "e2": [
+            "e2_100"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_99",
+        "e1_100",
+        "e1_98"
+      ],
+      "detectors_e2": [
+        "e2_99",
+        "e2_101",
+        "e2_100"
+      ],
+      "e2_detector_lengths": {
+        "e2_99": 40.0,
+        "e2_101": 40.0,
+        "e2_100": 20.0
+      },
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GgGGgrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGGG",
+            "duration": 42,
+            "green_indices": [
+              5,
+              6,
+              7
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 7,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "7": 1,
+          "0": 0
+        }
+      }
+    },
+    "cluster2884057633_2884057637_2884057639_633672243": {
+      "direction_map": {
+        "N": "-79855537#0",
+        "E": "49872902",
+        "S": "147161802",
+        "W": "28802258#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-79855537#0_0"
+        ],
+        "E": [
+          "49872902_0"
+        ],
+        "S": [
+          "147161802_0"
+        ],
+        "W": [
+          "28802258#0_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_59"
+          ],
+          "e2": [
+            "e2_60"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_61"
+          ],
+          "e2": [
+            "e2_59"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_60"
+          ],
+          "e2": [
+            "e2_61"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_58"
+          ],
+          "e2": [
+            "e2_58"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_59",
+        "e1_61",
+        "e1_60",
+        "e1_58"
+      ],
+      "detectors_e2": [
+        "e2_60",
+        "e2_59",
+        "e2_61",
+        "e2_58"
+      ],
+      "e2_detector_lengths": {
+        "e2_60": 80.0,
+        "e2_59": 30.0,
+        "e2_61": 80.0,
+        "e2_58": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrrGGgrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrGGgrrrGGg",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "1": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 0,
+          "1": 1
+        },
+        "standard_to_actual": {
+          "0": 0,
+          "1": 1
+        }
+      }
+    },
+    "cluster292272389_J4_J5_J6": {
+      "direction_map": {
+        "N": "-182071993#1",
+        "E": "-1169825563#1",
+        "S": "26646028#1",
+        "W": "4533227#1.24"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-182071993#1_0"
+        ],
+        "E": [
+          "-1169825563#1_0"
+        ],
+        "S": [
+          "26646028#1_0"
+        ],
+        "W": [
+          "4533227#1.24_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_140"
+          ],
+          "e2": [
+            "e2_145"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_141"
+          ],
+          "e2": []
+        },
+        "S": {
+          "e1": [
+            "e1_142"
+          ],
+          "e2": [
+            "e2_144"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_139"
+          ],
+          "e2": [
+            "e2_143"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_140",
+        "e1_141",
+        "e1_142",
+        "e1_139"
+      ],
+      "detectors_e2": [
+        "e2_145",
+        "e2_144",
+        "e2_143"
+      ],
+      "e2_detector_lengths": {
+        "e2_145": 40.0,
+        "e2_144": 40.0,
+        "e2_143": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgrrrGGg",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGgrrrGGgrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster297958412_5285897990_5285898010": {
+      "direction_map": {
+        "N": null,
+        "E": "547047277#1",
+        "S": null,
+        "W": "-547047277#4"
+      },
+      "lanes_by_direction": {
+        "N": [],
+        "E": [
+          "547047277#1_0",
+          "547047277#1_1"
+        ],
+        "S": [],
+        "W": [
+          "-547047277#4_0",
+          "-547047277#4_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [
+            "e1_46",
+            "e1_47"
+          ],
+          "e2": [
+            "e2_47",
+            "e2_46"
+          ]
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [
+            "e1_45",
+            "e1_44"
+          ],
+          "e2": [
+            "e2_43",
+            "e2_45"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_46",
+        "e1_47",
+        "e1_45",
+        "e1_44"
+      ],
+      "detectors_e2": [
+        "e2_47",
+        "e2_46",
+        "e2_43",
+        "e2_45"
+      ],
+      "e2_detector_lengths": {
+        "e2_47": 80.0,
+        "e2_46": 80.0,
+        "e2_43": 20.0,
+        "e2_45": 20.0
+      },
+      "observation_mask": [
+        0.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgGGGg",
+            "duration": 82,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrr",
+            "duration": 5,
+            "green_indices": []
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_LEFT"
+          ],
+          "1": []
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster3648465489_3932665510_3932665511_4203342230": {
+      "direction_map": {
+        "N": "-4743764#2",
+        "E": null,
+        "S": "4533225#6",
+        "W": "-374535325#4"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-4743764#2_0"
+        ],
+        "E": [],
+        "S": [
+          "4533225#6_0"
+        ],
+        "W": [
+          "-374535325#4_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGrrrrGGGgrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGGGgrrrrGGgg",
+            "duration": 42,
+            "green_indices": [
+              2,
+              3,
+              4,
+              5,
+              10,
+              11,
+              12,
+              13
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 7,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "7": 1,
+          "0": 0
+        }
+      }
+    },
+    "cluster3944993721_3944993722_3944993723_3944993724": {
+      "direction_map": {
+        "N": "-192236405#2",
+        "E": "1117202247#1",
+        "S": "28682845#6",
+        "W": "-1139084789#3"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-192236405#2_0"
+        ],
+        "E": [
+          "1117202247#1_0"
+        ],
+        "S": [
+          "28682845#6_0"
+        ],
+        "W": [
+          "-1139084789#3_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_89"
+          ],
+          "e2": [
+            "e2_86"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_90"
+          ],
+          "e2": [
+            "e2_90"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_91"
+          ],
+          "e2": [
+            "e2_92"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_88"
+          ],
+          "e2": [
+            "e2_89"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_89",
+        "e1_90",
+        "e1_91",
+        "e1_88"
+      ],
+      "detectors_e2": [
+        "e2_86",
+        "e2_90",
+        "e2_92",
+        "e2_89"
+      ],
+      "e2_detector_lengths": {
+        "e2_86": 30.0,
+        "e2_90": 80.0,
+        "e2_92": 5.0,
+        "e2_89": 80.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrGGrrrGGg",
+            "duration": 42,
+            "green_indices": [
+              2,
+              3,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGrrGGgrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              4,
+              5,
+              6
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster5448429849_J26_J27": {
+      "direction_map": {
+        "N": "-4440329",
+        "E": null,
+        "S": "-603349777#1",
+        "W": "4440329"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-4440329_0"
+        ],
+        "E": [],
+        "S": [
+          "-603349777#1_0",
+          "-603349777#1_1"
+        ],
+        "W": [
+          "4440329_0"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GgrrGG",
+            "duration": 38,
+            "green_indices": [
+              0,
+              1,
+              4,
+              5
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGrrrr",
+            "duration": 6,
+            "green_indices": [
+              0,
+              1
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrGGGr",
+            "duration": 37,
+            "green_indices": [
+              2,
+              3,
+              4
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_LEFT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "2": [
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 5,
+          "2": 7,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "5": 1,
+          "7": 2,
+          "0": 0
+        }
+      }
+    },
+    "cluster6345915043_J32_J33": {
+      "direction_map": {
+        "N": "4730408#3",
+        "E": "4572091",
+        "S": null,
+        "W": "-4572091"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "4730408#3_0",
+          "4730408#3_1"
+        ],
+        "E": [
+          "4572091_0",
+          "4572091_1"
+        ],
+        "S": [],
+        "W": [
+          "-4572091_0",
+          "-4572091_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGGG",
+            "duration": 42,
+            "green_indices": [
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "index": 2,
+            "state": "GGGrrrr",
+            "duration": 42,
+            "green_indices": [
+              0,
+              1,
+              2
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_THROUGH"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 4
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "4": 1
+        }
+      }
+    },
+    "clusterJ14_cluster1923986931_28137432_3071329232_8856676981": {
+      "direction_map": {
+        "N": "-182056040#4",
+        "E": "-1111971585#2",
+        "S": "28951462#1",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-182056040#4_0"
+        ],
+        "E": [
+          "-1111971585#2_0"
+        ],
+        "S": [
+          "28951462#1_0"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_131"
+          ],
+          "e2": [
+            "e2_134"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_132"
+          ],
+          "e2": [
+            "e2_133"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_133"
+          ],
+          "e2": [
+            "e2_136"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_131",
+        "e1_132",
+        "e1_133"
+      ],
+      "detectors_e2": [
+        "e2_134",
+        "e2_133",
+        "e2_136"
+      ],
+      "e2_detector_lengths": {
+        "e2_134": 60.0,
+        "e2_133": 40.0,
+        "e2_136": 60.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgrrrGGg",
+            "duration": 38,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              11
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGgrrrGGgrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_RIGHT",
+            "MovementType.EAST_LEFT"
+          ],
+          "1": [
+            "MovementType.EAST_LEFT"
+          ],
+          "2": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 3,
+          "0": 6,
+          "2": 0
+        },
+        "standard_to_actual": {
+          "3": 1,
+          "6": 0,
+          "0": 2
+        }
+      }
+    },
+    "clusterJ16_clusterJ11_J12_J13_J9": {
+      "direction_map": {
+        "N": "-182071986#3",
+        "E": "-1169825566#1",
+        "S": null,
+        "W": "1169825567"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-182071986#3_0"
+        ],
+        "E": [
+          "-1169825566#1_0"
+        ],
+        "S": [],
+        "W": [
+          "1169825567_0",
+          "1169825567_1"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_136"
+          ],
+          "e2": [
+            "e2_135"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_137"
+          ],
+          "e2": [
+            "e2_139"
+          ]
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [
+            "e1_134",
+            "e1_135"
+          ],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_136",
+        "e1_137",
+        "e1_134",
+        "e1_135"
+      ],
+      "detectors_e2": [
+        "e2_135",
+        "e2_139"
+      ],
+      "e2_detector_lengths": {
+        "e2_135": 60.0,
+        "e2_139": 40.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrGGgrrrGGg",
+            "duration": 38,
+            "green_indices": [
+              3,
+              4,
+              5,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrrrrGrrrrrG",
+            "duration": 6,
+            "green_indices": [
+              5,
+              11
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GGgrrrGGgrrr",
+            "duration": 37,
+            "green_indices": [
+              0,
+              1,
+              2,
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_LEFT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ],
+          "1": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_LEFT"
+          ],
+          "2": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 3,
+          "2": 4,
+          "0": 1
+        },
+        "standard_to_actual": {
+          "3": 1,
+          "4": 2,
+          "1": 0
+        }
+      }
+    },
+    "clusterJ19_cluster11107612632_2267154345_5116225796_5116225801": {
+      "direction_map": {
+        "N": "-699663268#2",
+        "E": "536842076#1",
+        "S": "-28630236#0",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-699663268#2_0"
+        ],
+        "E": [
+          "536842076#1_0"
+        ],
+        "S": [
+          "-28630236#0_0",
+          "-28630236#0_1"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [],
+          "e2": []
+        },
+        "E": {
+          "e1": [],
+          "e2": []
+        },
+        "S": {
+          "e1": [],
+          "e2": []
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [],
+      "detectors_e2": [],
+      "e2_detector_lengths": {},
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGgGr",
+            "duration": 38,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGGrr",
+            "duration": 6,
+            "green_indices": [
+              2,
+              3
+            ]
+          },
+          {
+            "index": 4,
+            "state": "GrrrGG",
+            "duration": 37,
+            "green_indices": [
+              0,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.EAST_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.EAST_LEFT"
+          ],
+          "1": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "2": [
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.EAST_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 5,
+          "2": 4,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "5": 1,
+          "4": 2,
+          "0": 0
+        }
+      }
+    },
+    "clusterJ3_cluster1233603788_12799959199_12800019444_5730016977": {
+      "direction_map": {
+        "N": "-31261713#1",
+        "E": "-4533227#1.24",
+        "S": "192236405#1",
+        "W": null
+      },
+      "lanes_by_direction": {
+        "N": [
+          "-31261713#1_0",
+          "-31261713#1_1"
+        ],
+        "E": [
+          "-4533227#1.24_0"
+        ],
+        "S": [
+          "192236405#1_0"
+        ],
+        "W": []
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_85",
+            "e1_84"
+          ],
+          "e2": [
+            "e2_84",
+            "e2_85"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_86"
+          ],
+          "e2": [
+            "e2_87"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_87"
+          ],
+          "e2": [
+            "e2_88"
+          ]
+        },
+        "W": {
+          "e1": [],
+          "e2": []
+        }
+      },
+      "detectors_e1": [
+        "e1_85",
+        "e1_84",
+        "e1_86",
+        "e1_87"
+      ],
+      "detectors_e2": [
+        "e2_84",
+        "e2_85",
+        "e2_87",
+        "e2_88"
+      ],
+      "e2_detector_lengths": {
+        "e2_84": 80.0,
+        "e2_85": 80.0,
+        "e2_87": 80.0,
+        "e2_88": 30.0
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGgrrGGg",
+            "duration": 38,
+            "green_indices": [
+              0,
+              1,
+              2,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "index": 2,
+            "state": "rrGrrrrG",
+            "duration": 6,
+            "green_indices": [
+              2,
+              7
+            ]
+          },
+          {
+            "index": 4,
+            "state": "rrrGGGrr",
+            "duration": 37,
+            "green_indices": [
+              3,
+              4,
+              5
+            ]
+          }
+        ],
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "1": [
+            "MovementType.NORTH_LEFT",
+            "MovementType.SOUTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.EAST_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "2": 6,
+          "0": 0
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "6": 2,
+          "0": 0
+        }
+      }
+    }
+  },
+  "adjacency": {
+    "5116225783": [],
+    "9954076990": [],
+    "J1": [
+      {
+        "neighbor_id": "cluster10206979633_11813833529_30148022_30825863",
+        "direction": "E",
+        "connecting_edge": "4730718#0"
+      },
+      {
+        "neighbor_id": "cluster2884057633_2884057637_2884057639_633672243",
+        "direction": "S",
+        "connecting_edge": "4730716#1"
+      }
+    ],
+    "J11": [],
+    "J12": [
+      {
+        "neighbor_id": "cluster28581626_6165393392_6165393419_J11",
+        "direction": "N",
+        "connecting_edge": "-1209522756"
+      }
+    ],
+    "J18": [],
+    "J2": [
+      {
+        "neighbor_id": "cluster1584034520_1584034532_1584034534_1584034537",
+        "direction": "E",
+        "connecting_edge": "313465298#1"
+      },
+      {
+        "neighbor_id": "cluster2463962663_2964071731_30825881_5682255964",
+        "direction": "W",
+        "connecting_edge": "-29116100#2"
+      }
+    ],
+    "J20": [],
+    "J21": [
+      {
+        "neighbor_id": "cluster3648465489_3932665510_3932665511_4203342230",
+        "direction": "S",
+        "connecting_edge": "4743764#2"
+      }
+    ],
+    "J29": [
+      {
+        "neighbor_id": "9954076990",
+        "direction": "W",
+        "connecting_edge": "15675745#0"
+      }
+    ],
+    "J32": [
+      {
+        "neighbor_id": "cluster6345915043_J32_J33",
+        "direction": "E",
+        "connecting_edge": "4572091.56"
+      }
+    ],
+    "J4": [
+      {
+        "neighbor_id": "cluster2884057633_2884057637_2884057639_633672243",
+        "direction": "N",
+        "connecting_edge": "-147390907#0"
+      }
+    ],
+    "cluster10206979633_11813833529_30148022_30825863": [
+      {
+        "neighbor_id": "cluster12788209370_27256997_2884057642_J1",
+        "direction": "E",
+        "connecting_edge": "1213415600#2"
+      }
+    ],
+    "cluster107204001_12451744325_4956927680": [
+      {
+        "neighbor_id": "cluster130115362_4956927675_J6",
+        "direction": "E",
+        "connecting_edge": "82956882.11"
+      }
+    ],
+    "cluster10827082788_2567854590_27256989_2957061242": [
+      {
+        "neighbor_id": "cluster1584034520_1584034532_1584034534_1584034537",
+        "direction": "N",
+        "connecting_edge": "-1384314608#1"
+      },
+      {
+        "neighbor_id": "cluster10827082789_28582171_2957061238_2957062053",
+        "direction": "S",
+        "connecting_edge": "298904469#2"
+      }
+    ],
+    "cluster10827082789_28582171_2957061238_2957062053": [
+      {
+        "neighbor_id": "cluster10827082788_2567854590_27256989_2957061242",
+        "direction": "N",
+        "connecting_edge": "-298904469#2"
+      }
+    ],
+    "cluster11583966683_6165393385_843205119": [],
+    "cluster11841694883_130113831": [
+      {
+        "neighbor_id": "cluster2028647696_2028647698_2261078579_48932863",
+        "direction": "N",
+        "connecting_edge": "-147161798#0"
+      }
+    ],
+    "cluster12453550285_cluster12453550280_292279061_7809714885": [],
+    "cluster12625073140_12625073150_2884057670_2923898716_#1more": [],
+    "cluster12788209370_27256997_2884057642_J1": [
+      {
+        "neighbor_id": "cluster10206979633_11813833529_30148022_30825863",
+        "direction": "W",
+        "connecting_edge": "-1213415600#3"
+      }
+    ],
+    "cluster12867045509_1388689556_5116225741_5116225760_#3more": [
+      {
+        "neighbor_id": "5116225783",
+        "direction": "S",
+        "connecting_edge": "548529066#0"
+      }
+    ],
+    "cluster130115362_4956927675_J6": [
+      {
+        "neighbor_id": "cluster107204001_12451744325_4956927680",
+        "direction": "N",
+        "connecting_edge": "-82956882"
+      },
+      {
+        "neighbor_id": "cluster2172694538_2498739556_81508252_843791894",
+        "direction": "S",
+        "connecting_edge": "39013715#1"
+      }
+    ],
+    "cluster1388689544_1388689554_5116225746_5116225755_#2more": [
+      {
+        "neighbor_id": "cluster1552956912_2528311025_2528311028_2528311030_#4more",
+        "direction": "E",
+        "connecting_edge": "4572161#1"
+      },
+      {
+        "neighbor_id": "cluster12867045509_1388689556_5116225741_5116225760_#3more",
+        "direction": "W",
+        "connecting_edge": "526016649"
+      }
+    ],
+    "cluster1552956912_2528311025_2528311028_2528311030_#4more": [],
+    "cluster1584034520_1584034532_1584034534_1584034537": [
+      {
+        "neighbor_id": "cluster10827082788_2567854590_27256989_2957061242",
+        "direction": "S",
+        "connecting_edge": "1384314608#1"
+      }
+    ],
+    "cluster2028647696_2028647698_2261078579_48932863": [
+      {
+        "neighbor_id": "cluster11841694883_130113831",
+        "direction": "S",
+        "connecting_edge": "147161798#0"
+      }
+    ],
+    "cluster2172694538_2498739556_81508252_843791894": [
+      {
+        "neighbor_id": "cluster130115362_4956927675_J6",
+        "direction": "W",
+        "connecting_edge": "-39013715#1"
+      }
+    ],
+    "cluster2172694601_2884057371_2884057377_3964600251_#2more": [
+      {
+        "neighbor_id": "cluster2172694607_2261078657_2884057365_3955958142_#1more",
+        "direction": "W",
+        "connecting_edge": "284686649#1"
+      }
+    ],
+    "cluster2172694607_2261078657_2884057365_3955958142_#1more": [
+      {
+        "neighbor_id": "cluster2172694601_2884057371_2884057377_3964600251_#2more",
+        "direction": "E",
+        "connecting_edge": "284686647#1"
+      },
+      {
+        "neighbor_id": "cluster297958412_5285897990_5285898010",
+        "direction": "W",
+        "connecting_edge": "-547047277#2"
+      }
+    ],
+    "cluster2179364258_3954328258_3954328259_3964591267": [],
+    "cluster2261078326_29970248_4971976330_J24": [],
+    "cluster2261078667_2275742542_2884057379_4333509527": [
+      {
+        "neighbor_id": "cluster297958412_5285897990_5285898010",
+        "direction": "E",
+        "connecting_edge": "547047277#4"
+      }
+    ],
+    "cluster2261078859_3946827990_6165393389_6165393416": [
+      {
+        "neighbor_id": "cluster28581626_6165393392_6165393419_J11",
+        "direction": "S",
+        "connecting_edge": "1211302819#0.13"
+      }
+    ],
+    "cluster2463962663_2964071731_30825881_5682255964": [],
+    "cluster28581626_6165393392_6165393419_J11": [
+      {
+        "neighbor_id": "cluster2261078859_3946827990_6165393389_6165393416",
+        "direction": "N",
+        "connecting_edge": "-1211302819#0"
+      }
+    ],
+    "cluster2884057633_2884057637_2884057639_633672243": [],
+    "cluster292272389_J4_J5_J6": [
+      {
+        "neighbor_id": "clusterJ3_cluster1233603788_12799959199_12800019444_5730016977",
+        "direction": "W",
+        "connecting_edge": "4533227#1.24"
+      }
+    ],
+    "cluster297958412_5285897990_5285898010": [
+      {
+        "neighbor_id": "cluster2172694607_2261078657_2884057365_3955958142_#1more",
+        "direction": "E",
+        "connecting_edge": "547047277#1"
+      },
+      {
+        "neighbor_id": "cluster2261078667_2275742542_2884057379_4333509527",
+        "direction": "W",
+        "connecting_edge": "-547047277#4"
+      }
+    ],
+    "cluster3648465489_3932665510_3932665511_4203342230": [],
+    "cluster3944993721_3944993722_3944993723_3944993724": [
+      {
+        "neighbor_id": "clusterJ3_cluster1233603788_12799959199_12800019444_5730016977",
+        "direction": "N",
+        "connecting_edge": "-192236405#2"
+      }
+    ],
+    "cluster5448429849_J26_J27": [],
+    "cluster6345915043_J32_J33": [
+      {
+        "neighbor_id": "cluster1388689544_1388689554_5116225746_5116225755_#2more",
+        "direction": "N",
+        "connecting_edge": "4730408#3"
+      }
+    ],
+    "clusterJ14_cluster1923986931_28137432_3071329232_8856676981": [],
+    "clusterJ16_clusterJ11_J12_J13_J9": [],
+    "clusterJ19_cluster11107612632_2267154345_5116225796_5116225801": [],
+    "clusterJ3_cluster1233603788_12799959199_12800019444_5730016977": [
+      {
+        "neighbor_id": "cluster292272389_J4_J5_J6",
+        "direction": "E",
+        "connecting_edge": "-4533227#1.24"
+      },
+      {
+        "neighbor_id": "cluster3944993721_3944993722_3944993723_3944993724",
+        "direction": "S",
+        "connecting_edge": "192236405#1"
+      }
+    ]
+  },
+  "config": {
+    "output_dir": "network/grid4x4",
+    "output_file": "intersection_config.json",
+    "gpi": {
+      "enabled": true
+    },
+    "frap": {
+      "enabled": true
+    }
+  }
+}

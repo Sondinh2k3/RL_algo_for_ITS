@@ -111,62 +111,6 @@ class TestMinimalTrainingStep:
         assert torch.isfinite(loss), f"Loss should be finite, got {loss.item()}"
 
 
-class TestMaskedSoftmaxTraining:
-    """Test training with MaskedSoftmax distribution."""
-    
-    def test_masked_softmax_backward(self):
-        """MaskedSoftmax should support backward pass."""
-        from src.models.masked_softmax_distribution import TorchMaskedSoftmax
-        
-        class MockModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self._last_action_mask = torch.ones(4, 8)
-                self.linear = nn.Linear(48, 16)
-                
-        model = MockModel()
-        model.train()
-        
-        obs = torch.randn(4, 48, requires_grad=True)
-        inputs = model.linear(obs)
-        
-        dist = TorchMaskedSoftmax(inputs, model)
-        sample = dist.sample()
-        
-        # Simulate policy loss
-        loss = -dist.logp(sample).mean()
-        
-        loss.backward()
-        
-        assert obs.grad is not None, "Gradients should flow to observation"
-        
-    def test_entropy_gradient(self):
-        """Entropy should have valid gradients for entropy bonus."""
-        from src.models.masked_softmax_distribution import TorchMaskedSoftmax
-        
-        class MockModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self._last_action_mask = torch.ones(4, 8)
-                self.linear = nn.Linear(48, 16)
-                
-        model = MockModel()
-        model.train()
-        
-        obs = torch.randn(4, 48)
-        inputs = model.linear(obs)
-        inputs.retain_grad()
-        
-        dist = TorchMaskedSoftmax(inputs, model)
-        entropy = dist.entropy()
-        
-        # Entropy bonus loss
-        loss = -entropy.mean()
-        loss.backward()
-        
-        assert inputs.grad is not None, "Entropy should have gradients"
-        assert not torch.isnan(inputs.grad).any(), "Entropy gradients should not be NaN"
-
 
 class TestValueFunctionTraining:
     """Test value function training."""

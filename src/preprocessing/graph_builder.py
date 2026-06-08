@@ -211,31 +211,3 @@ def expand_adjacency_for_batch(
         [Batch, 4, N, N] tensor
     """
     return adj_directions.unsqueeze(0).expand(batch_size, -1, -1, -1)
-
-
-# Legacy function for backward compatibility
-def build_simple_adjacency(
-    edge_list: List[Tuple[int, int]],
-    num_nodes: int,
-    bidirectional: bool = True
-) -> np.ndarray:
-    """
-    Build simple (non-directional) adjacency matrix.
-    
-    Args:
-        edge_list: List of (source, target) tuples
-        num_nodes: Number of nodes
-        bidirectional: If True, add reverse edges
-        
-    Returns:
-        adj: np.ndarray of shape [N, N]
-    """
-    adj = np.zeros((num_nodes, num_nodes), dtype=np.float32)
-    
-    for u, v in edge_list:
-        if u < num_nodes and v < num_nodes:
-            adj[u, v] = 1.0
-            if bidirectional:
-                adj[v, u] = 1.0
-                
-    return adj

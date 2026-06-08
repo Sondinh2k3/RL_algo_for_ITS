@@ -165,6 +165,7 @@ class PhaseStandardizer:
         
         # Phase configuration
         self.phases: List[Phase] = []
+        self.transition_phases: List[Dict[str, Any]] = []
         self.movements: List[Movement] = []
         self.num_phases = 0
         
@@ -185,16 +186,45 @@ class PhaseStandardizer:
         
         This avoids calling configure() which makes many TraCI requests.
         """
+        raw_phases = phase_config.get("phases", [])
+        green_positions = [
+            idx for idx, phase in enumerate(raw_phases)
+            if phase.get("green_indices") or any(c in phase.get("state", "") for c in ("G", "g"))
+        ]
+        if raw_phases and len(green_positions) < len(raw_phases):
+            old_to_new = {old_idx: new_idx for new_idx, old_idx in enumerate(green_positions)}
+            phase_config = dict(phase_config)
+            phase_config["phases"] = [raw_phases[idx] for idx in green_positions]
+            phase_config["transition_phases"] = [
+                phase for idx, phase in enumerate(raw_phases) if idx not in old_to_new
+            ] + list(phase_config.get("transition_phases", []))
+
+            raw_actual_to_std = {
+                int(k): int(v)
+                for k, v in phase_config.get("actual_to_standard", {}).items()
+            }
+            phase_config["actual_to_standard"] = {
+                old_to_new[old_idx]: std_idx
+                for old_idx, std_idx in raw_actual_to_std.items()
+                if old_idx in old_to_new
+            }
+            phase_config["standard_to_actual"] = {
+                std_idx: actual_idx
+                for actual_idx, std_idx in phase_config["actual_to_standard"].items()
+            }
+            phase_config["num_phases"] = len(green_positions)
+
         self.phase_config = phase_config
         self.num_phases = phase_config.get("num_phases", 0)
-        
-        # Load actual to standard mapping (ensure keys are ints)
+        self.transition_phases = phase_config.get("transition_phases", [])
+
+        # Load actual to standard mapping (ensure keys and values are ints)
         actual_to_std = phase_config.get("actual_to_standard", {})
-        self.actual_to_standard = {int(k): v for k, v in actual_to_std.items()}
-        
-        # Load standard to actual mapping (ensure keys are ints)
+        self.actual_to_standard = {int(k): int(v) for k, v in actual_to_std.items()}
+
+        # Load standard to actual mapping (ensure keys and values are ints)
         std_to_actual = phase_config.get("standard_to_actual", {})
-        self.standard_to_actual = {int(k): v for k, v in std_to_actual.items()}
+        self.standard_to_actual = {int(k): int(v) for k, v in std_to_actual.items()}
         
         # Note: standardized_action only needs actual_to_standard
         
@@ -295,8 +325,10 @@ class PhaseStandardizer:
             self._configured = True
             return
         
-        # Extract phases (skip yellow phases)
+        # Extract controllable green phases. Yellow/all-red phases remain in
+        # SUMO as fixed transition phases and must not be part of the RL action.
         phases_data = []
+        self.transition_phases = []
         
         # Handle both sumolib (getPhases()) and traci (.phases) objects
         if hasattr(program, "phases"):
@@ -311,15 +343,21 @@ class PhaseStandardizer:
             state = phase.state
             duration = phase.duration
             
-            # Yellow phase detection
-            is_yellow = 'y' in state.lower()
-            
-            if not is_yellow:
+            has_green = any(c in state for c in ("G", "g"))
+
+            if has_green:
                 phases_data.append({
                     'index': i,
                     'state': state,
                     'duration': duration,
                     'green_indices': [j for j, c in enumerate(state) if c.upper() == 'G']
+                })
+            else:
+                self.transition_phases.append({
+                    'index': i,
+                    'state': state,
+                    'duration': duration,
+                    'green_indices': []
                 })
         
         self.num_phases = len(phases_data)

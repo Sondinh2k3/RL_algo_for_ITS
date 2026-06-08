@@ -238,24 +238,36 @@ class MGMQPPOTorchPolicy(PPOTorchPolicy):
             else:
                 clip_fraction = torch.mean(clipped.float())
 
-        # Compute value function loss
+        # Symmetric Δvalue clipping (OpenAI-style PPO value loss).
+        #
+        # The previous implementation clamped the per-sample squared error,
+        # which zeroes the gradient on any sample whose error exceeds
+        # √vf_clip_param — silently killing critic learning whenever the
+        # reward scale changes. Clipping the *value update* instead bounds
+        # the policy-step impact without depending on reward magnitude:
+        #
+        #   v_pred_clipped = v_old + clip(V - v_old, ±vf_clip_param)
+        #   vf_loss        = max((V - target)², (v_pred_clipped - target)²)
         if self.config["use_critic"]:
             value_fn_out = model.value_function()
-            vf_loss = torch.pow(
-                value_fn_out - train_batch[Postprocessing.VALUE_TARGETS], 2.0
+            value_targets = train_batch[Postprocessing.VALUE_TARGETS]
+            vf_clip = self.config["vf_clip_param"]
+
+            v_old = train_batch[SampleBatch.VF_PREDS]
+            v_pred_clipped = v_old + torch.clamp(
+                value_fn_out - v_old, -vf_clip, vf_clip
             )
-            vf_loss_clipped = torch.clamp(vf_loss, 0, self.config["vf_clip_param"])
-            mean_vf_loss = reduce_mean_valid(vf_loss_clipped)
+            vf_loss_unclipped = torch.pow(value_fn_out - value_targets, 2.0)
+            vf_loss_clipped_pred = torch.pow(v_pred_clipped - value_targets, 2.0)
+            vf_loss = torch.max(vf_loss_unclipped, vf_loss_clipped_pred)
+            mean_vf_loss = reduce_mean_valid(vf_loss)
         else:
             value_fn_out = torch.tensor(0.0).to(surrogate_loss.device)
-            vf_loss_clipped = mean_vf_loss = torch.tensor(0.0).to(
-                surrogate_loss.device
-            )
+            mean_vf_loss = torch.tensor(0.0).to(surrogate_loss.device)
 
-        total_loss = reduce_mean_valid(
-            -surrogate_loss
-            + self.config["vf_loss_coeff"] * vf_loss_clipped
-            - self.entropy_coeff * curr_entropy
+        total_loss = (
+            reduce_mean_valid(-surrogate_loss - self.entropy_coeff * curr_entropy)
+            + self.config["vf_loss_coeff"] * mean_vf_loss
         )
 
         # Add KL penalty

@@ -6,9 +6,9 @@
     <!-- <insertion-density value="300.0"/> -->
     <begin value="0"/>
     <end value="3600"/>
-    <insertion-rate value="1000,2142,4286,7140,10600,15000,20000,30000,20000,15000,10600,7140,4286,2142,1000,1"/>
+    <insertion-rate value="3000,11000,2000,13000,1000"/>
     <!-- <period value="0.6"/> -->
-    <binomial value="10"/>
+    <!-- <binomial value="10"/> -->
     <random-depart value="True"/>
     <seed value="123"/>
 </configuration>

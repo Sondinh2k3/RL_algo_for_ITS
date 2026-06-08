@@ -1,0 +1,793 @@
+{
+  "network_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/network/leductho/leductho.net.xml",
+  "detector_file": "/home/sondinh2k3/Documents/ITS_VTS_Working/MGMQ_done/RL_algo_for_ITS/network/leductho/detector.add.xml",
+  "num_intersections": 3,
+  "intersections": {
+    "cluster10123839429_1312668863_1312668913_1720251781_#8more": {
+      "direction_map": {
+        "N": "1388028724#0",
+        "E": "408822902#0.340",
+        "S": "709290676#0",
+        "W": "709295448#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "1388028724#0_0",
+          "1388028724#0_1",
+          "1388028724#0_2"
+        ],
+        "E": [
+          "408822902#0.340_0",
+          "408822902#0.340_1",
+          "408822902#0.340_2",
+          "408822902#0.340_3"
+        ],
+        "S": [
+          "709290676#0_0",
+          "709290676#0_1",
+          "709290676#0_2"
+        ],
+        "W": [
+          "709295448#0_0",
+          "709295448#0_1",
+          "709295448#0_2",
+          "709295448#0_3"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_10",
+            "e1_9",
+            "e1_8"
+          ],
+          "e2": [
+            "e2_10",
+            "e2_9",
+            "e2_8"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_3",
+            "e1_2",
+            "e1_1",
+            "e1_0"
+          ],
+          "e2": [
+            "e2_3",
+            "e2_2",
+            "e2_1",
+            "e2_0"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_11",
+            "e1_12",
+            "e1_13"
+          ],
+          "e2": [
+            "e2_13",
+            "e2_12",
+            "e2_11"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_4",
+            "e1_5",
+            "e1_6",
+            "e1_7"
+          ],
+          "e2": [
+            "e2_7",
+            "e2_6",
+            "e2_5",
+            "e2_4"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_10",
+        "e1_9",
+        "e1_8",
+        "e1_3",
+        "e1_2",
+        "e1_1",
+        "e1_0",
+        "e1_11",
+        "e1_12",
+        "e1_13",
+        "e1_4",
+        "e1_5",
+        "e1_6",
+        "e1_7"
+      ],
+      "detectors_e2": [
+        "e2_10",
+        "e2_9",
+        "e2_8",
+        "e2_3",
+        "e2_2",
+        "e2_1",
+        "e2_0",
+        "e2_13",
+        "e2_12",
+        "e2_11",
+        "e2_7",
+        "e2_6",
+        "e2_5",
+        "e2_4"
+      ],
+      "e2_detector_lengths": {
+        "e2_10": 59.579999999999984,
+        "e2_9": 60.42999999999997,
+        "e2_8": 61.01999999999999,
+        "e2_3": 80.0,
+        "e2_2": 80.0,
+        "e2_1": 80.0,
+        "e2_0": 80.0,
+        "e2_13": 61.15,
+        "e2_12": 62.25,
+        "e2_11": 63.69,
+        "e2_7": 63.11000000000003,
+        "e2_6": 64.81,
+        "e2_5": 65.29000000000002,
+        "e2_4": 67.11000000000003
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 2,
+        "phases": [
+          {
+            "index": 0,
+            "state": "rrrrrGGGGGrrrrrGGGGG",
+            "duration": 65,
+            "green_indices": [
+              5,
+              6,
+              7,
+              8,
+              9,
+              15,
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "index": 3,
+            "state": "GGGGgrrrrrGGGGgrrrrr",
+            "duration": 47,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              10,
+              11,
+              12,
+              13,
+              14
+            ]
+          }
+        ],
+        "transition_phases": [
+          {
+            "index": 1,
+            "state": "rrrrryyyyyrrrrryyyyy",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 4,
+            "state": "yyyyyrrrrryyyyyrrrrr",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 5,
+            "state": "rrrrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "fixed_transition_time": 8.0,
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ],
+          "1": [
+            "MovementType.SOUTH_LEFT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.NORTH_LEFT",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_THROUGH",
+            "MovementType.SOUTH_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "0": 1,
+          "1": 0
+        },
+        "standard_to_actual": {
+          "1": 0,
+          "0": 1
+        }
+      }
+    },
+    "cluster10222796214_cluster10222796210_10222796211_10222796215_10222808620_#5more": {
+      "direction_map": {
+        "N": "1117725397#0",
+        "E": "E0.259",
+        "S": "116433544#3",
+        "W": "1117725388#0"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "1117725397#0_0",
+          "1117725397#0_1",
+          "1117725397#0_2"
+        ],
+        "E": [
+          "E0.259_0",
+          "E0.259_1",
+          "E0.259_2",
+          "E0.259_3"
+        ],
+        "S": [
+          "116433544#3_0",
+          "116433544#3_1",
+          "116433544#3_2"
+        ],
+        "W": [
+          "1117725388#0_0",
+          "1117725388#0_1",
+          "1117725388#0_2",
+          "1117725388#0_3"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_30",
+            "e1_29",
+            "e1_28"
+          ],
+          "e2": [
+            "e2_30",
+            "e2_29",
+            "e2_28"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_37",
+            "e1_36",
+            "e1_35",
+            "e1_34"
+          ],
+          "e2": [
+            "e2_34",
+            "e2_33",
+            "e2_32",
+            "e2_31"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_31",
+            "e1_32",
+            "e1_33"
+          ],
+          "e2": [
+            "e2_37",
+            "e2_36",
+            "e2_35"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_38",
+            "e1_39",
+            "e1_40",
+            "e1_41"
+          ],
+          "e2": [
+            "e2_41",
+            "e2_40",
+            "e2_39",
+            "e2_38"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_30",
+        "e1_29",
+        "e1_28",
+        "e1_37",
+        "e1_36",
+        "e1_35",
+        "e1_34",
+        "e1_31",
+        "e1_32",
+        "e1_33",
+        "e1_38",
+        "e1_39",
+        "e1_40",
+        "e1_41"
+      ],
+      "detectors_e2": [
+        "e2_30",
+        "e2_29",
+        "e2_28",
+        "e2_34",
+        "e2_33",
+        "e2_32",
+        "e2_31",
+        "e2_37",
+        "e2_36",
+        "e2_35",
+        "e2_41",
+        "e2_40",
+        "e2_39",
+        "e2_38"
+      ],
+      "e2_detector_lengths": {
+        "e2_30": 70.76999999999997,
+        "e2_29": 71.04999999999998,
+        "e2_28": 72.36999999999995,
+        "e2_34": 79.76,
+        "e2_33": 80.62,
+        "e2_32": 80.35000000000002,
+        "e2_31": 80.76,
+        "e2_37": 76.38999999999999,
+        "e2_36": 75.27,
+        "e2_35": 78.77999999999999,
+        "e2_41": 84.97999999999999,
+        "e2_40": 85.36999999999999,
+        "e2_39": 87.27,
+        "e2_38": 89.87999999999998
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 4,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGGrrrrrrrGGGGrrrrrrr",
+            "duration": 30,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              11,
+              12,
+              13,
+              14
+            ]
+          },
+          {
+            "index": 3,
+            "state": "rrrrGrrrrrrrrrrGrrrrrr",
+            "duration": 22,
+            "green_indices": [
+              4,
+              15
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrrrrGGGGGrrrrrrGGGGGr",
+            "duration": 30,
+            "green_indices": [
+              5,
+              6,
+              7,
+              8,
+              9,
+              16,
+              17,
+              18,
+              19,
+              20
+            ]
+          },
+          {
+            "index": 9,
+            "state": "rrrrrrrrrrGrrrrrrrrrrG",
+            "duration": 22,
+            "green_indices": [
+              10,
+              21
+            ]
+          }
+        ],
+        "transition_phases": [
+          {
+            "index": 1,
+            "state": "yyyyrrrrrrryyyyrrrrrrr",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 4,
+            "state": "rrrryrrrrrrrrrryrrrrrr",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 5,
+            "state": "rrrrrrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 7,
+            "state": "rrrrryyyyyrrrrrryyyyyr",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 8,
+            "state": "rrrrrrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 10,
+            "state": "rrrrrrrrrryrrrrrrrrrry",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 11,
+            "state": "rrrrrrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "fixed_transition_time": 16.0,
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_LEFT",
+            "MovementType.NORTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ],
+          "3": [
+            "MovementType.EAST_LEFT",
+            "MovementType.WEST_LEFT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "3": 3,
+          "0": 0,
+          "2": 1
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "3": 3,
+          "0": 0,
+          "1": 2
+        }
+      }
+    },
+    "cluster1312668928_1312668940_1720251725_1720251748_#8more": {
+      "direction_map": {
+        "N": "708633678#0",
+        "E": "708633682#0",
+        "S": "708633679#0",
+        "W": "E4"
+      },
+      "lanes_by_direction": {
+        "N": [
+          "708633678#0_0",
+          "708633678#0_1",
+          "708633678#0_2"
+        ],
+        "E": [
+          "708633682#0_0",
+          "708633682#0_1",
+          "708633682#0_2"
+        ],
+        "S": [
+          "708633679#0_0",
+          "708633679#0_1",
+          "708633679#0_2"
+        ],
+        "W": [
+          "E4_0",
+          "E4_1",
+          "E4_2"
+        ]
+      },
+      "detectors_by_direction": {
+        "N": {
+          "e1": [
+            "e1_16",
+            "e1_15",
+            "e1_14"
+          ],
+          "e2": [
+            "e2_16",
+            "e2_15",
+            "e2_14"
+          ]
+        },
+        "E": {
+          "e1": [
+            "e1_25",
+            "e1_26",
+            "e1_27"
+          ],
+          "e2": [
+            "e2_25",
+            "e2_26",
+            "e2_27"
+          ]
+        },
+        "S": {
+          "e1": [
+            "e1_19",
+            "e1_18",
+            "e1_17"
+          ],
+          "e2": [
+            "e2_19",
+            "e2_18",
+            "e2_17"
+          ]
+        },
+        "W": {
+          "e1": [
+            "e1_22",
+            "e1_21",
+            "e1_20"
+          ],
+          "e2": [
+            "e2_22",
+            "e2_21",
+            "e2_20"
+          ]
+        }
+      },
+      "detectors_e1": [
+        "e1_16",
+        "e1_15",
+        "e1_14",
+        "e1_25",
+        "e1_26",
+        "e1_27",
+        "e1_19",
+        "e1_18",
+        "e1_17",
+        "e1_22",
+        "e1_21",
+        "e1_20"
+      ],
+      "detectors_e2": [
+        "e2_16",
+        "e2_15",
+        "e2_14",
+        "e2_25",
+        "e2_26",
+        "e2_27",
+        "e2_19",
+        "e2_18",
+        "e2_17",
+        "e2_22",
+        "e2_21",
+        "e2_20"
+      ],
+      "e2_detector_lengths": {
+        "e2_16": 67.61,
+        "e2_15": 68.35,
+        "e2_14": 69.82,
+        "e2_25": 74.9,
+        "e2_26": 75.87,
+        "e2_27": 75.46000000000002,
+        "e2_19": 77.92999999999999,
+        "e2_18": 79.2,
+        "e2_17": 80.45000000000003,
+        "e2_22": 72.45000000000002,
+        "e2_21": 72.47000000000001,
+        "e2_20": 74.22000000000001
+      },
+      "observation_mask": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "phase_config": {
+        "num_phases": 3,
+        "phases": [
+          {
+            "index": 0,
+            "state": "GGGGrrrrrGGGGrrrrr",
+            "duration": 40,
+            "green_indices": [
+              0,
+              1,
+              2,
+              3,
+              9,
+              10,
+              11,
+              12
+            ]
+          },
+          {
+            "index": 3,
+            "state": "rrrrGrrrrrrrrGrrrr",
+            "duration": 30,
+            "green_indices": [
+              4,
+              13
+            ]
+          },
+          {
+            "index": 6,
+            "state": "rrrrrGGGGrrrrrGGGG",
+            "duration": 38,
+            "green_indices": [
+              5,
+              6,
+              7,
+              8,
+              14,
+              15,
+              16,
+              17
+            ]
+          }
+        ],
+        "transition_phases": [
+          {
+            "index": 1,
+            "state": "yyyyrrrrryyyyrrrrr",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 2,
+            "state": "rrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 4,
+            "state": "rrrryrrrrrrrryrrrr",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 5,
+            "state": "rrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          },
+          {
+            "index": 7,
+            "state": "rrrrryyyyrrrrryyyy",
+            "duration": 3,
+            "green_indices": []
+          },
+          {
+            "index": 8,
+            "state": "rrrrrrrrrrrrrrrrrr",
+            "duration": 1,
+            "green_indices": []
+          }
+        ],
+        "fixed_transition_time": 12.0,
+        "movement_to_phase": {},
+        "phase_to_movements": {
+          "0": [
+            "MovementType.SOUTH_RIGHT",
+            "MovementType.NORTH_RIGHT",
+            "MovementType.NORTH_THROUGH",
+            "MovementType.SOUTH_THROUGH"
+          ],
+          "1": [
+            "MovementType.SOUTH_LEFT",
+            "MovementType.NORTH_LEFT"
+          ],
+          "2": [
+            "MovementType.EAST_THROUGH",
+            "MovementType.WEST_RIGHT",
+            "MovementType.WEST_THROUGH",
+            "MovementType.EAST_RIGHT"
+          ]
+        },
+        "actual_to_standard": {
+          "1": 2,
+          "0": 0,
+          "2": 1
+        },
+        "standard_to_actual": {
+          "2": 1,
+          "0": 0,
+          "1": 2
+        }
+      }
+    }
+  },
+ "adjacency": {
+    "cluster10123839429_1312668863_1312668913_1720251781_#8more": [
+      {
+        "neighbor_id": "cluster1312668928_1312668940_1720251725_1720251748_#8more",
+        "direction": "S"
+      }
+    ],
+    "cluster10222796214_cluster10222796210_10222796211_10222796215_10222808620_#5more": [
+      {
+        "neighbor_id": "cluster1312668928_1312668940_1720251725_1720251748_#8more",
+        "direction": "N"
+      }
+    ],
+    "cluster1312668928_1312668940_1720251725_1720251748_#8more": [
+      {
+        "neighbor_id": "cluster10123839429_1312668863_1312668913_1720251781_#8more",
+        "direction": "N"
+      },
+      {
+        "neighbor_id": "cluster10222796214_cluster10222796210_10222796211_10222796215_10222808620_#5more",
+        "direction": "S"
+      }
+    ]
+  },
+  "config": {
+    "output_dir": "network/grid4x4",
+    "output_file": "intersection_config.json",
+    "gpi": {
+      "enabled": true
+    },
+    "frap": {
+      "enabled": true
+    }
+  }
+}

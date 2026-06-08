@@ -6,20 +6,20 @@
 # ============================================
 network:
   # Name of the traffic network (used as folder name under network/)
-  name: test1
+  name: leductho
 
   # Base path for network files (relative to project root)
   # If not specified, defaults to: network/{network_name}/
   base_path: null
 
   # Network files (relative to base_path if base_path is set, or absolute paths)
-  net_file: test1.net.xml
+  net_file: leductho.net.xml
 
   # Route files - can be a single file or comma-separated list
   # Order matters: type definitions should come before trip definitions
   route_files:
-    - test1.rou.xml # Vehicle type definitions
-    - test1-demo.rou.xml # Demo traffic routes (optional)
+    - leductho.rou.xml # Vehicle type definitions
+    - leductho-demo.rou.xml # Demo traffic routes (optional)
 
   # Detector configuration file (for E2 detector-based rewards)
   detector_file: detector.add.xml
@@ -62,58 +62,64 @@ mgmq:
   local_gnn:
     enabled: false # Use LocalMGMQTorchModel
     max_neighbors: 4 # Maximum neighbors (K) for local GNN
-    obs_dim: 48 # 4 features * 12 detectors
+    obs_dim: 56 # 4 lane features * 12 detectors + 8 green-time ratios
 
 # ============================================
-# PPO Training Parameters
+# PPO Training Parameters (network-agnostic)
 # ============================================
+# These values are scale-invariant once advantages are normalized per minibatch
+# and rewards are normalized + frozen after warmup (see `environment.reward_norm`).
+# You should not need to retune them when switching networks.
 ppo:
-  learning_rate: 0.0003 # Reduced from 0.0001 (Actor RL rate halved to prevent noisy advantage degradation)
-  gamma: 0.995 # Discount factor
-  lambda_: 0.95 # GAE lambda
-  entropy_coeff: 0.05 # Increased from 0.01: prevents entropy collapse with MaskedSoftmax
-  # CRITICAL FIX: Schedule points must be in AGENT TIMESTEPS (not iterations)
-  # With 16 agents × 67 steps × 2 workers = ~2144 agent_steps/iteration
-  # Old schedule [[0,0.01],[100,0.005],[300,0.001]] decayed to min by iteration 1!
-  # New schedule: decay over ~100-200 iterations (proper exploration period)
-  # entropy_coeff_schedule: [[0, 0.01], [200000, 0.005], [500000, 0.001]]
-  clip_param: 0.2 # Reduced from 0.2 (Tighter clipping due to weak critic)
-  kl_target: 0.01 # KL target for adaptive KL coefficient. Default 0.01 is too aggressive
-  # With per-minibatch advantage normalization, typical KL is 0.02-0.03
-  # Setting target=0.03 keeps kl_coeff stable near initial value (0.2)
-  kl_coeff_floor: 0.01 # CRITICAL: Minimum kl_coeff to prevent trust-region collapse
-  # Without floor, kl_coeff *= 0.5 can decay to ~0, disabling KL penalty entirely
-  # This causes policy drift → value explosion → reward collapse
-  # Floor of 0.01 ensures trust-region constraint is always active
-  vf_clip_param: 10.0 # Must be >> (V-target)² to avoid killing value gradients
-  # With V≈0, target≈11: MSE=121. Old clamp(loss,0,100) zeroed gradient for these!
-  # Set to 10000 so clamp never activates during normal training
-  vf_loss_coeff: 0.5 # Reduced from 1.0: vf_loss≈9.7 was dominating policy_loss≈0.02
-  # 0.5 gives better balance: 0.5*9.7=4.85 vs policy contribution
-  train_batch_size: 2000 # Increased from 400: more data per update reduces variance
-  # With 2 workers × 3 agents × 67 steps = ~402 per episode, collect ~5 episodes
-  minibatch_size: 128 # Increased from 64 for more stable gradient estimates
-  num_sgd_iter: 6 # Reduced from 10: fewer passes over same data reduces overfitting
-  # DIAGNOSTIC FIX (Steps 1-2): Reduced grad_clip from 10.0 to 1.0
-  # Prevents logit explosion in policy head which caused KL coefficient to explode
-  # Combined with per-minibatch advantage normalization in MGMQPPOTorchPolicy
-  grad_clip: 10.0
-  # Learning rate schedule: linear decay over training
-  # Points are [agent_timestep, lr_value]
-  # lr_schedule: [[0, 0.0003], [500000, 0.0001], [1000000, 0.00003]]
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  lambda_: 0.95
+  clip_param: 0.2
+  entropy_coeff: 0.02
+  kl_target: 0.01
+  kl_coeff_floor: 0.1
+  # Symmetric value clipping (Δvalue), like the OpenAI PPO baseline.
+  # Independent of reward scale: applied to (V - V_old), not to MSE.
+  vf_clip_param: 0.2
+  vf_loss_coeff: 0.5
+  num_sgd_iter: 6
+  grad_clip: 1.0
+
+# ============================================
+# Batch / Iteration Scaling
+# ============================================
+# Batch size, minibatch size and num_iterations are derived from these
+# scale-free knobs; they auto-adjust to N_agents and episode length.
+#
+#   episodes_per_iter = target_episodes_per_iter (if N_agents <= 3) else 2
+#   train_batch_size = N_agents · T_episode · episodes_per_iter
+#   minibatch_size   = train_batch_size // minibatch_per_iter
+#   num_iterations   = ceil(target_agent_steps / train_batch_size)
+#
+# Set `target_episodes_per_iter` higher for less-noisy gradient estimates
+# on very small networks; larger networks use a fixed value of 2.
+# and `target_agent_steps` to control the total environment-interaction budget.
+scaling:
+  target_episodes_per_iter: 8
+  # target_episodes_per_iter: 24  # Dùng cho mạng có 1 hoặc 2 nút
+  minibatch_per_iter: 4
+  target_agent_steps: 5000000
 
 # ============================================
 # Training Settings
 # ============================================
+# Leave `num_iterations: auto` to derive from `scaling.target_agent_steps`,
+# or override with a fixed integer. Same for `num_workers: auto` (uses
+# os.cpu_count() - 2, capped at 8).
 training:
-  num_iterations: 500 # Increased from 200 for proper convergence
-  num_workers: 4 # Increased from 2 - more diverse experience per training batch
-  num_envs_per_worker: 1 # Environments per worker
-  checkpoint_interval: 5 # Checkpoint frequency
-  patience: 500 # Early stopping patience (iterations without improvement)
-  seed: 42 # Random seed
-  use_gpu: false # Use GPU for training
-  output_dir: "./results_mgmq" # Output directory
+  num_iterations: auto
+  num_workers: auto
+  num_envs_per_worker: 1
+  checkpoint_interval: 5
+  patience: 500
+  seed: 42
+  use_gpu: false
+  output_dir: "./results_mgmq"
 
 # ============================================
 # Reward Configuration
@@ -128,22 +134,56 @@ reward:
   # - diff-departed-veh: Difference in departed vehicles
   # - teleport-penalty: Penalty for teleported vehicles (severe congestion indicator)
   functions:
-    - halt-veh-by-detectors
-    - diff-departed-veh
-    - diff-waiting-time
-    - occupancy
+    - queue
+    - throughput
+    # - diff-waiting-time
+    # - halt-veh-by-detectors
     # - average-speed
     # - teleport-penalty   # Uncomment to penalize teleportation (requires time_to_teleport > 0)
-  weights: null # Auto-compute equal weights if null
+  weights: [0.7, 0.3]  # queue:throughput ratio
 
 # ============================================
 # Environment Configuration
 # ============================================
 environment:
-  num_seconds: 6000 # Simulation duration (synced with grid4x4.sumocfg end=8000)
-  max_green: 90 # Maximum green time
-  min_green: 5 # Minimum green time
-  cycle_time: 90 # Traffic light cycle time
-  yellow_time: 3 # Yellow time
-  time_to_teleport: 50 # Teleport stuck vehicles (-1 to disable)
-  use_phase_standardizer: true # Map 4-value action to signal phases
+  num_seconds: 3600
+  max_green: 90
+  min_green: 15
+  cycle_time: 150
+  yellow_time: 3
+  time_to_teleport: 500
+  use_phase_standardizer: true
+  action_mode: discrete_adjustment  # "ratio", "cycle_level_continuous", or "discrete_adjustment"
+  green_time_step: 5
+
+  # Reward normalization — SB3-style scale-only return-based RMS.
+  # The env divides each reward by sqrt(var(R)) where R is a per-agent
+  # discounted-return accumulator using `ppo.gamma`. This is the standard
+  # network-agnostic normalization: no warmup, no freeze, no mean shift.
+  # `clip` bounds normalized rewards (in std units).
+  reward_norm:
+    enabled: true
+    clip: 10.0
+  # ------------------------------------------------------------------
+  # Action modes reference
+  # ------------------------------------------------------------------
+  # ratio
+  #   Continuous simplex via Gaussian + softmax (MaskedSoftmax). The agent
+  #   outputs mean+log_std per phase; softmax projects to the simplex.
+  #   Phase masking zeros out invalid phases before softmax.
+  #
+  # cycle_level_continuous
+  #   Continuous simplex via Dirichlet (MaskedDirichlet). The agent outputs
+  #   concentration parameters (one per standard phase). Samples live on the
+  #   8-simplex by construction, so no softmax is required. Typically gives
+  #   a lower-variance policy gradient than `ratio`. Invalid phases get a
+  #   tiny concentration so their sampled mass is ~0.
+  #
+  # discrete_adjustment
+  #   7 actions per phase: {-15, -10, -5, 0, +5, +10, +15} seconds.
+  #   Uses MaskedMultiCategorical. Invalid phases are forced to "keep".
+  # ------------------------------------------------------------------
+  # The `ratio` and `cycle_level_continuous` modes share the same env-side
+  # translator (_get_green_time_from_ratio), so you can switch between them
+  # without retraining the environment — only the policy head / distribution
+  # changes.

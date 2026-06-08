@@ -34,8 +34,9 @@ from src.environment.rllib_utils import (
     register_sumo_env,
 )
 from src.models.mgmq_model import MGMQTorchModel, LocalMGMQTorchModel
-from src.models.dirichlet_distribution import register_dirichlet_distribution
-from src.models.masked_softmax_distribution import register_masked_softmax_distribution
+from src.models.mlp_model import MLPTorchModel
+from src.models.masked_multi_categorical import register_masked_multi_categorical
+from src.models.masked_dirichlet import register_masked_dirichlet
 from src.config import (
     load_model_config,
     get_mgmq_config,
@@ -47,17 +48,17 @@ from src.config import (
 )
 
 
-# Register custom models (same as training)
+# Register custom models (same as training) — all three must be registered
+# here so Ray RolloutWorker actors can resolve whichever custom_model name
+# is baked into the checkpoint.
 ModelCatalog.register_custom_model("mgmq_model", MGMQTorchModel)
 ModelCatalog.register_custom_model("local_mgmq_model", LocalMGMQTorchModel)
-# Backward compatibility: alias for old checkpoint trained with temporal naming
-ModelCatalog.register_custom_model("local_temporal_mgmq_model", LocalMGMQTorchModel)
+ModelCatalog.register_custom_model("mlp_model", MLPTorchModel)
 
-# Register Dirichlet distribution for action space (legacy)
-register_dirichlet_distribution()
-
-# Register Masked Softmax distribution (NEW - RECOMMENDED)
-register_masked_softmax_distribution()
+# Register Masked Multi-Categorical distribution (for discrete_adjustment mode)
+register_masked_multi_categorical()
+# Register Masked Dirichlet distribution (for cycle_level_continuous mode)
+register_masked_dirichlet()
 
 
 
@@ -190,12 +191,13 @@ def evaluate_mgmq(
                 "--lateral-resolution 0.5 "
                 "--ignore-route-errors "
                 "--tls.actuated.jam-threshold 30 "
+                "--no-internal-links true "
                 "--device.rerouting.adaptation-steps 18 "
                 "--device.rerouting.adaptation-interval 10"
             )
             if detector_file and Path(detector_file).exists():
                 additional_sumo_cmd = f"-a {detector_file} {additional_sumo_cmd}"
-            
+
             env_config = {
                 "net_file": net_file,  # FROM YAML CONFIG
                 "route_file": route_file,  # FROM YAML CONFIG
@@ -223,6 +225,10 @@ def evaluate_mgmq(
                 # Raw rewards are still available via info["raw_reward"]
                 "normalize_reward": stored_env_config.get("normalize_reward", False),
                 "clip_rewards": stored_env_config.get("clip_rewards", None),
+                "sumo_seed": seed,  # Deterministic seed; overridden per-episode via env.reset(seed=seed+ep)
+                # Action mode MUST match training or policy output won't be interpreted correctly
+                "action_mode": stored_env_config.get("action_mode", yaml_env_cfg.get("action_mode", "ratio")),
+                "green_time_step": stored_env_config.get("green_time_step", yaml_env_cfg.get("green_time_step", 5)),
             }
             print("\n✓ Using environment config from training:")
             print(f"  num_seconds: {env_config['num_seconds']}")
@@ -230,6 +236,7 @@ def evaluate_mgmq(
             print(f"  reward_fn: {env_config['reward_fn']}")
             print(f"  reward_weights: {env_config['reward_weights']}")
             print(f"  window_size: {env_config['window_size']}")
+            print(f"  action_mode: {env_config['action_mode']}")
             print(f"  use_phase_standardizer: {env_config['use_phase_standardizer']}")
             print(f"  use_neighbor_obs: {env_config['use_neighbor_obs']}")
         else:
@@ -240,6 +247,7 @@ def evaluate_mgmq(
                 "--lateral-resolution 0.5 "
                 "--ignore-route-errors "
                 "--tls.actuated.jam-threshold 30 "
+                "--no-internal-links true "
                 "--device.rerouting.adaptation-steps 18 "
                 "--device.rerouting.adaptation-interval 10"
             )
@@ -272,6 +280,9 @@ def evaluate_mgmq(
                 # Raw rewards are still available via info["raw_reward"]
                 "normalize_reward": yaml_env_cfg.get("normalize_reward", False),
                 "clip_rewards": yaml_env_cfg.get("clip_rewards", None),
+                "sumo_seed": seed,  # Deterministic seed; overridden per-episode via env.reset(seed=seed+ep)
+                "action_mode": yaml_env_cfg.get("action_mode", "ratio"),
+                "green_time_step": yaml_env_cfg.get("green_time_step", 5),
             }
             print("\n✓ Using environment config from YAML defaults")
         
@@ -391,7 +402,9 @@ def evaluate_mgmq(
                 for agent_id in obs.keys():
                     action = algo.compute_single_action(
                         obs[agent_id],
-                        policy_id="default_policy"
+                        policy_id="default_policy",
+
+                        explore = False  # Disable exploration for evaluation
                     )
                     actions[agent_id] = action
                     
@@ -554,7 +567,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", type=str, required=True,
                         help="Path to checkpoint directory")
     parser.add_argument("--network", type=str, default="grid4x4",
-                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1"],
+                        choices=["grid4x4", "4x4loop", "network_test", "zurich", "PhuQuoc", "test", "test1", "osm", "leductho"],
                         help="Network name")
     parser.add_argument("--episodes", type=int, default=10,
                         help="Number of evaluation episodes")

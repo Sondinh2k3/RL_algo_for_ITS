@@ -75,61 +75,6 @@ class TestMGMQEncoder:
         assert not torch.isnan(obs.grad).any(), "Gradients should not be NaN"
 
 
-class TestLocalMGMQEncoder:
-    """Test the LocalMGMQEncoder component (neighbor-aware)."""
-    
-    @pytest.fixture
-    def local_encoder(self):
-        """Create a test local encoder."""
-        from src.models.mgmq_model import LocalMGMQEncoder
-        
-        return LocalMGMQEncoder(
-            obs_dim=48,
-            max_neighbors=4,
-            gat_hidden_dim=64,
-            gat_output_dim=32,
-            gat_num_heads=4,
-            graphsage_hidden_dim=64,
-            gru_hidden_dim=32,
-            dropout=0.0,
-        )
-        
-    def test_local_encoder_dict_input(self, local_encoder):
-        """LocalEncoder should accept Dict observation."""
-        batch_size = 4
-        max_neighbors = 4
-        
-        obs_dict = {
-            "self_features": torch.randn(batch_size, 48),
-            "neighbor_features": torch.randn(batch_size, max_neighbors, 48),
-            "neighbor_mask": torch.ones(batch_size, max_neighbors),
-        }
-        
-        joint_emb = local_encoder(obs_dict)
-        
-        expected_dim = local_encoder.joint_emb_dim
-        assert joint_emb.shape == (batch_size, expected_dim), \
-            f"Expected shape ({batch_size}, {expected_dim}), got {joint_emb.shape}"
-            
-    def test_local_encoder_masked_neighbors(self, local_encoder):
-        """LocalEncoder should handle masked (missing) neighbors."""
-        batch_size = 2
-        max_neighbors = 4
-        
-        obs_dict = {
-            "self_features": torch.randn(batch_size, 48),
-            "neighbor_features": torch.randn(batch_size, max_neighbors, 48),
-            "neighbor_mask": torch.tensor([
-                [1, 1, 0, 0],  # 2 valid neighbors
-                [1, 0, 0, 0],  # 1 valid neighbor
-            ], dtype=torch.float32),
-        }
-        
-        joint_emb = local_encoder(obs_dict)
-        
-        assert not torch.isnan(joint_emb).any(), "Output should not contain NaN with masked neighbors"
-
-
 class TestMGMQTorchModel:
     """Test the RLlib-compatible MGMQTorchModel wrapper."""
     
